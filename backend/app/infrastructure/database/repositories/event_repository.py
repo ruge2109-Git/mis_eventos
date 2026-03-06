@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlmodel import Session, and_, select
+from sqlmodel import Session, and_, func, select
 
 from app.application.ports.event_repository import EventRepository
 from app.domain.entities.event import Event as DomainEvent
@@ -24,15 +24,21 @@ class PostgresEventRepository(BaseRepository[EventModel], EventRepository):
         return db_event.to_domain() if db_event else None
 
     def list_all(
-        self, skip: int = 0, limit: int = 100, search: str | None = None, status: str | None = None
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        search: str | None = None,
+        status: str | None = None,
+        organizer_id: int | None = None,
     ) -> tuple[list[DomainEvent], int]:
         statement = select(EventModel)
         if search:
             statement = statement.where(EventModel.title.contains(search))
         if status:
             statement = statement.where(EventModel.status == status)
+        if organizer_id is not None:
+            statement = statement.where(EventModel.organizer_id == organizer_id)
 
-        from sqlmodel import func
         count_statement = select(func.count()).select_from(statement.subquery())
         total = self.session.exec(count_statement).one()
 

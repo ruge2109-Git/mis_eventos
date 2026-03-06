@@ -126,15 +126,22 @@ class EventUseCases:
         return event
 
     def list_events(
-        self, skip: int = 0, limit: int = 100, search: str | None = None, status: str | None = None
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        search: str | None = None,
+        status: str | None = None,
+        organizer_id: int | None = None,
     ) -> tuple[list[Event], int]:
-        cache_key = f"events_paginated_list_{skip}_{limit}_{search}_{status}"
-        if self.cache:
+        cache_key = f"events_paginated_list_{skip}_{limit}_{search}_{status}_{organizer_id}"
+        if self.cache and organizer_id is None:
             cached = self.cache.get(cache_key)
             if cached:
                 return [Event(**e) for e in cached["items"]], cached["total"]
 
-        events, total = self.event_repo.list_all(skip=skip, limit=limit, search=search, status=status)
+        events, total = self.event_repo.list_all(
+            skip=skip, limit=limit, search=search, status=status, organizer_id=organizer_id
+        )
 
         if self.cache:
             cache_data = {

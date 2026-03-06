@@ -39,8 +39,17 @@ class EventController:
     def upload_image(self, event_id: int, file: UploadFile):
         return self.event_use_cases.update_event_image(event_id, file)
 
-    def list_events(self, skip: int, limit: int, search: str | None, status: str | None = None):
-        events, total = self.event_use_cases.list_events(skip=skip, limit=limit, search=search, status=status)
+    def list_events(
+        self,
+        skip: int,
+        limit: int,
+        search: str | None,
+        status: str | None = None,
+        organizer_id: int | None = None,
+    ):
+        events, total = self.event_use_cases.list_events(
+            skip=skip, limit=limit, search=search, status=status, organizer_id=organizer_id
+        )
         
         return {
             "items": [dataclasses.asdict(e) for e in events],
