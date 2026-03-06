@@ -32,6 +32,7 @@ export class AuthComponent implements OnInit {
       icon: 'mail',
       required: true,
       placeholder: 'nombre@ejemplo.com',
+      autocomplete: 'email',
       errorMessages: {
         required: 'El correo electrónico es obligatorio',
         email: 'Formato de correo inválido'
@@ -46,6 +47,7 @@ export class AuthComponent implements OnInit {
       linkUrl: '#',
       required: true,
       placeholder: '••••••••',
+      autocomplete: 'current-password',
       errorMessages: {
         required: 'La contraseña es obligatoria'
       }
@@ -79,6 +81,7 @@ export class AuthComponent implements OnInit {
       icon: 'person',
       required: true,
       placeholder: 'Ej. Juan Pérez',
+      autocomplete: 'name',
       errorMessages: {
         required: 'El nombre es obligatorio'
       }
@@ -90,6 +93,7 @@ export class AuthComponent implements OnInit {
       icon: 'mail',
       required: true,
       placeholder: 'nombre@ejemplo.com',
+      autocomplete: 'email',
       errorMessages: {
         required: 'El correo electrónico es obligatorio',
         email: 'Formato de correo inválido'
@@ -103,6 +107,7 @@ export class AuthComponent implements OnInit {
       required: true,
       validators: [Validators.minLength(8), Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,72}$/)],
       placeholder: 'Mínimo 8 caracteres, 1 mayús, 1 número, 1 símbolo',
+      autocomplete: 'new-password',
       errorMessages: {
         required: 'La contraseña es obligatoria',
         minlength: 'La contraseña debe tener al menos 8 caracteres',
@@ -117,6 +122,7 @@ export class AuthComponent implements OnInit {
       required: true,
       equalTo: 'password',
       placeholder: 'Repite la contraseña',
+      autocomplete: 'new-password',
       errorMessages: {
         required: 'Confirma tu contraseña',
         mustMatch: 'Las contraseñas no coinciden'

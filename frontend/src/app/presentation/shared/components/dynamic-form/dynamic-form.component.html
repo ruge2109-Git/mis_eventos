@@ -31,6 +31,7 @@
               [type]="field.type"
               [formControlName]="field.name"
               [placeholder]="field.placeholder || ''"
+              [attr.autocomplete]="field.autocomplete ?? null"
               class="w-full h-[44px] rounded-lg border bg-[#181a20] text-sm text-white focus:outline-none transition-all duration-200"
               [ngClass]="{
                 'border-red-500/50 focus:border-red-500': getErrorMessage(field),
@@ -50,6 +51,7 @@
               [type]="isPasswordVisible(field.name) ? 'text' : 'password'"
               [formControlName]="field.name"
               [placeholder]="field.placeholder || ''"
+              [attr.autocomplete]="field.autocomplete ?? null"
               class="w-full h-[44px] rounded-lg border bg-[#181a20] text-sm text-white focus:outline-none transition-all duration-200"
               [ngClass]="{
                 'border-red-500/50 focus:border-red-500': getErrorMessage(field),

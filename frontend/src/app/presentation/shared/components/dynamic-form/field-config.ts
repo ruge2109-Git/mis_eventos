@@ -19,4 +19,5 @@ export interface FieldConfig {
   validators?: any[];
   errorMessages?: Record<string, string>;
   equalTo?: string;
+  autocomplete?: string;
 }
