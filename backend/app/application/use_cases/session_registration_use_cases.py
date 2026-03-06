@@ -1,22 +1,24 @@
-from typing import List, Optional
-from app.domain.entities.session_registration import SessionRegistration
-from app.domain.entities.user import UserRole
+from app.application.ports.registration_repository import RegistrationRepository
 from app.application.ports.session_registration_repository import SessionRegistrationRepository
 from app.application.ports.session_repository import SessionRepository
-from app.application.ports.registration_repository import RegistrationRepository
 from app.application.ports.user_repository import UserRepository
+from app.domain.entities.session_registration import SessionRegistration
+from app.domain.entities.user import UserRole
 from app.domain.exceptions import (
-    ResourceNotFoundError, ResourceAlreadyExistsError, 
-    EventCapacityExceededError, AuthorizationError
+    AuthorizationError,
+    EventCapacityExceededError,
+    ResourceAlreadyExistsError,
+    ResourceNotFoundError,
 )
+
 
 class SessionRegistrationUseCases:
     def __init__(
-        self, 
-        session_reg_repo: SessionRegistrationRepository, 
+        self,
+        session_reg_repo: SessionRegistrationRepository,
         session_repo: SessionRepository,
         registration_repo: RegistrationRepository,
-        user_repo: UserRepository
+        user_repo: UserRepository,
     ):
         self.session_reg_repo = session_reg_repo
         self.session_repo = session_repo
@@ -28,7 +30,7 @@ class SessionRegistrationUseCases:
         user = self.user_repo.get_by_id(user_id)
         if not user:
             raise ResourceNotFoundError(f"User with ID {user_id} not found")
-        
+
         if user.role == UserRole.ADMIN:
             raise AuthorizationError("Administrators are not allowed to register for sessions")
 
@@ -36,11 +38,13 @@ class SessionRegistrationUseCases:
         session = self.session_repo.get_by_id(session_id)
         if not session:
             raise ResourceNotFoundError(f"Session with ID {session_id} not found")
-        
+
         # 3. Check if user is registered for the parent event
         event_registration = self.registration_repo.get_by_user_and_event(user_id, session.event_id)
         if not event_registration:
-            raise AuthorizationError("You must be registered for the event before joining this session")
+            raise AuthorizationError(
+                "You must be registered for the event before joining this session"
+            )
 
         # 4. Check if already registered for this session
         if self.session_reg_repo.get_by_user_and_session(user_id, session_id):
@@ -59,5 +63,5 @@ class SessionRegistrationUseCases:
         registration = self.session_reg_repo.get_by_user_and_session(user_id, session_id)
         if not registration:
             raise ResourceNotFoundError("You are not registered for this session")
-        
+
         self.session_reg_repo.delete(registration.id)

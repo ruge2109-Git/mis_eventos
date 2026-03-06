@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
+
 from app.domain.entities.registration import Registration
+
 
 class RegistrationRepository(ABC):
     @abstractmethod
@@ -8,15 +9,15 @@ class RegistrationRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_user_and_event(self, user_id: int, event_id: int) -> Optional[Registration]:
+    def get_by_user_and_event(self, user_id: int, event_id: int) -> Registration | None:
         pass
 
     @abstractmethod
-    def list_by_user(self, user_id: int) -> List[Registration]:
+    def list_by_user(self, user_id: int) -> list[Registration]:
         pass
 
     @abstractmethod
-    def list_by_event(self, event_id: int) -> List[Registration]:
+    def list_by_event(self, event_id: int) -> list[Registration]:
         pass
 
     @abstractmethod

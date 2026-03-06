@@ -1,9 +1,11 @@
-from typing import Optional, List
 from sqlmodel import Session, select
-from app.domain.entities.session import Session as DomainSession
+
 from app.application.ports.session_repository import SessionRepository
+from app.domain.entities.session import Session as DomainSession
 from app.infrastructure.database.models import SessionModel
+
 from .base_repository import BaseRepository
+
 
 class PostgresSessionRepository(BaseRepository[SessionModel], SessionRepository):
     def __init__(self, session: Session):
@@ -14,11 +16,11 @@ class PostgresSessionRepository(BaseRepository[SessionModel], SessionRepository)
         saved_model = self._save(db_model)
         return saved_model.to_domain()
 
-    def get_by_id(self, session_id: int) -> Optional[DomainSession]:
+    def get_by_id(self, session_id: int) -> DomainSession | None:
         db_session = self._get_by_id(session_id)
         return db_session.to_domain() if db_session else None
 
-    def list_by_event(self, event_id: int) -> List[DomainSession]:
+    def list_by_event(self, event_id: int) -> list[DomainSession]:
         statement = select(SessionModel).where(SessionModel.event_id == event_id)
         db_sessions = self.session.exec(statement).all()
         return [s.to_domain() for s in db_sessions]

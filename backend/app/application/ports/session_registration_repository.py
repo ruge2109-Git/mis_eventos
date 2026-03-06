@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
+
 from app.domain.entities.session_registration import SessionRegistration
+
 
 class SessionRegistrationRepository(ABC):
     @abstractmethod
@@ -8,11 +9,11 @@ class SessionRegistrationRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_user_and_session(self, user_id: int, session_id: int) -> Optional[SessionRegistration]:
+    def get_by_user_and_session(self, user_id: int, session_id: int) -> SessionRegistration | None:
         pass
 
     @abstractmethod
-    def list_by_session(self, session_id: int) -> List[SessionRegistration]:
+    def list_by_session(self, session_id: int) -> list[SessionRegistration]:
         pass
 
     @abstractmethod

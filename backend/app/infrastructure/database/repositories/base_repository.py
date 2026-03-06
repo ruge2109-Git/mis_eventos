@@ -1,16 +1,18 @@
-from typing import TypeVar, Generic, Type, Optional, List
+from typing import Generic, TypeVar
+
 from sqlmodel import Session, SQLModel, select
 
 # Definimos tipos genéricos para el Modelo de DB y la Entidad de Dominio
 TModel = TypeVar("TModel", bound=SQLModel)
 
+
 class BaseRepository(Generic[TModel]):
-    def __init__(self, session: Session, model_class: Type[TModel]):
+    def __init__(self, session: Session, model_class: type[TModel]):
         self.session = session
         self.model_class = model_class
 
     def _save(self, db_model: TModel) -> TModel:
-        if hasattr(db_model, 'id') and db_model.id:
+        if hasattr(db_model, "id") and db_model.id:
             existing = self.session.get(self.model_class, db_model.id)
             if existing:
                 data = db_model.model_dump(exclude={"id"})
@@ -23,10 +25,10 @@ class BaseRepository(Generic[TModel]):
         self.session.refresh(db_model)
         return db_model
 
-    def _get_by_id(self, id: int) -> Optional[TModel]:
+    def _get_by_id(self, id: int) -> TModel | None:
         return self.session.get(self.model_class, id)
 
-    def _list_all(self, skip: int = 0, limit: int = 100) -> List[TModel]:
+    def _list_all(self, skip: int = 0, limit: int = 100) -> list[TModel]:
         statement = select(self.model_class).offset(skip).limit(limit)
         return self.session.exec(statement).all()
 

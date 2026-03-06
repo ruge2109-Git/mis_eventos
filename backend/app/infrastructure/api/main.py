@@ -1,22 +1,26 @@
+import os
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import os
-
-from app.infrastructure.config.settings import settings
-from app.infrastructure.config.database import engine
-from app.infrastructure.database.seeding import seed_admin_user
 from sqlmodel import Session
-from app.infrastructure.config.logging import logger
 
+from app.domain.exceptions import DomainException
+from app.infrastructure.api.middleware.error_handler import (
+    domain_exception_handler,
+    global_exception_handler,
+)
 from app.infrastructure.api.routers.auth_router import router as auth_router
 from app.infrastructure.api.routers.event_router import router as event_router
-from app.infrastructure.api.routers.session_router import router as session_router
 from app.infrastructure.api.routers.registration_router import router as registration_router
 from app.infrastructure.api.routers.session_registration_router import router as session_reg_router
-from app.infrastructure.api.middleware.error_handler import domain_exception_handler, global_exception_handler
-from app.domain.exceptions import DomainException
+from app.infrastructure.api.routers.session_router import router as session_router
+from app.infrastructure.config.database import engine
+from app.infrastructure.config.logging import logger
+from app.infrastructure.config.settings import settings
+from app.infrastructure.database.seeding import seed_admin_user
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,16 +32,20 @@ async def lifespan(app: FastAPI):
         with Session(engine) as session:
             seed_admin_user(session)
     except Exception as e:
-        logger.warning(f"Initial seeding skipped or failed: {str(e)}. This is expected if migrations haven't run.")
-    
+        logger.warning(
+            f"Initial seeding skipped or failed: {str(e)}. "
+            "This is expected if migrations haven't run."
+        )
+
     yield
+
 
 app = FastAPI(
     title=settings.APP_NAME,
     description="API for event management following Hexagonal Architecture and SOLID principles",
     version="1.0.0",
     debug=settings.DEBUG,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # Mount static files to serve images
@@ -60,6 +68,7 @@ app.include_router(event_router)
 app.include_router(session_router)
 app.include_router(registration_router)
 app.include_router(session_registration_router := session_reg_router)
+
 
 @app.get("/")
 def read_root():

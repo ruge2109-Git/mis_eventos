@@ -1,5 +1,6 @@
 from app.application.use_cases.registration_use_cases import RegistrationUseCases
 
+
 class RegistrationController:
     def __init__(self, registration_use_cases: RegistrationUseCases):
         self.registration_use_cases = registration_use_cases

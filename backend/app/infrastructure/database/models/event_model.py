@@ -1,29 +1,32 @@
-from typing import Optional, List, TYPE_CHECKING
-from sqlmodel import Field, SQLModel, Relationship
 from datetime import datetime
+from typing import TYPE_CHECKING
+
+from sqlmodel import Field, Relationship, SQLModel
+
 from app.domain.entities.event import Event as DomainEvent
 
 if TYPE_CHECKING:
-    from .user_model import UserModel
-    from .session_model import SessionModel
     from .registration_model import RegistrationModel
+    from .session_model import SessionModel
+    from .user_model import UserModel
+
 
 class EventModel(SQLModel, table=True):
     __tablename__ = "events"
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     title: str = Field(index=True)
-    description: Optional[str] = None
+    description: str | None = None
     capacity: int
     status: str
-    location: Optional[str] = None
-    image_url: Optional[str] = None
+    location: str | None = None
+    image_url: str | None = None
     start_date: datetime
     end_date: datetime
     organizer_id: int = Field(foreign_key="users.id")
-    
+
     organizer: "UserModel" = Relationship(back_populates="events")
-    sessions: List["SessionModel"] = Relationship(back_populates="event")
-    registrations: List["RegistrationModel"] = Relationship(back_populates="event")
+    sessions: list["SessionModel"] = Relationship(back_populates="event")
+    registrations: list["RegistrationModel"] = Relationship(back_populates="event")
 
     def to_domain(self) -> DomainEvent:
         return DomainEvent(
@@ -36,7 +39,7 @@ class EventModel(SQLModel, table=True):
             image_url=self.image_url,
             start_date=self.start_date,
             end_date=self.end_date,
-            organizer_id=self.organizer_id
+            organizer_id=self.organizer_id,
         )
 
     @classmethod
@@ -51,5 +54,5 @@ class EventModel(SQLModel, table=True):
             image_url=event.image_url,
             start_date=event.start_date,
             end_date=event.end_date,
-            organizer_id=event.organizer_id
+            organizer_id=event.organizer_id,
         )

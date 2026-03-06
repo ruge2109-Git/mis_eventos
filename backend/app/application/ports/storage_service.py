@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+
 from fastapi import UploadFile
+
 
 class StorageService(ABC):
     @abstractmethod

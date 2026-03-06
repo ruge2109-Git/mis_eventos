@@ -1,25 +1,28 @@
-from typing import Optional, TYPE_CHECKING, List
-from sqlmodel import Field, SQLModel, Relationship
 from datetime import datetime
+from typing import TYPE_CHECKING
+
+from sqlmodel import Field, Relationship, SQLModel
+
 from app.domain.entities.session import Session as DomainSession
 
 if TYPE_CHECKING:
     from .event_model import EventModel
     from .session_registration_model import SessionRegistrationModel
 
+
 class SessionModel(SQLModel, table=True):
     __tablename__ = "sessions"
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     start_time: datetime
     end_time: datetime
     speaker: str
     capacity: int
     event_id: int = Field(foreign_key="events.id")
-    
+
     event: "EventModel" = Relationship(back_populates="sessions")
-    registrations: List["SessionRegistrationModel"] = Relationship(back_populates="session")
+    registrations: list["SessionRegistrationModel"] = Relationship(back_populates="session")
 
     def to_domain(self) -> DomainSession:
         return DomainSession(
@@ -30,7 +33,7 @@ class SessionModel(SQLModel, table=True):
             end_time=self.end_time,
             speaker=self.speaker,
             capacity=self.capacity,
-            event_id=self.event_id
+            event_id=self.event_id,
         )
 
     @classmethod
@@ -43,5 +46,5 @@ class SessionModel(SQLModel, table=True):
             end_time=session.end_time,
             speaker=session.speaker,
             capacity=session.capacity,
-            event_id=session.event_id
+            event_id=session.event_id,
         )

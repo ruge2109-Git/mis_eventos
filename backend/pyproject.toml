@@ -21,6 +21,37 @@ redis = "^5.0.3"
 pydantic-settings = "^2.2.1"
 python-dotenv = "^1.0.1"
 
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.3.4"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "B008", # Do not perform function call `Depends` in argument defaults
+    "F403", # `from app.infrastructure.database.models import *` used
+    "F405", # `UserModel` may be undefined, or defined from star imports
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [build-system]
 requires = ["poetry-core"]

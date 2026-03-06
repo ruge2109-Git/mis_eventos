@@ -2,16 +2,15 @@ import os
 import sys
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from sqlmodel import SQLModel
 
 from alembic import context
 
-sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app.infrastructure.database.models import *
 from app.infrastructure.config.database import DATABASE_URL
+from app.infrastructure.database.models import *
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -29,6 +28,7 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 target_metadata = SQLModel.metadata
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -64,18 +64,17 @@ def run_migrations_online() -> None:
     # Usamos la URL configurada dinámicamente
     configuration = config.get_section(config.config_ini_section)
     url = configuration.get("sqlalchemy.url")
-    
+
     # Si por alguna razón no está en config pero sí en DATABASE_URL
     if not url:
         url = DATABASE_URL
 
     from sqlalchemy import create_engine
+
     connectable = create_engine(url, poolclass=pool.NullPool)
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

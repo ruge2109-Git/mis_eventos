@@ -1,8 +1,11 @@
 import os
 import uuid
-from PIL import Image
+
 from fastapi import UploadFile
+from PIL import Image
+
 from app.application.ports.storage_service import StorageService
+
 
 class LocalStorageService(StorageService):
     def __init__(self, upload_dir: str = "uploads", base_url: str = "/static"):
@@ -16,7 +19,8 @@ class LocalStorageService(StorageService):
         Saves an image, optimizes it (WebP), and generates a thumbnail.
         Returns the main image relative URL.
         Note: For a production app, we would return a dictionary or object with all sizes.
-        For simplicity, the main image URL is returned and followers naming convention for thumbnails.
+        For simplicity, the main image URL is returned and follows a naming
+        convention for thumbnails.
         """
         # 1. Prepare directory
         target_dir = os.path.join(self.upload_dir, folder)
@@ -27,7 +31,7 @@ class LocalStorageService(StorageService):
         base_name = str(uuid.uuid4())
         filename = f"{base_name}.webp"
         thumb_name = f"{base_name}_thumb.webp"
-        
+
         file_path = os.path.join(target_dir, filename)
         thumb_path = os.path.join(target_dir, thumb_name)
 
@@ -36,19 +40,19 @@ class LocalStorageService(StorageService):
             with Image.open(file.file) as img:
                 if img.mode in ("RGBA", "P"):
                     img = img.convert("RGB")
-                
+
                 # --- MAIN IMAGE (Responsive Desktop) ---
                 main_img = img.copy()
                 main_img.thumbnail((1200, 1200), Image.Resampling.LANCZOS)
                 main_img.save(file_path, "WEBP", quality=80, optimize=True)
-                
+
                 # --- THUMBNAIL (Mobile/List view) ---
                 thumb_img = img.copy()
                 thumb_img.thumbnail((400, 400), Image.Resampling.LANCZOS)
                 thumb_img.save(thumb_path, "WEBP", quality=70, optimize=True)
-                
+
         except Exception as e:
-            raise Exception(f"Failed to process image: {str(e)}")
+            raise Exception(f"Failed to process image: {str(e)}") from e
 
         # 4. Return relative URL of the main image
         return f"{self.base_url}/{folder}/{filename}"
@@ -57,11 +61,11 @@ class LocalStorageService(StorageService):
         if path.startswith(self.base_url):
             relative_path = path.replace(self.base_url, "").lstrip("/")
             local_path = os.path.join(self.upload_dir, relative_path)
-            
+
             # Delete main
             if os.path.exists(local_path):
                 os.remove(local_path)
-            
+
             # Delete thumb
             thumb_path = local_path.replace(".webp", "_thumb.webp")
             if os.path.exists(thumb_path):

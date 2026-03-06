@@ -1,5 +1,6 @@
 from app.application.use_cases.session_registration_use_cases import SessionRegistrationUseCases
 
+
 class SessionRegistrationController:
     def __init__(self, use_cases: SessionRegistrationUseCases):
         self.use_cases = use_cases

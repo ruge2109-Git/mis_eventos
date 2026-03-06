@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, status
-from typing import List, Optional
 from datetime import datetime
+
+from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
-from app.infrastructure.api.controllers.session_controller import SessionController
-from app.infrastructure.api.dependencies.provider import get_session_controller, RequireOrganizer
+
 from app.domain.entities.user import User
+from app.infrastructure.api.controllers.session_controller import SessionController
+from app.infrastructure.api.dependencies.provider import RequireOrganizer, get_session_controller
 
 router = APIRouter(prefix="/sessions", tags=["Sessions"])
+
 
 class SessionCreateRequest(BaseModel):
     title: str
@@ -15,32 +17,34 @@ class SessionCreateRequest(BaseModel):
     speaker: str
     capacity: int
     event_id: int
-    description: Optional[str] = None
+    description: str | None = None
+
 
 class SessionResponse(BaseModel):
     id: int
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     start_time: datetime
     end_time: datetime
     speaker: str
     capacity: int
     event_id: int
 
+
 @router.post(
-    "/", 
+    "/",
     response_model=SessionResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create session for an event",
-    description="Adds a specific talk or activity to an existing event. Only Organizers or Admins."
+    description="Adds a specific talk or activity to an existing event. Only Organizers or Admins.",
 )
 def create_session(
-    session_data: SessionCreateRequest, 
+    session_data: SessionCreateRequest,
     controller: SessionController = Depends(get_session_controller),
-    current_user: User = Depends(RequireOrganizer)
+    current_user: User = Depends(RequireOrganizer),
 ):
     """
-    Validates automatically that there are no overlapping schedules. 
+    Validates automatically that there are no overlapping schedules.
     Ideally we should also check if current_user is the organizer of the event_id.
     """
     return controller.create_session(
@@ -50,14 +54,17 @@ def create_session(
         speaker=session_data.speaker,
         capacity=session_data.capacity,
         event_id=session_data.event_id,
-        description=session_data.description
+        description=session_data.description,
     )
 
+
 @router.get(
-    "/event/{event_id}", 
-    response_model=List[SessionResponse],
+    "/event/{event_id}",
+    response_model=list[SessionResponse],
     summary="List sessions for an event",
-    description="Retrieves the schedule of activities for a specific event."
+    description="Retrieves the schedule of activities for a specific event.",
 )
-def get_event_sessions(event_id: int, controller: SessionController = Depends(get_session_controller)):
+def get_event_sessions(
+    event_id: int, controller: SessionController = Depends(get_session_controller)
+):
     return controller.get_event_sessions(event_id)

@@ -165,6 +165,20 @@ docker compose exec backend alembic revision --autogenerate -m "Descripción"
 
 ---
 
+## Calidad de Código (Linting)
+
+Para mantener el código limpio y profesional, utilizamos **Ruff**. Puede ejecutar el linter y formateador directamente con Docker:
+
+```bash
+# Revisar y corregir automáticamente problemas de estilo e importaciones
+docker compose exec backend ruff check . --fix
+
+# Formatear el código siguiendo los estándares definidos en pyproject.toml
+docker compose exec backend ruff format .
+```
+
+---
+
 ## Primeros pasos y Pruebas
 
 Para validar el funcionamiento del backend una vez que los contenedores estén activos:

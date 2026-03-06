@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
+
 
 class CacheService(ABC):
     @abstractmethod
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         pass
 
     @abstractmethod

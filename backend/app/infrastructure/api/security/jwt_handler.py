@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
-from typing import Optional
-from jose import JWTError, jwt
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+
 from app.infrastructure.config.settings import settings
 
 SECRET_KEY = settings.SECRET_KEY
@@ -11,7 +12,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -20,6 +22,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
 
 def get_current_user_email(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
@@ -34,4 +37,4 @@ def get_current_user_email(token: str = Depends(oauth2_scheme)):
             raise credentials_exception
         return email
     except JWTError:
-        raise credentials_exception
+        raise credentials_exception from None
