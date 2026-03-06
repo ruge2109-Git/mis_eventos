@@ -7,14 +7,23 @@ from app.domain.entities.user import UserRole
 from app.infrastructure.api.controllers.auth_controller import AuthController
 from app.infrastructure.api.dependencies.provider import get_auth_controller
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+from app.infrastructure.api.schemas.error_response import ErrorResponse
+
+router = APIRouter(
+    prefix="/auth",
+    tags=["Authentication"],
+    responses={
+        400: {"model": ErrorResponse, "description": "Bad Request or Validation Error"},
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
 
 
 class UserRegister(BaseModel):
-    email: EmailStr
-    full_name: str = Field(..., min_length=2, max_length=100)
-    password: str = Field(..., min_length=8, max_length=72)
-    role: UserRole = UserRole.ATTENDEE
+    email: EmailStr = Field(..., description="The user's email address.", examples=["john.doe@example.com"])
+    full_name: str = Field(..., min_length=2, max_length=100, description="The user's full name.", examples=["John Doe"])
+    password: str = Field(..., min_length=8, max_length=72, description="A complex password containing at least one uppercase letter, one lowercase letter, one number, and one special character.", examples=["SecureP@ssw0rd!"])
+    role: UserRole = Field(UserRole.ATTENDEE, description="Role of the user in the platform. Admin creation is forbidden.")
 
     @field_validator("password")
     @classmethod
@@ -31,21 +40,21 @@ class UserRegister(BaseModel):
 
 
 class UserLogin(BaseModel):
-    email: EmailStr
-    password: str = Field(..., max_length=72)
+    email: EmailStr = Field(..., examples=["john.doe@example.com"])
+    password: str = Field(..., max_length=72, examples=["SecureP@ssw0rd!"])
 
 
 class AuthResponse(BaseModel):
-    access_token: str
-    token_type: str
-    user_id: int
-    role: str
+    access_token: str = Field(..., description="JWT Bearer Token for authorization")
+    token_type: str = Field(..., description="The type of the token", examples=["bearer"])
+    user_id: int = Field(..., description="The system ID of the authenticated user")
+    role: str = Field(..., description="The role of the authenticated user", examples=["ATTENDEE", "ORGANIZER", "ADMIN"])
 
 
 class MessageResponse(BaseModel):
-    id: int
-    email: str
-    message: str
+    id: int = Field(..., description="The ID of the newly created resource")
+    email: str = Field(..., description="The email bound to the operation")
+    message: str = Field(..., description="Result message of the operation")
 
 
 @router.post(
@@ -53,7 +62,11 @@ class MessageResponse(BaseModel):
     response_model=MessageResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Register a new user",
-    description="Creates a new user in the system. Roles allowed: Attendee, Organizer.",
+    description="Creates a new user in the system. Roles allowed: Attendee, Organizer. Creation of Administrators is forbidden.",
+    responses={
+        403: {"model": ErrorResponse, "description": "Forbidden: Tried to register an Admin."},
+        409: {"model": ErrorResponse, "description": "Conflict: Email already exists in the system."}
+    }
 )
 def register(user_data: UserRegister, controller: AuthController = Depends(get_auth_controller)):
     """
@@ -77,7 +90,10 @@ def register(user_data: UserRegister, controller: AuthController = Depends(get_a
     "/login",
     response_model=AuthResponse,
     summary="Log in",
-    description="Authenticates the user and returns a JWT access token.",
+    description="Authenticates the user and returns a JWT access token for subsequent authorized requests.",
+    responses={
+        401: {"model": ErrorResponse, "description": "Unauthorized: Invalid email or password."}
+    }
 )
 def login(login_data: UserLogin, controller: AuthController = Depends(get_auth_controller)):
     """

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Response, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.domain.entities.user import User
 from app.infrastructure.api.controllers.session_registration_controller import (
@@ -11,19 +11,28 @@ from app.infrastructure.api.dependencies.provider import (
     RequireAuthenticated,
     get_session_registration_controller,
 )
+from app.infrastructure.api.schemas.error_response import ErrorResponse
 
-router = APIRouter(prefix="/session-registrations", tags=["Session Registrations"])
+router = APIRouter(
+    prefix="/session-registrations",
+    tags=["Session Registrations"],
+    responses={
+        400: {"model": ErrorResponse, "description": "Bad Request or Validation Error"},
+        401: {"model": ErrorResponse, "description": "Unauthorized: Missing or invalid token"},
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    }
+)
 
 
 class SessionRegistrationRequest(BaseModel):
-    session_id: int
+    session_id: int = Field(..., description="The ID of the session to register for", examples=[1])
 
 
 class SessionRegistrationResponse(BaseModel):
-    id: int
-    user_id: int
-    session_id: int
-    registration_date: datetime
+    id: int = Field(..., description="The unique system ID of the session registration log")
+    user_id: int = Field(..., description="The ID of the user who registered")
+    session_id: int = Field(..., description="The ID of the session")
+    registration_date: datetime = Field(..., description="Date and time when the registration occurred")
 
 
 @router.post(
@@ -35,6 +44,10 @@ class SessionRegistrationResponse(BaseModel):
         "Registers the authenticated user to a specific session. "
         "Requires previous event registration."
     ),
+    responses={
+        404: {"model": ErrorResponse, "description": "Not Found: Event or Session does not exist."},
+        409: {"model": ErrorResponse, "description": "Conflict: User already registered to this session, or overlapping session."}
+    }
 )
 def register_to_session(
     data: SessionRegistrationRequest,
@@ -49,6 +62,9 @@ def register_to_session(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Unregister from a session",
     description="Deletes the session registration for the authenticated user.",
+    responses={
+        404: {"model": ErrorResponse, "description": "Not Found: Registration does not exist."}
+    }
 )
 def unregister_from_session(
     session_id: int,
@@ -64,6 +80,9 @@ def unregister_from_session(
     response_model=list[SessionRegistrationResponse],
     summary="List user session registrations",
     description="Shows all sessions a particular user has registered for.",
+    responses={
+        404: {"model": ErrorResponse, "description": "Not Found: User might not exist."}
+    }
 )
 def get_user_session_registrations(
     user_id: int,
