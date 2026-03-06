@@ -2,8 +2,8 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
-import { AvatarComponent } from '../avatar/avatar.component';
-import { ButtonComponent } from '../button/button.component';
+import { AvatarComponent } from '@shared/components/avatar/avatar.component';
+import { ButtonComponent } from '@shared/components/button/button.component';
 
 @Component({
   selector: 'app-navbar',

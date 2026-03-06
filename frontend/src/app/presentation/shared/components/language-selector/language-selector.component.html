@@ -2,10 +2,13 @@
   <app-button (clicked)="toggleDropdown()" variant="ghost" size="sm"
     customClass="border border-accent-cyan/20 px-4 py-2 rounded-full hover:bg-accent-cyan/10 transition-all text-slate-400 glass group">
     <span
-      class="material-symbols-outlined text-sm symbol-filled text-accent-cyan group-hover:rotate-12 transition-transform mr-2">language</span>
+      class="material-symbols-outlined text-sm symbol-filled text-accent-cyan group-hover:rotate-12 transition-transform mr-2">
+      language
+    </span>
     {{ currentLocaleLabel }}
-    <span class="material-symbols-outlined text-xs transition-transform ml-2"
-      [class.rotate-180]="isOpen()">expand_more</span>
+    <span class="material-symbols-outlined text-xs transition-transform ml-2" [class.rotate-180]="isOpen()">
+      expand_more
+    </span>
   </app-button>
 
   <!-- Dropdown -->

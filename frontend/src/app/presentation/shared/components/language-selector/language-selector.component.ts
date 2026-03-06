@@ -1,12 +1,12 @@
 import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslocoService, TranslocoModule } from '@jsverse/transloco';
-import { ButtonComponent } from '../button/button.component';
+import { ButtonComponent } from '@shared/components/button/button.component';
 
 @Component({
   selector: 'app-language-selector',
   standalone: true,
-  imports: [CommonModule, TranslocoModule, ButtonComponent],
+  imports: [TranslocoModule, ButtonComponent],
   templateUrl: './language-selector.component.html',
   styleUrl: './language-selector.component.scss'
 })
