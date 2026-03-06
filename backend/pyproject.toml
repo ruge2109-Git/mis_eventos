@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "mis-eventos-backend"
+version = "0.1.0"
+description = "Backend para la aplicación Mis Eventos"
+authors = ["Admin <admin@example.com>"]
+readme = "README.md"
+packages = [{include = "app"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = {extras = ["all"], version = "^0.110.1"}
+sqlmodel = "^0.0.16"
+alembic = "^1.13.1"
+psycopg2-binary = "^2.9.9"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "1.7.4"}
+bcrypt = "4.0.1"
+python-multipart = "^0.0.9"
+Pillow = "^10.2.0"
+redis = "^5.0.3"
+pydantic-settings = "^2.2.1"
+python-dotenv = "^1.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
