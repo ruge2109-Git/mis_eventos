@@ -1,0 +1,74 @@
+<nav class="fixed top-0 left-0 right-0 z-50 glass-nav border-b border-white/10 bg-background-dark/70" *transloco="let t">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      
+      <!-- LOGO -->
+      <a routerLink="/" class="flex items-center gap-2 text-accent-cyan cursor-pointer">
+        <span class="material-symbols-outlined text-4xl symbol-filled">rocket_launch</span>
+        <span class="text-xl font-bold tracking-tight text-white">MisEventos</span>
+      </a>
+
+      <!-- LINKS NAV (Desktop) -->
+      <div class="hidden md:flex items-center gap-8">
+        <a routerLink="/events" class="text-sm font-medium hover:text-accent-cyan transition-colors">{{ t('nav.explore') }}</a>
+        <a routerLink="/profile" class="text-sm font-medium hover:text-accent-cyan transition-colors">{{ t('nav.myEvents') }}</a>
+      </div>
+
+      <!-- ACCIONES -->
+      <div class="flex items-center gap-4">
+        <app-button 
+          routerLink="/events/create"
+          class="hidden sm:block"
+        >
+          {{ t('btn.createEvent') }}
+        </app-button>
+        
+        <a routerLink="/login" class="cursor-pointer">
+          <app-avatar [size]="'md'"></app-avatar>
+        </a>
+
+        <app-button 
+          (clicked)="toggleMenu()"
+          variant="ghost"
+          size="icon"
+          customClass="md:hidden"
+        >
+          <span class="material-symbols-outlined text-3xl">
+            {{ isMobileMenuOpen() ? 'close' : 'menu' }}
+          </span>
+        </app-button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Mobile Menu Overlay -->
+  <div 
+    *ngIf="isMobileMenuOpen()"
+    class="md:hidden border-t border-white/10 bg-background-dark/95 animate-in slide-in-from-top duration-300"
+  >
+    <div class="px-4 py-6 space-y-4">
+      <a 
+        routerLink="/events" 
+        (click)="toggleMenu()"
+        class="block text-lg font-medium hover:text-accent-cyan transition-colors py-2 border-b border-white/5"
+      >
+        {{ t('nav.explore') }}
+      </a>
+      <a 
+        routerLink="/profile" 
+        (click)="toggleMenu()"
+        class="block text-lg font-medium hover:text-accent-cyan transition-colors py-2 border-b border-white/5"
+      >
+        {{ t('nav.myEvents') }}
+      </a>
+      <a 
+        routerLink="/events/create" 
+        (click)="toggleMenu()"
+        class="block text-lg font-bold text-accent-cyan py-2"
+      >
+        + {{ t('btn.createEvent') }}
+      </a>
+    </div>
+  </div>
+</nav>

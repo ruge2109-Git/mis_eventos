@@ -1,0 +1,22 @@
+{
+  "nav": {
+    "explore": "Explorar",
+    "myEvents": "Mis Eventos"
+  },
+  "btn": {
+    "createEvent": "Crear Evento",
+    "retry": "Reintentar"
+  },
+  "footer": {
+    "language": "Español (ES)",
+    "rights": "© 2026 MisEventos Corp. Potenciado por Tailwind e Inteligencia Colectiva."
+  },
+  "events": {
+    "loading": "Sincronizando con la red neuronal...",
+    "noResults": "No se encontraron eventos futuristas para \"{{query}}\"",
+    "featured": "Destacado",
+    "occupancy": "Ocupación",
+    "open": "Abierto",
+    "closed": "Cerrado"
+  }
+}

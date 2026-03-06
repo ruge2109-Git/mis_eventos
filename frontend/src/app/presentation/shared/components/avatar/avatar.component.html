@@ -1,0 +1,9 @@
+<div 
+  [class]="sizeClasses()"
+  class="rounded-full bg-surface border border-white/10 bg-cover bg-center overflow-hidden flex items-center justify-center text-slate-300"
+  [style.backgroundImage]="imageUrl() ? 'url(' + imageUrl() + ')' : 'none'"
+>
+  @if (!imageUrl()) {
+    <span class="material-symbols-outlined shrink-0" [style.fontSize]="iconSize()">person</span>
+  }
+</div>

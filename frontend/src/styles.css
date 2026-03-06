@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0F172A;
+  --color-accent-cyan: #00D1FF;
+  --color-accent-purple: #7000FF;
+  --color-surface: #11141B;
+  --color-background-dark: #07090E;
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+
+  --font-sans: "Space Grotesk", sans-serif;
+
+  /* Breakpoints: Reference-adjusted */
+  --breakpoint-xs: 400px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+@layer utilities {
+  .glow-cyan {
+    box-shadow: 0 0 15px rgba(0, 209, 255, 0.3);
+  }
+  .glow-purple {
+    box-shadow: 0 0 15px rgba(112, 0, 255, 0.3);
+  }
+  .glass {
+    background: rgba(17, 20, 27, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background-dark text-white antialiased font-sans;
+  }
+
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: var(--icon-size, 24px);
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  /* Utility for filled symbols */
+  .symbol-filled {
+    font-variation-settings: 'FILL' 1;
+  }
+
+  @keyframes slide-in-top {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .animate-in {
+    animation: slide-in-top 0.3s ease-out forwards;
+  }
+}

@@ -1,0 +1,11 @@
+<button
+  [type]="type()"
+  [disabled]="disabled() || loading()"
+  (click)="clicked.emit($event)"
+  [class]="buttonClasses()"
+>
+  @if (loading()) {
+    <span class="mr-2 animate-spin material-symbols-outlined text-sm">progress_activity</span>
+  }
+  <ng-content></ng-content>
+</button>

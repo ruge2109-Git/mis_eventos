@@ -1,0 +1,27 @@
+<div class="relative inline-block text-left" *transloco="let t">
+  <app-button (clicked)="toggleDropdown()" variant="ghost" size="sm"
+    customClass="border border-accent-cyan/20 px-4 py-2 rounded-full hover:bg-accent-cyan/10 transition-all text-slate-400 glass group">
+    <span
+      class="material-symbols-outlined text-sm symbol-filled text-accent-cyan group-hover:rotate-12 transition-transform mr-2">language</span>
+    {{ currentLocaleLabel }}
+    <span class="material-symbols-outlined text-xs transition-transform ml-2"
+      [class.rotate-180]="isOpen()">expand_more</span>
+  </app-button>
+
+  <!-- Dropdown -->
+  @if (isOpen()) {
+  <div
+    class="absolute bottom-full mb-2 right-0 w-40 rounded-xl glass border border-white/10 shadow-2xl py-2 animate-language-in duration-200">
+    @for (lang of languages; track lang.code) {
+    <button (click)="changeLanguage(lang.code)"
+      class="w-full text-left px-4 py-2 text-xs font-medium hover:bg-accent-cyan/10 transition-colors flex items-center justify-between"
+      [class.text-accent-cyan]="currentLang() === lang.code" [class.text-slate-300]="currentLang() !== lang.code">
+      {{ lang.label }}
+      @if (currentLang() === lang.code) {
+      <span class="w-1.5 h-1.5 rounded-full bg-accent-cyan shadow-[0_0_8px_rgba(0,209,255,0.8)]"></span>
+      }
+    </button>
+    }
+  </div>
+  }
+</div>

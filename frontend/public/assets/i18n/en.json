@@ -1,0 +1,22 @@
+{
+  "nav": {
+    "explore": "Explore",
+    "myEvents": "My Events"
+  },
+  "btn": {
+    "createEvent": "Create Event",
+    "retry": "Retry"
+  },
+  "footer": {
+    "language": "English (EN)",
+    "rights": "© 2026 MisEventos Corp. Powered by Tailwind and Collective Intelligence."
+  },
+  "events": {
+    "loading": "Syncing with the neural network...",
+    "noResults": "No futuristic events found for \"{{query}}\"",
+    "featured": "Featured",
+    "occupancy": "Occupancy",
+    "open": "Open",
+    "closed": "Closed"
+  }
+}

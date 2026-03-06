@@ -1,0 +1,20 @@
+.glass-nav {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 15px rgba(0, 209, 255, 0.3);
+  &:hover {
+    box-shadow: 0 0 25px rgba(0, 209, 255, 0.5);
+  }
+}
+
+.animate-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+@keyframes slide-in {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
