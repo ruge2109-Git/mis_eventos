@@ -57,3 +57,16 @@ def unregister_from_session(
 ):
     controller.unregister_from_session(current_user.id, session_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    "/user/{user_id}",
+    response_model=list[SessionRegistrationResponse],
+    summary="List user session registrations",
+    description="Shows all sessions a particular user has registered for.",
+)
+def get_user_session_registrations(
+    user_id: int,
+    controller: SessionRegistrationController = Depends(get_session_registration_controller)
+):
+    return controller.list_user_sessions(user_id)

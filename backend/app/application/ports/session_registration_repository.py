@@ -17,5 +17,9 @@ class SessionRegistrationRepository(ABC):
         pass
 
     @abstractmethod
+    def list_by_user(self, user_id: int) -> list[SessionRegistration]:
+        pass
+
+    @abstractmethod
     def delete(self, registration_id: int) -> None:
         pass

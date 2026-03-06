@@ -45,3 +45,9 @@ class EventController:
 
     def get_event(self, event_id: int):
         return self.event_use_cases.get_event(event_id)
+
+    def publish_event(self, event_id: int):
+        return self.event_use_cases.publish_event(event_id)
+
+    def cancel_event(self, event_id: int):
+        return self.event_use_cases.cancel_event(event_id)

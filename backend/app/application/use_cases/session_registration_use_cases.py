@@ -65,3 +65,6 @@ class SessionRegistrationUseCases:
             raise ResourceNotFoundError("You are not registered for this session")
 
         self.session_reg_repo.delete(registration.id)
+
+    def list_user_sessions(self, user_id: int) -> list[SessionRegistration]:
+        return self.session_reg_repo.list_by_user(user_id)

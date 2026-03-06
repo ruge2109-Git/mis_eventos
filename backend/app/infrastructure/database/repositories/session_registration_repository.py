@@ -37,5 +37,12 @@ class PostgresSessionRegistrationRepository(
         db_regs = self.session.exec(statement).all()
         return [r.to_domain() for r in db_regs]
 
+    def list_by_user(self, user_id: int) -> list[DomainSessionRegistration]:
+        statement = select(SessionRegistrationModel).where(
+            SessionRegistrationModel.user_id == user_id
+        )
+        db_regs = self.session.exec(statement).all()
+        return [r.to_domain() for r in db_regs]
+
     def delete(self, registration_id: int) -> None:
         self._delete(registration_id)

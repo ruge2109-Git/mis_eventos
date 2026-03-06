@@ -10,3 +10,6 @@ class SessionRegistrationController:
 
     def unregister_from_session(self, user_id: int, session_id: int):
         return self.use_cases.unregister_from_session(user_id, session_id)
+
+    def list_user_sessions(self, user_id: int):
+        return self.use_cases.list_user_sessions(user_id)

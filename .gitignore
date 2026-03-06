@@ -47,16 +47,20 @@ nosetests.xml
 coverage.xml
 *.cover
 *.py,cover
-. Greenland/.hypothesis/
+.hypothesis/
 .pytest_cache/
+.ruff_cache/
 cover/
+coverage_check*.txt
 
 # Translations
 *.mo
 *.pot
 
-# Django stuff:
+# Logs and databases
 *.log
+logs/
+backend/logs/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal

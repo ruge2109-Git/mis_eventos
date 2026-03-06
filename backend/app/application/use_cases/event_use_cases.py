@@ -92,6 +92,21 @@ class EventUseCases:
 
         if self.cache:
             self.cache.delete("events_list")
+            self.cache.delete(f"event_{event_id}")
+
+        return updated_event
+
+    def cancel_event(self, event_id: int) -> Event:
+        event = self.event_repo.get_by_id(event_id)
+        if not event:
+            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
+
+        event.cancel()
+        updated_event = self.event_repo.save(event)
+
+        if self.cache:
+            self.cache.delete("events_list")
+            self.cache.delete(f"event_{event_id}")
 
         return updated_event
 

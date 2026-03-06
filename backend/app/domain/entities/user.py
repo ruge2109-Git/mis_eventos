@@ -23,3 +23,6 @@ class User:
 
     def is_organizer(self) -> bool:
         return self.role == UserRole.ORGANIZER
+
+    def is_attendee(self) -> bool:
+        return self.role == UserRole.ATTENDEE

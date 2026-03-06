@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, UploadFile, status
 from pydantic import BaseModel
 
 from app.domain.entities.user import User
+from app.domain.exceptions import ResourceNotFoundError
 from app.infrastructure.api.controllers.event_controller import EventController
 from app.infrastructure.api.dependencies.provider import RequireOrganizer, get_event_controller
 
@@ -102,4 +103,41 @@ def list_events(
     description="Retrieves all information of a specific event by its ID.",
 )
 def get_event(event_id: int, controller: EventController = Depends(get_event_controller)):
-    return controller.get_event(event_id)
+    event = controller.get_event(event_id)
+    if not event:
+        raise ResourceNotFoundError(f"Event with ID {event_id} not found")
+    return event
+
+
+@router.post(
+    "/{event_id}/publish",
+    response_model=EventResponse,
+    summary="Publish event",
+    description="Publishes an event, making it available for registration. Requires Organizer/Admin.",
+)
+def publish_event(
+    event_id: int, 
+    controller: EventController = Depends(get_event_controller),
+    current_user: User = Depends(RequireOrganizer)
+):
+    """
+    Publish an event.
+    """
+    return controller.publish_event(event_id)
+
+
+@router.post(
+    "/{event_id}/cancel",
+    response_model=EventResponse,
+    summary="Cancel event",
+    description="Cancels an event. Requires Organizer/Admin.",
+)
+def cancel_event(
+    event_id: int, 
+    controller: EventController = Depends(get_event_controller),
+    current_user: User = Depends(RequireOrganizer)
+):
+    """
+    Cancel an event.
+    """
+    return controller.cancel_event(event_id)
