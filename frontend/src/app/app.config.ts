@@ -5,6 +5,8 @@ import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { EventRepository } from './core/domain/ports/event.repository';
 import { EventApiRepository } from './infrastructure/api/event-api.repository';
+import { AuthRepository } from './core/domain/ports/auth.repository';
+import { AuthApiRepository } from './infrastructure/api/auth-api.repository';
 import { provideTransloco } from '@jsverse/transloco';
 import { isDevMode } from '@angular/core';
 import { TranslocoHttpLoader } from './transloco-loader';
@@ -21,6 +23,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([loadingInterceptor, errorInterceptor])
     ),
     { provide: EventRepository, useClass: EventApiRepository },
+    { provide: AuthRepository, useClass: AuthApiRepository },
     provideTransloco({
         config: { 
           availableLangs: ['es', 'en'],

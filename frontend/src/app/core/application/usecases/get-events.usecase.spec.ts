@@ -2,9 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { throwError } from 'rxjs';
 import { GetEventsUseCase } from './get-events.usecase';
-import { EventRepository } from '../../domain/ports/event.repository';
-import { EventStore } from '../store/event.store';
-import { Event } from '../../domain/entities/event.entity';
+import { EventRepository } from '@core/domain/ports/event.repository';
+import { EventStore } from '@core/application/store/event.store';
+import { Event } from '@core/domain/entities/event.entity';
 
 describe('GetEventsUseCase', () => {
   let useCase: GetEventsUseCase;

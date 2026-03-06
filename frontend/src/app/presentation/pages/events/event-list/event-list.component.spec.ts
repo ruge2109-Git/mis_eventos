@@ -7,6 +7,7 @@ import { GetEventsUseCase } from '@core/application/usecases/get-events.usecase'
 import { EventStore } from '@core/application/store/event.store';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
+import { vi } from 'vitest';
 
 describe('EventListComponent', () => {
   let component: EventListComponent;
@@ -71,5 +72,46 @@ describe('EventListComponent', () => {
     fixture.detectChanges();
     loadMoreBtn = fixture.debugElement.query(By.css('app-button[customClass*="min-w-[200px]"]'));
     expect(loadMoreBtn).toBeFalsy();
+  });
+
+  it('should render app-search-bar', () => {
+    const searchBar = fixture.debugElement.query(By.css('app-search-bar'));
+    expect(searchBar).toBeTruthy();
+  });
+
+  it('should show loading state when store.loading is true', () => {
+    store.setLoading(true);
+    fixture.detectChanges();
+    const loadingEl = fixture.debugElement.query(By.css('.animate-spin'));
+    expect(loadingEl).toBeTruthy();
+  });
+
+  it('should show error state and retry button when store.error is set', () => {
+    store.setError('Error de red');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Error de red');
+    const retryBtn = fixture.debugElement.query(By.css('app-button'));
+    expect(retryBtn).toBeTruthy();
+  });
+
+  it('should call onSearch when search bar emits', () => {
+    const searchBar = fixture.debugElement.query(By.css('app-search-bar'));
+    const spy = vi.spyOn(component, 'onSearch');
+    searchBar.triggerEventHandler('search', 'test');
+    expect(spy).toHaveBeenCalledWith('test');
+  });
+
+  it('should filter events by searchQuery', () => {
+    store.setEvents(
+      [
+        { id: 1, title: 'Angular Meetup', description: null, startDate: new Date(), endDate: new Date(), location: null, imageUrl: null, capacity: 10, status: 'PUBLISHED', organizerId: 1 },
+        { id: 2, title: 'React Conference', description: null, startDate: new Date(), endDate: new Date(), location: null, imageUrl: null, capacity: 20, status: 'PUBLISHED', organizerId: 1 }
+      ],
+      2
+    );
+    component.searchQuery.set('Angular');
+    fixture.detectChanges();
+    expect(component.filteredEvents().length).toBe(1);
+    expect(component.filteredEvents()[0].title).toBe('Angular Meetup');
   });
 });

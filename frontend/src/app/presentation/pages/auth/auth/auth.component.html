@@ -1,0 +1,93 @@
+<div class="h-screen w-full flex bg-[#161a23] font-body text-white fixed top-0 left-0 z-50 overflow-hidden" *transloco="let t">
+  <a routerLink="/" class="fixed top-4 left-4 lg:top-8 lg:left-8 z-[60] flex items-center justify-center w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-all backdrop-blur-md cursor-pointer group shadow-lg" title="Volver al inicio">
+    <span class="material-symbols-outlined text-xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
+  </a>
+
+  <div class="hidden lg:flex w-1/2 relative bg-[#0b101a] flex-col justify-center p-20 overflow-hidden">
+    <div class="absolute inset-0 opacity-40 mix-blend-screen" style="background: radial-gradient(circle at center, #3b82f6 0%, transparent 60%);"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-[#0b101a] via-transparent to-transparent"></div>
+    
+    <div class="relative z-10 h-full flex flex-col justify-between">
+      <a routerLink="/" class="flex items-center gap-3 mt-4 w-fit cursor-pointer group">
+        <div class="w-8 h-8 rounded bg-[#3b82f6]/20 flex items-center justify-center group-hover:bg-[#3b82f6]/30 transition-colors">
+          <span class="material-symbols-outlined text-[#3b82f6] text-xl group-hover:scale-110 transition-transform">rocket_launch</span>
+        </div>
+        <span class="font-display font-bold text-lg text-white group-hover:text-gray-200 transition-colors">MisEventos</span>
+      </a>
+
+      <div class="my-auto">
+        @if (mode === 'login') {
+          <h1 class="font-display font-bold text-5xl leading-tight mb-6 mt-12" [innerHTML]="t('auth.loginLeftTitle') || 'Descubre<br/>experiencias<br/><span class=\'text-[#3b82f6]\'>inolvidables.</span>'"></h1>
+          <p class="text-gray-400 max-w-sm text-lg">{{ t('auth.loginLeftSubtitle') || 'Únete a la comunidad de eventos más exclusiva y accede a preventas VIP y contenidos únicos.' }}</p>
+        } @else {
+          <h1 class="font-display font-bold text-5xl leading-tight mb-6 mt-12" [innerHTML]="t('auth.registerLeftTitle') || 'Gestiona tus eventos<br/><span class=\'text-[#3b82f6]\'>sin límites.</span>'"></h1>
+          <p class="text-gray-400 max-w-sm text-lg">{{ t('auth.registerLeftSubtitle') || 'Únete a la plataforma líder para la creación y asistencia de eventos corporativos y sociales.' }}</p>
+        }
+      </div>
+
+      <div class="flex items-center gap-4 mb-4">
+        <div class="flex -space-x-2">
+          @if (mode === 'login') {
+            <img class="w-8 h-8 rounded-full border-2 border-[#0b101a]" src="https://i.pravatar.cc/100?img=1" alt="User">
+            <img class="w-8 h-8 rounded-full border-2 border-[#0b101a]" src="https://i.pravatar.cc/100?img=2" alt="User">
+            <img class="w-8 h-8 rounded-full border-2 border-[#0b101a]" src="https://i.pravatar.cc/100?img=3" alt="User">
+          } @else {
+            <img class="w-8 h-8 rounded-full border-2 border-[#0b101a]" src="https://i.pravatar.cc/100?img=4" alt="User">
+            <img class="w-8 h-8 rounded-full border-2 border-[#0b101a]" src="https://i.pravatar.cc/100?img=5" alt="User">
+            <img class="w-8 h-8 rounded-full border-2 border-[#0b101a]" src="https://i.pravatar.cc/100?img=6" alt="User">
+          }
+        </div>
+        <span class="text-sm text-gray-500">
+          @if (mode === 'login') {
+            {{ t('auth.loginLeftFooter') || 'Más de 10k personas ya están dentro' }}
+          } @else {
+            {{ t('auth.registerLeftFooter') || 'Más de 10k usuarios confían en nosotros' }}
+          }
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-16 lg:px-24 relative bg-[#121620] overflow-y-auto py-12 lg:py-0">
+    <a routerLink="/" class="flex lg:hidden items-center gap-3 absolute top-5 right-5 z-[60] cursor-pointer group">
+      <div class="w-8 h-8 rounded bg-[#3b82f6]/20 flex items-center justify-center group-hover:bg-[#3b82f6]/30 transition-colors">
+        <span class="material-symbols-outlined text-[#3b82f6] text-xl group-hover:scale-110 transition-transform">rocket_launch</span>
+      </div>
+      <span class="font-display font-bold text-lg text-white group-hover:text-gray-200 transition-colors">MisEventos</span>
+    </a>
+
+    <div class="w-full max-w-sm mx-auto my-auto transition-all duration-300">
+      <div class="mb-8 mt-16 sm:mt-12 lg:mt-0">
+        @if (mode === 'login') {
+          <h2 class="font-display font-bold text-3xl text-white mb-2">{{ t('auth.loginTitle') || 'Acceso al portal' }}</h2>
+          <p class="text-gray-400 text-sm">{{ t('auth.loginSubtitle') || 'Ingresa tus credenciales para continuar.' }}</p>
+        } @else {
+          <h2 class="font-display font-bold text-3xl text-white mb-2">{{ t('auth.registerTitle') || 'Crea tu cuenta' }}</h2>
+          <p class="text-gray-400 text-sm">{{ t('auth.registerSubtitle') || 'Comienza tu experiencia hoy mismo.' }}</p>
+        }
+      </div>
+
+      <div class="bg-[#181a20]/50 p-6 rounded-2xl border border-white/5">
+        <app-dynamic-form
+          [fields]="fields"
+          [submitLabel]="mode === 'login' ? 'Entrar →' : 'Crear Cuenta'"
+          [isLoading]="authStore.isLoading()"
+          [globalError]="authStore.error()"
+          (formSubmit)="onSubmit($event)">
+        </app-dynamic-form>
+      </div>
+
+      <div class="mt-8 text-center pb-8 lg:pb-0">
+        <p class="text-[13px] text-gray-400">
+          @if (mode === 'login') {
+            {{ t('auth.noAccountPrefix') || '¿Aún no tienes cuenta?' }}
+            <a routerLink="/auth/register" class="text-[#3b82f6] hover:underline font-medium ml-1">{{ t('auth.registerLinkText') || 'Regístrate' }}</a>
+          } @else {
+            {{ t('auth.hasAccountPrefix') || '¿Ya tienes una cuenta?' }} 
+            <a routerLink="/auth/login" class="text-[#3b82f6] hover:underline font-medium ml-1">{{ t('auth.loginLinkText') || 'Inicia sesión' }}</a>
+          }
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

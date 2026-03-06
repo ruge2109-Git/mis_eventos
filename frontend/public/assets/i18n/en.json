@@ -21,6 +21,25 @@
     "open": "Open",
     "closed": "Closed",
     "showingNOfTotal": "Showing {{current}} of {{total}} events",
-    "allLoaded": "You've reached the edge of the events."
+    "allLoaded": "You've reached the edge of the events.",
+    "published": "Published",
+    "draft": "Draft",
+    "cancelled": "Cancelled"
+  },
+  "auth": {
+    "loginTitle": "Portal Access",
+    "loginSubtitle": "Enter your credentials to continue.",
+    "registerTitle": "Create your account",
+    "registerSubtitle": "Start your experience today.",
+    "hasAccountPrefix": "Already have an account?",
+    "noAccountPrefix": "Don't have an account yet?",
+    "loginLinkText": "Log in",
+    "registerLinkText": "Register",
+    "loginLeftTitle": "Discover<br/><span class='text-[#3b82f6]'>unforgettable</span><br/>experiences.",
+    "loginLeftSubtitle": "Join the most exclusive events community and get access to VIP presales and unique content.",
+    "loginLeftFooter": "More than 10k people are already in",
+    "registerLeftTitle": "Manage your events<br/><span class='text-[#3b82f6]'>with no limits.</span>",
+    "registerLeftSubtitle": "Join the leading platform for creating and attending corporate and social events.",
+    "registerLeftFooter": "Over 10k users trust us"
   }
 }

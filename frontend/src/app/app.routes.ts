@@ -12,6 +12,19 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'auth',
+    children: [
+      {
+        path: 'login',
+        loadComponent: () => import('./presentation/pages/auth/auth/auth.component').then(m => m.AuthComponent)
+      },
+      {
+        path: 'register',
+        loadComponent: () => import('./presentation/pages/auth/auth/auth.component').then(m => m.AuthComponent)
+      }
+    ]
+  },
+  {
     path: '**',
     redirectTo: ''
   }

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { loadingInterceptor } from './loading.interceptor';
-import { EventStore } from '../../core/application/store/event.store';
+import { EventStore } from '@core/application/store/event.store';
 
 describe('LoadingInterceptor', () => {
   let httpMock: HttpTestingController;
@@ -41,5 +41,16 @@ describe('LoadingInterceptor', () => {
     req.flush({});
 
     expect(eventStore.setLoading).toHaveBeenCalledWith(false);
+  });
+
+  it('should not set loading for /auth/ requests', () => {
+    httpClient.post('/api/auth/login', {}).subscribe();
+
+    expect(eventStore.setLoading).not.toHaveBeenCalled();
+
+    const req = httpMock.expectOne('/api/auth/login');
+    req.flush({});
+
+    expect(eventStore.setLoading).not.toHaveBeenCalled();
   });
 });

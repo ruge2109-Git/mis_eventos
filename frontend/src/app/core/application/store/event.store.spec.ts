@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { EventStore } from './event.store';
-import { Event } from '../../domain/entities/event.entity';
+import { Event } from '@core/domain/entities/event.entity';
 
 describe('EventStore', () => {
   let store: EventStore;

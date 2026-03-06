@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslocoModule } from '@jsverse/transloco';
-import { LanguageSelectorComponent } from '../language-selector/language-selector.component';
+import { LanguageSelectorComponent } from '@components/language-selector/language-selector.component';
 
 @Component({
   selector: 'app-footer',

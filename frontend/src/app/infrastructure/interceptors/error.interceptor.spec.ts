@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { errorInterceptor } from './error.interceptor';
-import { EventStore } from '../../core/application/store/event.store';
+import { EventStore } from '@core/application/store/event.store';
 
 describe('ErrorInterceptor', () => {
   let httpMock: HttpTestingController;

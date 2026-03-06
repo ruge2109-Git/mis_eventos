@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { Event } from '../../domain/entities/event.entity';
+import { Event } from '@core/domain/entities/event.entity';
 
 export interface EventState {
   events: Event[];

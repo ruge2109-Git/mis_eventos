@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { EventRepository } from '../../domain/ports/event.repository';
-import { EventStore } from '../store/event.store';
+import { EventRepository } from '@core/domain/ports/event.repository';
+import { EventStore } from '@core/application/store/event.store';
 import { finalize, tap } from 'rxjs/operators';
 
 @Injectable({

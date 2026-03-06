@@ -1,10 +1,8 @@
 <div class="space-y-12" *transloco="let t">
-  <!-- Search Section -->
   <section class="max-w-3xl mx-auto">
     <app-search-bar (search)="onSearch($event)"></app-search-bar>
   </section>
 
-  <!-- Loading State -->
   @if (store.loading()) {
   <div class="flex flex-col items-center justify-center py-20 gap-4">
     <span class="animate-spin material-symbols-outlined text-5xl text-accent-cyan">progress_activity</span>
@@ -12,7 +10,6 @@
   </div>
   }
 
-  <!-- Error State -->
   @if (store.error()) {
   <div class="bg-red-500/10 border border-red-500/50 p-6 rounded-2xl text-center">
     <p class="text-red-400 font-bold mb-4">{{ store.error() }}</p>
@@ -22,7 +19,6 @@
   </div>
   }
 
-  <!-- Bento Grid -->
   @if (!store.loading() && !store.error()) {
   <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-[400px]">
     @for (event of filteredEvents(); track event.id ?? event.title) {
@@ -43,7 +39,6 @@
   </section>
   }
 
-  <!-- Pagination / Load More -->
   @if (store.hasMore() && !store.error()) {
   <div
     class="flex flex-col items-center justify-center p-12 gap-6 bg-surface/50 border border-white/5 rounded-3xl backdrop-blur-sm">

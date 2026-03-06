@@ -2,9 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
-import { Event, CreateEventDTO, UpdateEventDTO } from '../../core/domain/entities/event.entity';
-import { EventRepository } from '../../core/domain/ports/event.repository';
+import { environment } from '@environments/environment';
+import { Event, CreateEventDTO, UpdateEventDTO } from '@core/domain/entities/event.entity';
+import { EventRepository } from '@core/domain/ports/event.repository';
 
 interface EventResponse {
   id: number;

@@ -1,38 +1,43 @@
-<nav class="fixed top-0 left-0 right-0 z-50 glass-nav border-b border-white/10 bg-background-dark/70" *transloco="let t">
+<nav class="fixed top-0 left-0 right-0 z-50 glass-nav border-b border-white/10 bg-background-dark/70"
+  *transloco="let t">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
-      
-      <!-- LOGO -->
       <a routerLink="/" class="flex items-center gap-2 text-accent-cyan cursor-pointer">
         <span class="material-symbols-outlined text-4xl symbol-filled">rocket_launch</span>
         <span class="text-xl font-bold tracking-tight text-white">MisEventos</span>
       </a>
 
-      <!-- LINKS NAV (Desktop) -->
       <div class="hidden md:flex items-center gap-8">
-        <a routerLink="/events" class="text-sm font-medium hover:text-accent-cyan transition-colors">{{ t('nav.explore') }}</a>
-        <a routerLink="/profile" class="text-sm font-medium hover:text-accent-cyan transition-colors">{{ t('nav.myEvents') }}</a>
+        <a routerLink="/events" class="text-sm font-medium hover:text-accent-cyan transition-colors">{{ t('nav.explore')
+          }}</a>
+        @if (authStore.isAuthenticated()) {
+        <a routerLink="/profile" class="text-sm font-medium hover:text-accent-cyan transition-colors">{{
+          t('nav.myEvents') }}</a>
+        }
       </div>
 
-      <!-- ACCIONES -->
       <div class="flex items-center gap-4">
-        <app-button 
-          routerLink="/events/create"
-          class="hidden sm:block"
-        >
+        @if (authStore.isAuthenticated() && authStore.userRole() === 'Organizer') {
+        <app-button routerLink="/events/create" class="hidden sm:block">
           {{ t('btn.createEvent') }}
         </app-button>
-        
-        <a routerLink="/login" class="cursor-pointer">
-          <app-avatar [size]="'md'"></app-avatar>
-        </a>
+        }
 
-        <app-button 
-          (clicked)="toggleMenu()"
-          variant="ghost"
-          size="icon"
-          customClass="md:hidden"
-        >
+        @if (authStore.isAuthenticated()) {
+        <div class="flex items-center gap-4">
+          <app-avatar [size]="'md'"></app-avatar>
+          <button (click)="logout()"
+            class="text-sm font-medium text-white/70 hover:text-red-400 transition-colors hidden md:block">Salir</button>
+        </div>
+        } @else {
+        <a routerLink="/auth/login"
+          class="text-sm font-medium hover:text-accent-cyan transition-colors hidden sm:block">Ingresar</a>
+        <app-button routerLink="/auth/register" class="hidden sm:block">
+          Registro
+        </app-button>
+        }
+
+        <app-button (clicked)="toggleMenu()" variant="ghost" size="icon" customClass="md:hidden">
           <span class="material-symbols-outlined text-3xl">
             {{ isMobileMenuOpen() ? 'close' : 'menu' }}
           </span>
@@ -42,33 +47,42 @@
     </div>
   </div>
 
-  <!-- Mobile Menu Overlay -->
-  <div 
-    *ngIf="isMobileMenuOpen()"
-    class="md:hidden border-t border-white/10 bg-background-dark/95 animate-in slide-in-from-top duration-300"
-  >
+  @if (isMobileMenuOpen()) {
+  <div class="md:hidden border-t border-white/10 bg-background-dark/95 animate-in slide-in-from-top duration-300">
     <div class="px-4 py-6 space-y-4">
-      <a 
-        routerLink="/events" 
-        (click)="toggleMenu()"
-        class="block text-lg font-medium hover:text-accent-cyan transition-colors py-2 border-b border-white/5"
-      >
+      <a routerLink="/events" (click)="toggleMenu()"
+        class="block text-lg font-medium hover:text-accent-cyan transition-colors py-2 border-b border-white/5">
         {{ t('nav.explore') }}
       </a>
-      <a 
-        routerLink="/profile" 
-        (click)="toggleMenu()"
-        class="block text-lg font-medium hover:text-accent-cyan transition-colors py-2 border-b border-white/5"
-      >
+      @if (authStore.isAuthenticated()) {
+      <a routerLink="/profile" (click)="toggleMenu()"
+        class="block text-lg font-medium hover:text-accent-cyan transition-colors py-2 border-b border-white/5">
         {{ t('nav.myEvents') }}
       </a>
-      <a 
-        routerLink="/events/create" 
-        (click)="toggleMenu()"
-        class="block text-lg font-bold text-accent-cyan py-2"
-      >
+      }
+      @if (authStore.isAuthenticated() && authStore.userRole() === 'Organizer') {
+      <a routerLink="/events/create" (click)="toggleMenu()"
+        class="block text-lg font-bold text-accent-cyan py-2 border-b border-white/5">
         + {{ t('btn.createEvent') }}
       </a>
+      }
+      @if (!authStore.isAuthenticated()) {
+      <a routerLink="/auth/login" (click)="toggleMenu()"
+        class="block text-lg font-medium hover:text-accent-cyan transition-colors py-2 border-b border-white/5">
+        Ingresar
+      </a>
+      <a routerLink="/auth/register" (click)="toggleMenu()"
+        class="block text-lg font-bold text-accent-cyan py-2 border-b border-white/5">
+        Registro
+      </a>
+      }
+      @if (authStore.isAuthenticated()) {
+      <a (click)="logout(); toggleMenu()"
+        class="block text-lg font-medium text-red-400 opacity-90 hover:opacity-100 transition-colors py-2 cursor-pointer">
+        Cerrar Sesión
+      </a>
+      }
     </div>
   </div>
+  }
 </nav>

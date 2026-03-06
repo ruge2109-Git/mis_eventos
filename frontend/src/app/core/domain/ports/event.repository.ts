@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { Event, CreateEventDTO, UpdateEventDTO } from '../entities/event.entity';
+import { Event, CreateEventDTO, UpdateEventDTO } from '@core/domain/entities/event.entity';
 
 export abstract class EventRepository {
   abstract getAll(skip?: number, limit?: number): Observable<{ items: Event[], total: number }>;

@@ -1,0 +1,25 @@
+@if (toast.visible() && toast.message()) {
+  <div class="toast-wrapper">
+  <div
+    role="alert"
+    class="toast"
+    [attr.data-type]="toast.type()"
+    (click)="toast.dismiss()">
+    @switch (toast.type()) {
+      @case ('success') {
+        <span class="material-symbols-outlined icon">check_circle</span>
+      }
+      @case ('error') {
+        <span class="material-symbols-outlined icon">error</span>
+      }
+      @default {
+        <span class="material-symbols-outlined icon">info</span>
+      }
+    }
+    <span class="message">{{ toast.message() }}</span>
+    <button type="button" class="close" aria-label="Cerrar">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+  </div>
+}
