@@ -1,3 +1,4 @@
+import dataclasses
 from datetime import datetime
 
 from fastapi import UploadFile
@@ -53,7 +54,7 @@ class EventUseCases:
 
         # Invalidate cache
         if self.cache:
-            self.cache.delete("events_list")
+            self.cache.delete("events_paginated_list")
 
         if warning:
             logger.info(f"Event created with warning: {warning}")
@@ -120,29 +121,29 @@ class EventUseCases:
         event = self.event_repo.get_by_id(event_id)
 
         if event and self.cache:
-            import dataclasses
-
             self.cache.set(cache_key, dataclasses.asdict(event), expire_seconds=600)
 
         return event
 
     def list_events(
-        self, skip: int = 0, limit: int = 100, search: str | None = None
-    ) -> list[Event]:
-        cache_key = f"events_list_{skip}_{limit}_{search}"
+        self, skip: int = 0, limit: int = 100, search: str | None = None, status: str | None = None
+    ) -> tuple[list[Event], int]:
+        cache_key = f"events_paginated_list_{skip}_{limit}_{search}_{status}"
         if self.cache:
             cached = self.cache.get(cache_key)
             if cached:
-                return [Event(**e) for e in cached]
+                return [Event(**e) for e in cached["items"]], cached["total"]
 
-        events = self.event_repo.list_all(skip=skip, limit=limit, search=search)
+        events, total = self.event_repo.list_all(skip=skip, limit=limit, search=search, status=status)
 
         if self.cache:
-            import dataclasses
+            cache_data = {
+                "items": [dataclasses.asdict(e) for e in events],
+                "total": total
+            }
+            self.cache.set(cache_key, cache_data, expire_seconds=300)
 
-            self.cache.set(cache_key, [dataclasses.asdict(e) for e in events], expire_seconds=300)
-
-        return events
+        return events, total
 
     def _validate_event_dates(self, start_date: datetime, end_date: datetime):
         if end_date <= start_date:

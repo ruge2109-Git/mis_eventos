@@ -140,23 +140,29 @@ class TestEventUseCases:
 
     def test_list_events_no_cache(self, use_cases, mock_repos):
         mock_repos["cache"].get.return_value = None
-        mock_repos["event_repo"].list_all.return_value = [
-            Event(title="E1", capacity=10, start_date=datetime.utcnow(), end_date=datetime.utcnow() + timedelta(hours=1), organizer_id=1)
-        ]
-        result = use_cases.list_events()
-        assert len(result) == 1
+        mock_repos["event_repo"].list_all.return_value = (
+            [Event(title="E1", capacity=10, start_date=datetime.utcnow(), end_date=datetime.utcnow() + timedelta(hours=1), organizer_id=1)],
+            1
+        )
+        events, total = use_cases.list_events()
+        assert len(events) == 1
+        assert total == 1
         mock_repos["cache"].set.assert_called()
 
     def test_list_events_cached(self, use_cases, mock_repos):
         now = datetime.utcnow()
-        cached_data = [{
-            "title": "Cached List", "capacity": 10, 
-            "start_date": now.isoformat(), "end_date": (now + timedelta(hours=1)).isoformat(), 
-            "organizer_id": 1, "id": 1
-        }]
+        cached_data = {
+            "items": [{
+                "title": "Cached List", "capacity": 10, 
+                "start_date": now.isoformat(), "end_date": (now + timedelta(hours=1)).isoformat(), 
+                "organizer_id": 1, "id": 1
+            }],
+            "total": 1
+        }
         mock_repos["cache"].get.return_value = cached_data
         
-        result = use_cases.list_events()
-        assert len(result) == 1
-        assert result[0].title == "Cached List"
+        events, total = use_cases.list_events()
+        assert len(events) == 1
+        assert total == 1
+        assert events[0].title == "Cached List"
         mock_repos["event_repo"].list_all.assert_not_called()

@@ -24,15 +24,22 @@ class PostgresEventRepository(BaseRepository[EventModel], EventRepository):
         return db_event.to_domain() if db_event else None
 
     def list_all(
-        self, skip: int = 0, limit: int = 100, search: str | None = None
-    ) -> list[DomainEvent]:
+        self, skip: int = 0, limit: int = 100, search: str | None = None, status: str | None = None
+    ) -> tuple[list[DomainEvent], int]:
         statement = select(EventModel)
         if search:
             statement = statement.where(EventModel.title.contains(search))
+        if status:
+            statement = statement.where(EventModel.status == status)
+
+        from sqlmodel import func
+        count_statement = select(func.count()).select_from(statement.subquery())
+        total = self.session.exec(count_statement).one()
+
         statement = statement.offset(skip).limit(limit)
 
         db_events = self.session.exec(statement).all()
-        return [db_event.to_domain() for db_event in db_events]
+        return [db_event.to_domain() for db_event in db_events], total
 
     def find_overlapping(
         self, start_date: datetime, end_date: datetime, exclude_id: int | None = None

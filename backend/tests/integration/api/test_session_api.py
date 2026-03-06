@@ -34,11 +34,13 @@ class TestSessionAPI:
     def test_list_sessions(self, client, organizer_auth_headers, event_id):
         # Create one first
         now = datetime.utcnow()
-        client.post("/sessions/", json={
-            "title": "S1", "start_time": (now + timedelta(days=1, hours=1)).isoformat(),
+        post_response = client.post("/sessions/", json={
+            "title": "Session 1", "start_time": (now + timedelta(days=1, hours=1)).isoformat(),
             "end_time": (now + timedelta(days=1, hours=2)).isoformat(),
             "speaker": "A", "capacity": 5, "event_id": event_id
         }, headers=organizer_auth_headers)
+        
+        assert post_response.status_code == status.HTTP_201_CREATED, post_response.text
         
         response = client.get(f"/sessions/event/{event_id}")
         assert response.status_code == status.HTTP_200_OK

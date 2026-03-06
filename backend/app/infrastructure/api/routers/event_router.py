@@ -44,6 +44,13 @@ class EventResponse(BaseModel):
     warning: str | None = Field(None, description="Warning messages, e.g., if there is a scheduling conflict")
 
 
+class PaginatedEventResponse(BaseModel):
+    items: list[EventResponse]
+    total: int
+    skip: int
+    limit: int
+
+
 @router.post(
     "/",
     response_model=EventResponse,
@@ -101,17 +108,24 @@ def upload_event_image(
 
 @router.get(
     "/",
-    response_model=list[EventResponse],
+    response_model=PaginatedEventResponse,
     summary="List events",
     description="Retrieves a paginated list of all registered events.",
 )
 def list_events(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 12,
     search: str | None = None,
+    status: str | None = "Published",
     controller: EventController = Depends(get_event_controller),
 ):
-    return controller.list_events(skip=skip, limit=limit, search=search)
+    result = controller.list_events(skip=skip, limit=limit, search=search, status=status)
+    return {
+        "items": result["items"],
+        "total": result["total"],
+        "skip": skip,
+        "limit": limit
+    }
 
 
 @router.get(

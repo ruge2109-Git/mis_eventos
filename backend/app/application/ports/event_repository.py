@@ -14,7 +14,9 @@ class EventRepository(ABC):
         pass
 
     @abstractmethod
-    def list_all(self, skip: int = 0, limit: int = 100, search: str | None = None) -> list[Event]:
+    def list_all(
+        self, skip: int = 0, limit: int = 100, search: str | None = None, status: str | None = None
+    ) -> tuple[list[Event], int]:
         pass
 
     @abstractmethod

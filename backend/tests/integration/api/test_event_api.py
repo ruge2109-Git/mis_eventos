@@ -23,7 +23,8 @@ class TestEventAPI:
     def test_list_events(self, client):
         response = client.get("/events/")
         assert response.status_code == status.HTTP_200_OK
-        assert isinstance(response.json(), list)
+        assert "items" in response.json()
+        assert isinstance(response.json()["items"], list)
 
     def test_get_event_not_found(self, client):
         response = client.get("/events/9999")

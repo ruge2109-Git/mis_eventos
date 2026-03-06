@@ -164,8 +164,28 @@ docker compose exec backend alembic revision --autogenerate -m "Descripción"
 ```
 
 ---
-
-## Calidad de Código (Linting)
+ 
+ ## Ejecución de Pruebas (Testing)
+ 
+ El proyecto utiliza **Pytest** para las pruebas unitarias e integrales. Para asegurar un entorno consistente, se recomienda ejecutar las pruebas dentro del contenedor de Docker:
+ 
+ ```bash
+ # Ejecutar todas las pruebas con reporte de cobertura en terminal
+ docker compose exec backend pytest
+ 
+ # Ejecutar solo pruebas unitarias
+ docker compose exec backend pytest tests/unit
+ 
+ # Ejecutar solo pruebas de integración
+ docker compose exec backend pytest tests/integration
+ 
+ # Ejecutar un archivo de prueba específico
+ docker compose exec backend pytest tests/unit/test_some_feature.py
+ ```
+ 
+ ---
+ 
+ ## Calidad de Código (Linting)
 
 Para mantener el código limpio y profesional, utilizamos **Ruff**. Puede ejecutar el linter y formateador directamente con Docker:
 
