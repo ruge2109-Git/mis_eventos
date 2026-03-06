@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LanguageSelectorComponent } from './language-selector.component';
-import { TranslocoTestingModule } from '@jsverse/transloco';
+import { provideTransloco } from '@jsverse/transloco';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('LanguageSelectorComponent', () => {
   let component: LanguageSelectorComponent;
@@ -8,7 +10,17 @@ describe('LanguageSelectorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [LanguageSelectorComponent, TranslocoTestingModule]
+      imports: [LanguageSelectorComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTransloco({
+          config: {
+            availableLangs: ['es', 'en'],
+            defaultLang: 'es',
+          }
+        })
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(LanguageSelectorComponent);

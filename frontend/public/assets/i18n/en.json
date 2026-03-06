@@ -5,18 +5,22 @@
   },
   "btn": {
     "createEvent": "Create Event",
-    "retry": "Retry"
+    "retry": "Retry",
+    "loadMore": "Load More Events"
   },
   "footer": {
     "language": "English (EN)",
-    "rights": "© 2026 MisEventos Corp. Powered by Tailwind and Collective Intelligence."
+    "rights": "© 2026 MisEventos."
   },
   "events": {
-    "loading": "Syncing with the neural network...",
-    "noResults": "No futuristic events found for \"{{query}}\"",
+    "loading": "Loading...",
+    "noResults": "No events found for \"{{query}}\"",
+    "noEvents": "No events available at the moment.",
     "featured": "Featured",
     "occupancy": "Occupancy",
     "open": "Open",
-    "closed": "Closed"
+    "closed": "Closed",
+    "showingNOfTotal": "Showing {{current}} of {{total}} events",
+    "allLoaded": "You've reached the edge of the events."
   }
 }

@@ -10,12 +10,18 @@ export class GetEventsUseCase {
   private repository = inject(EventRepository);
   private store = inject(EventStore);
 
-  execute() {
+  execute(skip: number = 0, limit: number = 12, append: boolean = false) {
     this.store.setLoading(true);
     
-    return this.repository.getAll().pipe(
+    return this.repository.getAll(skip, limit).pipe(
       tap({
-        next: (events) => this.store.setEvents(events),
+        next: (response) => {
+          if (append) {
+            this.store.appendEvents(response.items, response.total);
+          } else {
+            this.store.setEvents(response.items, response.total);
+          }
+        },
         error: (err) => this.store.setError(err.message || 'Error fetching events')
       }),
       finalize(() => this.store.setLoading(false))

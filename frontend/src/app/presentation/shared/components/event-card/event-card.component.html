@@ -1,29 +1,26 @@
-<div 
+<div
   class="group relative overflow-hidden rounded-2xl bg-surface border border-white/5 flex flex-col h-full transition-all hover:border-accent-cyan/30"
-  [class.lg:flex-row]="event().isFeatured"
-  *transloco="let t"
->
+  [class.lg:flex-row]="event().isFeatured" *transloco="let t">
   <!-- Featured Badge -->
   @if (event().isFeatured) {
-    <div class="absolute top-4 left-4 z-10">
-      <span class="bg-accent-cyan/10 text-accent-cyan text-[10px] font-bold px-3 py-1 rounded-full border border-accent-cyan/20 backdrop-blur-md uppercase tracking-widest">
-        {{ t('events.featured') }}
-      </span>
-    </div>
+  <div class="absolute top-4 left-4 z-10">
+    <span
+      class="bg-accent-cyan/10 text-accent-cyan text-[10px] font-bold px-3 py-1 rounded-full border border-accent-cyan/20 backdrop-blur-md uppercase tracking-widest">
+      {{ t('events.featured') }}
+    </span>
+  </div>
   }
 
   <!-- Image -->
-  <div 
-    class="relative overflow-hidden shrink-0 transition-transform duration-500 group-hover:scale-105"
-    [class.lg:w-1/2]="event().isFeatured"
-    [class.h-full]="event().isFeatured"
-    [class.h-48]="!event().isFeatured"
-  >
-    <img 
-      [src]="event().imageUrl" 
-      [alt]="event().title"
-      class="w-full h-full object-cover"
-    />
+  <div class="relative overflow-hidden shrink-0 transition-transform duration-500 group-hover:scale-105"
+    [class.lg:w-1/2]="event().isFeatured" [class.h-full]="event().isFeatured" [class.h-48]="!event().isFeatured">
+    @if (event().imageUrl) {
+    <img [src]="event().imageUrl" [alt]="event().title" class="w-full h-full object-cover" />
+    } @else {
+    <div class="w-full h-full bg-slate-800 flex items-center justify-center">
+      <span class="material-symbols-outlined text-4xl text-slate-700">image_not_supported</span>
+    </div>
+    }
     <div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent"></div>
   </div>
 
@@ -31,18 +28,18 @@
   <div class="p-6 flex-1 flex flex-col justify-between">
     <div class="space-y-4">
       <div class="flex justify-between items-start gap-2">
-        <h3 class="font-bold leading-tight line-clamp-2" [class.text-3xl]="event().isFeatured" [class.text-lg]="!event().isFeatured">
+        <h3 class="font-bold leading-tight line-clamp-2" [class.text-3xl]="event().isFeatured"
+          [class.text-lg]="!event().isFeatured">
           {{ event().title }}
         </h3>
-        <span 
-          class="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded shrink-0 shadow-sm" 
-          [class]="event().isOpen ? 'text-green-400 bg-green-400/10 border border-green-400/20' : 'text-red-400 bg-red-400/10 border border-red-400/20'"
-        >
-          <span class="w-1.5 h-1.5 rounded-full animate-pulse" [class]="event().isOpen ? 'bg-green-400' : 'bg-red-400'"></span>
-          {{ event().isOpen ? t('events.open') : t('events.closed') }}
+        <span class="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded shrink-0 shadow-sm"
+          [class]="event().status === 'PUBLISHED' ? 'text-green-400 bg-green-400/10 border border-green-400/20' : 'text-orange-400 bg-orange-400/10 border border-orange-400/20'">
+          <span class="w-1.5 h-1.5 rounded-full animate-pulse"
+            [class]="event().status === 'PUBLISHED' ? 'bg-green-400' : 'bg-orange-400'"></span>
+          {{ event().status === 'PUBLISHED' ? t('events.open') : t('events.' + event().status.toLowerCase()) }}
         </span>
       </div>
-      
+
       <p class="text-slate-400 text-sm line-clamp-3">
         {{ event().description }}
       </p>
@@ -50,12 +47,14 @@
       <div class="flex items-center gap-4 text-slate-300 text-xs">
         <div class="flex items-center gap-1.5 opacity-80">
           <span class="material-symbols-outlined text-sm text-accent-cyan">calendar_today</span>
-          {{ event().date | date:'MMM d, y' }}
+          {{ event().startDate | date:'MMM d, y' }}
         </div>
+        @if (event().location) {
         <div class="flex items-center gap-1.5 opacity-80">
           <span class="material-symbols-outlined text-sm text-accent-cyan">location_on</span>
           {{ event().location }}
         </div>
+        }
       </div>
     </div>
 
@@ -63,13 +62,12 @@
     <div class="mt-6 space-y-2">
       <div class="flex justify-between text-[10px] font-bold tracking-wider uppercase">
         <span class="text-slate-500">{{ t('events.occupancy') }}</span>
-        <span class="text-accent-cyan">{{ event().capacity }}/{{ event().maxCapacity }}</span>
+        <span class="text-accent-cyan">{{ event().capacity }} max</span>
       </div>
       <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-        <div 
-          class="h-full bg-gradient-to-r from-accent-cyan to-accent-purple shadow-[0_0_10px_rgba(0,201,255,0.5)] transition-all duration-1000" 
-          [style.width.%]="(event().capacity / event().maxCapacity) * 100"
-        ></div>
+        <div
+          class="h-full bg-gradient-to-r from-accent-cyan to-accent-purple shadow-[0_0_10px_rgba(0,201,255,0.5)] transition-all duration-1000 w-full">
+        </div>
       </div>
     </div>
   </div>

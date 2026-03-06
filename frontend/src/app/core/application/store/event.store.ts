@@ -3,9 +3,14 @@ import { Event } from '../../domain/entities/event.entity';
 
 export interface EventState {
   events: Event[];
-  selectedEventId: string | null;
+  selectedEventId: number | null;
   loading: boolean;
   error: string | null;
+  pagination: {
+    total: number;
+    skip: number;
+    limit: number;
+  };
 }
 
 @Injectable({
@@ -17,27 +22,59 @@ export class EventStore {
     events: [],
     selectedEventId: null,
     loading: false,
-    error: null
+    error: null,
+    pagination: {
+      total: 0,
+      skip: 0,
+      limit: 12
+    }
   });
 
   // Selectors (Computed Signals)
   events = computed(() => this.state().events);
-  selectedEvent = computed(() => 
+  selectedEvent = computed(() =>
     this.state().events.find(e => e.id === this.state().selectedEventId) || null
   );
   loading = computed(() => this.state().loading);
   error = computed(() => this.state().error);
-  
-  featuredEvents = computed(() => 
+  pagination = computed(() => this.state().pagination);
+  hasMore = computed(() => {
+    const total = this.state().pagination.total;
+    const current = this.state().events.length;
+    return total > 0 && current < total;
+  });
+
+  featuredEvents = computed(() =>
     this.state().events.filter(e => e.isFeatured)
   );
 
   // Actions
-  setEvents(events: Event[]) {
-    this.state.update(s => ({ ...s, events, loading: false }));
+  setEvents(events: Event[], total: number) {
+    this.state.update(s => ({
+      ...s,
+      events,
+      pagination: { ...s.pagination, total },
+      loading: false
+    }));
   }
 
-  setSelectedEvent(id: string | null) {
+  appendEvents(events: Event[], total: number) {
+    this.state.update(s => ({
+      ...s,
+      events: [...s.events, ...events],
+      pagination: { ...s.pagination, total },
+      loading: false
+    }));
+  }
+
+  setPagination(skip: number, limit: number) {
+    this.state.update(s => ({
+      ...s,
+      pagination: { ...s.pagination, skip, limit }
+    }));
+  }
+
+  setSelectedEvent(id: number | null) {
     this.state.update(s => ({ ...s, selectedEventId: id }));
   }
 
@@ -60,7 +97,7 @@ export class EventStore {
     }));
   }
 
-  removeEvent(id: string) {
+  removeEvent(id: number) {
     this.state.update(s => ({
       ...s,
       events: s.events.filter(e => e.id !== id)

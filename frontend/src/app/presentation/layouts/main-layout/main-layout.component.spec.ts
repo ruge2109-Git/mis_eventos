@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MainLayout } from './main-layout.component';
+import { provideTransloco } from '@jsverse/transloco';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { TranslocoTestingModule } from '@jsverse/transloco';
 
 describe('MainLayout', () => {
   let component: MainLayout;
@@ -9,7 +11,17 @@ describe('MainLayout', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MainLayout, RouterTestingModule, TranslocoTestingModule]
+      imports: [MainLayout, RouterTestingModule],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTransloco({
+          config: {
+            availableLangs: ['es', 'en'],
+            defaultLang: 'es',
+          }
+        })
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(MainLayout);

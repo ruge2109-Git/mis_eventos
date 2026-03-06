@@ -1,59 +1,69 @@
-# MisEventosApp
+# MisEventos Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.1.4.
+Documentación técnica del cliente web para la plataforma MisEventos.
 
-## Development server
+## Tecnologías Principales
 
-To start a local development server, run:
+- **Angular 21**: Framework base estructurado con Standalone Components.
+- **Angular Signals**: Gestión reactiva del estado interno de los componentes.
+- **Tailwind CSS 4**: Motor de estilos de última generación para diseño responsivo y premium.
+- **Transloco**: Biblioteca de internacionalización dinámica para soporte multi-idioma.
+- **TypeScript**: Lenguaje de programación principal con tipado estricto.
 
-```bash
-ng serve
-```
+## Estándar de Arquitectura
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+El proyecto sigue una estructura modular y organizada para garantizar la escalabilidad y el mantenimiento del código. Cada componente se descompone en cuatro archivos fundamentales:
 
-## Code scaffolding
+- **Logic (TS)**: Controlador que gestiona los datos y eventos (`*.component.ts`).
+- **Template (HTML)**: Estructura semántica de la interfaz (`*.component.html`).
+- **Styles (SCSS)**: Estilos encapsulados mediante SASS (`*.component.scss`).
+- **Testing (Spec)**: Pruebas unitarias para validar el comportamiento (`*.component.spec.ts`).
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Sistema de Componentes Compartidos
 
-```bash
-ng generate component component-name
-```
+Se ha implementado una biblioteca de componentes internos ubicados en `src/app/presentation/shared/components/` para asegurar la consistencia visual y técnica:
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+- **ButtonComponent**: Abstracción de botones con soporte para variantes (primary, outline, ghost), tamaños (sm, md, lg, icon) y estados de carga.
+- **InputComponent**: Campo de entrada con gestión de iconos, etiquetas dinámicas e integración con formularios reactivos.
+- **NavbarComponent**: Navegación principal con diseño glassmorphism y comportamiento responsivo.
+- **FooterComponent**: Pie de página informativo con integración del selector de idioma.
+- **AvatarComponent**: Representación visual de usuarios con dimensiones normalizadas.
+- **SearchBarComponent**: Interfaz de búsqueda con lógica de debounce para optimización de rendimiento.
+- **EventCardComponent**: Visualización de información detallada de eventos, incluyendo estados destacados y progreso de capacidad.
 
-```bash
-ng generate --help
-```
+## Guía de Desarrollo
 
-## Building
+### Requisitos Previos
 
-To build the project run:
+- Node.js (versión compatible con Angular 21)
+- npm
 
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+### Instalación
 
 ```bash
-ng e2e
+npm install
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+### Servidor de Desarrollo
 
-## Additional Resources
+Para iniciar la aplicación en modo desarrollo:
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+```bash
+npm start
+```
+El servidor estará disponible por defecto en `http://localhost:4200`.
+
+### Pruebas Unitarias
+
+Para ejecutar el conjunto de pruebas con Vitest:
+
+```bash
+npm test
+```
+
+## Internacionalización
+
+El sistema utiliza Transloco para la gestión de idiomas. Las definiciones de traducción se encuentran en formato JSON en el directorio público:
+
+- Español: `public/assets/i18n/es.json`
+- Inglés: `public/assets/i18n/en.json`

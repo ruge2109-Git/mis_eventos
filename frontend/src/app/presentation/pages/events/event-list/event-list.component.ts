@@ -28,7 +28,7 @@ export class EventListComponent implements OnInit {
     
     return events.filter(e => 
       e.title.toLowerCase().includes(query) || 
-      e.description.toLowerCase().includes(query)
+      (e.description?.toLowerCase().includes(query) ?? false)
     );
   });
 
@@ -36,8 +36,21 @@ export class EventListComponent implements OnInit {
     this.loadEvents();
   }
 
-  loadEvents() {
-    this.getEventsUseCase.execute().subscribe();
+  loadEvents(append: boolean = false) {
+    const { skip, limit } = this.store.pagination();
+    const nextSkip = append ? skip + limit : 0;
+    
+    if (append) {
+      this.store.setPagination(nextSkip, limit);
+    }
+
+    this.getEventsUseCase.execute(nextSkip, limit, append).subscribe();
+  }
+
+  onLoadMore() {
+    if (this.store.hasMore() && !this.store.loading()) {
+      this.loadEvents(true);
+    }
   }
 
   onSearch(query: string) {

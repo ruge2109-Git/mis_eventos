@@ -1,18 +1,17 @@
 export interface Event {
-  id: string;
+  id: number;
   title: string;
-  description: string;
-  date: Date;
-  location: string;
-  imageUrl: string;
+  description: string | null;
+  startDate: Date;
+  endDate: Date;
+  location: string | null;
+  imageUrl: string | null;
   capacity: number;
-  maxCapacity: number;
-  isOpen: boolean;
-  status: 'published' | 'draft' | 'cancelled';
-  organizerId: string;
-  category: string;
+  status: 'PUBLISHED' | 'DRAFT' | 'CANCELLED';
+  organizerId: number;
+  category?: string;
   isFeatured?: boolean;
 }
 
-export type CreateEventDTO = Omit<Event, 'id'>;
+export type CreateEventDTO = Omit<Event, 'id' | 'status' | 'organizerId'>;
 export type UpdateEventDTO = Partial<CreateEventDTO>;
