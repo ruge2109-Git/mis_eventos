@@ -166,9 +166,9 @@ describe('NavbarComponent when authenticated', () => {
     expect(fixture.nativeElement.textContent).toContain('Salir');
   });
 
-  it('should show profile link', () => {
-    const profileLink = fixture.debugElement.query(By.css('a[routerLink="/profile"]'));
-    expect(profileLink).toBeTruthy();
+  it('should not show dashboard link when role is Attendee', () => {
+    const dashboardLink = fixture.debugElement.query(By.css('a[routerLink="/dashboard/organizer"]'));
+    expect(dashboardLink).toBeFalsy();
   });
 });
 
@@ -196,8 +196,8 @@ describe('NavbarComponent when authenticated as Organizer', () => {
   });
 
   it('should show create event link or button', () => {
-    const createLink = fixture.debugElement.query(By.css('a[routerLink="/events/create"]'));
-    const createButton = fixture.debugElement.queryAll(By.css('app-button')).find(b => b.attributes['ng-reflect-router-link'] === '/events/create');
+    const createLink = fixture.debugElement.query(By.css('a[routerLink="/dashboard/organizer/crear"]'));
+    const createButton = fixture.debugElement.queryAll(By.css('app-button')).find(b => b.attributes['ng-reflect-router-link'] === '/dashboard/organizer/crear');
     expect(createLink !== null || createButton !== undefined || fixture.nativeElement.textContent?.includes('createEvent')).toBe(true);
   });
 });

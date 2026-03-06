@@ -359,4 +359,171 @@ describe('DynamicFormComponent', () => {
     const msg = component.getErrorMessage(field);
     expect(msg).toBe('Las contraseñas no coinciden.');
   });
+
+  it('should build form with no controls when fields is empty', () => {
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = [];
+    fixture.detectChanges();
+    expect(Object.keys(component.form.controls)).toHaveLength(0);
+  });
+
+  it('should create file control with default null', () => {
+    const fieldsFile: FieldConfig[] = [{ name: 'avatar', label: 'Avatar', type: 'file' }];
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = fieldsFile;
+    fixture.detectChanges();
+    expect(component.form.get('avatar')?.value).toBeNull();
+  });
+
+  it('onFileChange should set fileSizeMax error and clear input when file exceeds maxSizeBytes', () => {
+    const fieldsFile: FieldConfig[] = [{ name: 'doc', label: 'Doc', type: 'file', maxSizeBytes: 100 }];
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = fieldsFile;
+    fixture.detectChanges();
+    const input = document.createElement('input');
+    input.type = 'file';
+    const bigFile = new File([new ArrayBuffer(200)], 'big.pdf', { type: 'application/pdf' });
+    Object.defineProperty(input, 'files', { value: [bigFile], configurable: true });
+    component.onFileChange(fieldsFile[0], { target: input } as unknown as Event);
+    expect(component.form.get('doc')?.value).toBeNull();
+    expect(component.form.get('doc')?.errors?.['fileSizeMax']).toEqual({ max: 100 });
+    expect(input.value).toBe('');
+  });
+
+  it('onFileChange should set control value when file is within size', () => {
+    const fieldsFile: FieldConfig[] = [{ name: 'doc', label: 'Doc', type: 'file', maxSizeBytes: 1000 }];
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = fieldsFile;
+    fixture.detectChanges();
+    const input = document.createElement('input');
+    input.type = 'file';
+    const smallFile = new File(['x'], 'small.pdf', { type: 'application/pdf' });
+    Object.defineProperty(input, 'files', { value: [smallFile], configurable: true });
+    component.onFileChange(fieldsFile[0], { target: input } as unknown as Event);
+    expect(component.form.get('doc')?.value).toBe(smallFile);
+  });
+
+  it('getFilePreviewUrl should return null when control value is not a File', () => {
+    const fieldsFile: FieldConfig[] = [{ name: 'img', label: 'Image', type: 'file', accept: 'image/*' }];
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = fieldsFile;
+    fixture.detectChanges();
+    component.form.get('img')?.setValue('not-a-file');
+    const url = component.getFilePreviewUrl(fieldsFile[0]);
+    expect(url).toBeNull();
+  });
+
+  it('getFilePreviewUrl should return null when File is not an image', () => {
+    const fieldsFile: FieldConfig[] = [{ name: 'img', label: 'Image', type: 'file' }];
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = fieldsFile;
+    fixture.detectChanges();
+    const file = new File(['x'], 'doc.pdf', { type: 'application/pdf' });
+    component.form.get('img')?.setValue(file);
+    const url = component.getFilePreviewUrl(fieldsFile[0]);
+    expect(url).toBeNull();
+  });
+
+  it('getFilePreviewUrl should return blob URL for image File', () => {
+    const fieldsFile: FieldConfig[] = [{ name: 'img', label: 'Image', type: 'file' }];
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = fieldsFile;
+    fixture.detectChanges();
+    const file = new File(['x'], 'photo.jpg', { type: 'image/jpeg' });
+    component.form.get('img')?.setValue(file);
+    const url = component.getFilePreviewUrl(fieldsFile[0]);
+    expect(url).toMatch(/^blob:/);
+  });
+
+  it('should return maxlength error message in getErrorMessage', () => {
+    const fieldsMax: FieldConfig[] = [{ name: 'code', label: 'Code', type: 'text', validators: [Validators.maxLength(5)] }];
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = fieldsMax;
+    fixture.detectChanges();
+    component.form.get('code')?.setValue('abcdef');
+    component.form.get('code')?.markAsTouched();
+    component.form.get('code')?.updateValueAndValidity();
+    const field: FieldConfig = { name: 'code', label: 'Code', type: 'text' };
+    const msg = component.getErrorMessage(field);
+    expect(msg).toBeTruthy();
+    expect(msg).toContain('5');
+  });
+
+  it('should return min error message in getErrorMessage', () => {
+    const fieldsMin: FieldConfig[] = [{ name: 'age', label: 'Age', type: 'number', validators: [Validators.min(18)] }];
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = fieldsMin;
+    fixture.detectChanges();
+    component.form.get('age')?.setValue(10);
+    component.form.get('age')?.markAsTouched();
+    component.form.get('age')?.updateValueAndValidity();
+    const field: FieldConfig = { name: 'age', label: 'Age', type: 'number' };
+    const msg = component.getErrorMessage(field);
+    expect(msg).toBeTruthy();
+    expect(msg).toContain('18');
+  });
+
+  it('should return fileSizeMax error message in getErrorMessage', () => {
+    const fieldsFile: FieldConfig[] = [{ name: 'doc', label: 'Doc', type: 'file', maxSizeBytes: 2 * 1024 * 1024 }];
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = fieldsFile;
+    fixture.detectChanges();
+    component.form.get('doc')?.setValue(null);
+    component.form.get('doc')?.setErrors({ fileSizeMax: { max: 2 * 1024 * 1024 } });
+    component.form.get('doc')?.markAsTouched();
+    const field: FieldConfig = { name: 'doc', label: 'Doc', type: 'file', maxSizeBytes: 2 * 1024 * 1024 };
+    const msg = component.getErrorMessage(field);
+    expect(msg).toContain('2.0');
+    expect(msg).toContain('MB');
+  });
+
+  it('should return null from getErrorMessage when control not touched', () => {
+    const field: FieldConfig = { name: 'email', label: 'Email', type: 'email', required: true };
+    component.form.get('email')?.setValue('');
+    component.form.get('email')?.updateValueAndValidity();
+    expect(component.getErrorMessage(field)).toBeNull();
+  });
+
+  it('should use field.errorMessages when provided for required', () => {
+    const fieldsCustom: FieldConfig[] = [{ name: 'email', label: 'Email', type: 'email', required: true, errorMessages: { required: 'Email is required' } }];
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = fieldsCustom;
+    fixture.detectChanges();
+    component.form.get('email')?.setValue('');
+    component.form.get('email')?.markAsTouched();
+    component.form.get('email')?.updateValueAndValidity();
+    const msg = component.getErrorMessage(fieldsCustom[0]);
+    expect(msg).toBe('Email is required');
+  });
+
+  it('should not throw when equalTo references non-existent control', () => {
+    const fieldsOrphan: FieldConfig[] = [{ name: 'confirm', label: 'Confirm', type: 'password', equalTo: 'nonexistent' }];
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = fieldsOrphan;
+    expect(() => fixture.detectChanges()).not.toThrow();
+  });
+
+  it('onFileChange should do nothing when control is missing', () => {
+    const fieldsFile: FieldConfig[] = [{ name: 'doc', label: 'Doc', type: 'file' }];
+    fixture = TestBed.createComponent(DynamicFormComponent);
+    component = fixture.componentInstance;
+    component.fields = [];
+    fixture.detectChanges();
+    const input = document.createElement('input');
+    const file = new File(['x'], 'a.pdf', { type: 'application/pdf' });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    expect(() => component.onFileChange({ name: 'doc', label: 'Doc', type: 'file' }, { target: input } as unknown as Event)).not.toThrow();
+  });
 });

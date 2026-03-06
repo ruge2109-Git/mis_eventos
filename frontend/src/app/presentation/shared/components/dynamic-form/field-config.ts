@@ -7,7 +7,7 @@ export interface SelectOption {
 export interface FieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'password' | 'number' | 'select' | 'tel' | 'checkbox' | 'radio-group';
+  type: 'text' | 'email' | 'password' | 'number' | 'select' | 'tel' | 'checkbox' | 'radio-group' | 'datetime-local' | 'textarea' | 'file';
   required?: boolean;
   value?: any;
   placeholder?: string;
@@ -20,4 +20,7 @@ export interface FieldConfig {
   errorMessages?: Record<string, string>;
   equalTo?: string;
   autocomplete?: string;
+  accept?: string;
+  maxSizeBytes?: number;
+  rows?: number;
 }

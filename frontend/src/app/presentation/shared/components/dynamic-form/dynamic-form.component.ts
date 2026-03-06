@@ -19,6 +19,7 @@ export class DynamicFormComponent implements OnInit {
 
   form: FormGroup;
   showPasswordMap: Map<string, boolean> = new Map();
+  private filePreviewUrls: Map<string, string> = new Map();
 
   constructor(private fb: FormBuilder) {
     this.form = this.fb.group({});
@@ -41,7 +42,13 @@ export class DynamicFormComponent implements OnInit {
         }
       }
 
-      const defaultValue = field.value !== undefined ? field.value : (field.type === 'checkbox' ? false : (field.type === 'radio-group' ? (field.options?.[0]?.value || '') : ''));
+      const defaultValue = field.value !== undefined
+        ? field.value
+        : (field.type === 'checkbox' ? false
+          : field.type === 'radio-group' ? (field.options?.[0]?.value || '')
+            : field.type === 'datetime-local' || field.type === 'textarea' ? ''
+              : field.type === 'file' ? null
+                : '');
       const control = this.fb.control(defaultValue, validators);
       group.addControl(field.name, control);
 
@@ -80,10 +87,45 @@ export class DynamicFormComponent implements OnInit {
     event.preventDefault();
     event.stopPropagation();
     if (this.form.valid) {
-      this.formSubmit.emit(this.form.value);
+      const value = { ...this.form.value };
+      this.formSubmit.emit(value);
     } else {
       this.form.markAllAsTouched();
     }
+  }
+
+  onFileChange(field: FieldConfig, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    const control = this.form.get(field.name);
+    if (!control) return;
+    const oldUrl = this.filePreviewUrls.get(field.name);
+    if (oldUrl) {
+      URL.revokeObjectURL(oldUrl);
+      this.filePreviewUrls.delete(field.name);
+    }
+    if (file && field.maxSizeBytes && file.size > field.maxSizeBytes) {
+      control.setValue(null);
+      control.setErrors({ fileSizeMax: { max: field.maxSizeBytes } });
+      control.markAsTouched();
+      input.value = '';
+      return;
+    }
+    control.setValue(file);
+    control.setErrors(file ? null : control.errors);
+    control.markAsTouched();
+  }
+
+  getFilePreviewUrl(field: FieldConfig): string | null {
+    const control = this.form.get(field.name);
+    const value = control?.value;
+    if (!(value instanceof File) || !value.type.startsWith('image/')) return null;
+    let url = this.filePreviewUrls.get(field.name);
+    if (!url) {
+      url = URL.createObjectURL(value);
+      this.filePreviewUrls.set(field.name, url);
+    }
+    return url;
   }
 
   getErrorMessage(field: FieldConfig): string | null {
@@ -96,6 +138,8 @@ export class DynamicFormComponent implements OnInit {
     if (control.errors['maxlength']) return field.errorMessages?.['maxlength'] || `Debe tener menos de ${control.errors['maxlength'].requiredLength} caracteres.`;
     if (control.errors['pattern']) return field.errorMessages?.['pattern'] || 'El formato no es válido.';
     if (control.errors['mustMatch']) return field.errorMessages?.['mustMatch'] || 'Las contraseñas no coinciden.';
+    if (control.errors['min']) return field.errorMessages?.['min'] || `El valor mínimo es ${control.errors['min'].min}.`;
+    if (control.errors['fileSizeMax']) return field.errorMessages?.['fileSizeMax'] || `El archivo no debe superar ${(control.errors['fileSizeMax'].max / 1024 / 1024).toFixed(1)} MB.`;
 
     if (field.type === 'checkbox' && control.errors['required']) return field.errorMessages?.['required'] || 'Debe aceptar los términos.';
 

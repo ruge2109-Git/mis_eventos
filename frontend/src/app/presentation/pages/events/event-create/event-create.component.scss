@@ -1,0 +1,31 @@
+:host {
+  display: block;
+}
+
+.input-event {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    border-color: var(--color-accent-cyan);
+    box-shadow: 0 0 0 1px var(--color-accent-cyan);
+  }
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-accent-cyan) 0%, var(--color-accent-purple) 100%);
+  border: none;
+  box-shadow: 0 0 20px rgba(0, 209, 255, 0.25);
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+    box-shadow: 0 0 24px rgba(0, 209, 255, 0.35);
+  }
+}
+
+.session-card {
+  &:focus-within {
+    border-color: rgba(0, 209, 255, 0.4);
+  }
+}

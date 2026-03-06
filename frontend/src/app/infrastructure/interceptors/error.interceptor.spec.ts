@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Router } from '@angular/router';
 import { errorInterceptor } from './error.interceptor';
 import { EventStore } from '@core/application/store/event.store';
+import { AuthStore } from '@core/application/store/auth.store';
 
 describe('ErrorInterceptor', () => {
   let httpMock: HttpTestingController;
@@ -16,9 +18,15 @@ describe('ErrorInterceptor', () => {
         provideHttpClientTesting(),
         {
           provide: EventStore,
-          useValue: {
-            setError: vi.fn()
-          }
+          useValue: { setError: vi.fn() }
+        },
+        {
+          provide: AuthStore,
+          useValue: { logout: vi.fn() }
+        },
+        {
+          provide: Router,
+          useValue: { navigate: vi.fn() }
         }
       ]
     });
@@ -58,19 +66,32 @@ describe('ErrorInterceptor', () => {
     expect(eventStore.setError).toHaveBeenCalledWith('Error interno del servidor. Por favor, inténtalo más tarde');
   });
 
-  it('should handle client-side ErrorEvent', () => {
-    const errorEvent = new ErrorEvent('Client Error', { message: 'Network fails' });
-    
+  it('should handle client-side ErrorEvent with Unknown Error', () => {
+    const errorEvent = new ErrorEvent('Error', { message: 'Unknown Error' });
+
     httpClient.get('/test').subscribe({
       error: (err) => {
-        expect(err.message).toBe('Error: Network fails');
+        expect(err.message).toBe('No se pudo conectar con el servidor. Comprueba tu conexión a internet o que el servicio esté en marcha.');
       }
     });
 
     const req = httpMock.expectOne('/test');
     req.error(errorEvent);
 
-    expect(eventStore.setError).toHaveBeenCalledWith('Error: Network fails');
+    expect(eventStore.setError).toHaveBeenCalledWith('No se pudo conectar con el servidor. Comprueba tu conexión a internet o que el servicio esté en marcha.');
+  });
+
+  it('should catch status 0 (no response from server)', () => {
+    httpClient.get('/test').subscribe({
+      error: (err) => {
+        expect(err.message).toBe('No se pudo conectar con el servidor. Comprueba tu conexión a internet o que el servicio esté en marcha.');
+      }
+    });
+
+    const req = httpMock.expectOne('/test');
+    req.flush(null, { status: 0, statusText: 'Unknown Error' });
+
+    expect(eventStore.setError).toHaveBeenCalledWith('No se pudo conectar con el servidor. Comprueba tu conexión a internet o que el servicio esté en marcha.');
   });
 
   it('should catch 400 error with message', () => {

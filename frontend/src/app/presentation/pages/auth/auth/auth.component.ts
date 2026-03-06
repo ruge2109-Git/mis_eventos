@@ -162,7 +162,12 @@ export class AuthComponent implements OnInit {
       this.authStore.login(formData.email, formData.password).subscribe({
         next: () => {
           this.toast.success('Sesión iniciada');
-          this.router.navigate(['/']);
+          const role = this.authStore.userRole();
+          if (role === 'Organizer' || role === 'Admin') {
+            this.router.navigate(['/dashboard/organizer']);
+          } else {
+            this.router.navigate(['/']);
+          }
         }
       });
     } else {

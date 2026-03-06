@@ -19,6 +19,7 @@ describe('AuthComponent', () => {
     clearError: ReturnType<typeof vi.fn>;
     isLoading: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
+    userRole: ReturnType<typeof vi.fn>;
   };
   let mockToastService: { success: ReturnType<typeof vi.fn> };
   let router: Router;
@@ -29,7 +30,8 @@ describe('AuthComponent', () => {
       register: vi.fn().mockReturnValue(of(undefined)),
       clearError: vi.fn(),
       isLoading: vi.fn().mockReturnValue(false),
-      error: vi.fn().mockReturnValue(null)
+      error: vi.fn().mockReturnValue(null),
+      userRole: vi.fn().mockReturnValue(null)
     };
     mockToastService = { success: vi.fn() };
     await TestBed.configureTestingModule({
@@ -113,12 +115,22 @@ describe('AuthComponent', () => {
     expect(mockAuthStore.login).toHaveBeenCalledWith('user@test.com', 'Pass123!');
   });
 
-  it('should navigate to / after successful login', () => {
+  it('should navigate to / after successful login when role is not Organizer/Admin', () => {
+    vi.mocked(mockAuthStore.userRole).mockReturnValue('Attendee');
     component.mode = 'login';
     component.setFields();
     component.onSubmit({ email: 'u@u.com', password: 'Pass1!' });
 
     expect(router.navigate).toHaveBeenCalledWith(['/']);
+  });
+
+  it('should navigate to /dashboard/organizer after successful login when role is Organizer', () => {
+    vi.mocked(mockAuthStore.userRole).mockReturnValue('Organizer');
+    component.mode = 'login';
+    component.setFields();
+    component.onSubmit({ email: 'org@test.com', password: 'Pass1!' });
+
+    expect(router.navigate).toHaveBeenCalledWith(['/dashboard/organizer']);
   });
 
   it('should call toast.success with session message on successful login', () => {

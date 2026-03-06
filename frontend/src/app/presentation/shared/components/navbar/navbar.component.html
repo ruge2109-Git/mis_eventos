@@ -10,15 +10,15 @@
       <div class="hidden md:flex items-center gap-8">
         <a routerLink="/events" class="text-sm font-medium hover:text-accent-cyan transition-colors">{{ t('nav.explore')
           }}</a>
-        @if (authStore.isAuthenticated()) {
-        <a routerLink="/profile" class="text-sm font-medium hover:text-accent-cyan transition-colors">{{
+        @if (authStore.isAuthenticated() && authStore.userRole() === 'Organizer') {
+        <a routerLink="/dashboard/organizer" class="text-sm font-medium hover:text-accent-cyan transition-colors">{{
           t('nav.myEvents') }}</a>
         }
       </div>
 
       <div class="flex items-center gap-4">
         @if (authStore.isAuthenticated() && authStore.userRole() === 'Organizer') {
-        <app-button routerLink="/events/create" class="hidden sm:block">
+        <app-button routerLink="/dashboard/organizer/crear" class="hidden sm:block">
           {{ t('btn.createEvent') }}
         </app-button>
         }
@@ -54,14 +54,14 @@
         class="block text-lg font-medium hover:text-accent-cyan transition-colors py-2 border-b border-white/5">
         {{ t('nav.explore') }}
       </a>
-      @if (authStore.isAuthenticated()) {
-      <a routerLink="/profile" (click)="toggleMenu()"
+      @if (authStore.isAuthenticated() && authStore.userRole() === 'Organizer') {
+      <a routerLink="/dashboard/organizer" (click)="toggleMenu()"
         class="block text-lg font-medium hover:text-accent-cyan transition-colors py-2 border-b border-white/5">
         {{ t('nav.myEvents') }}
       </a>
       }
       @if (authStore.isAuthenticated() && authStore.userRole() === 'Organizer') {
-      <a routerLink="/events/create" (click)="toggleMenu()"
+      <a routerLink="/dashboard/organizer/crear" (click)="toggleMenu()"
         class="block text-lg font-bold text-accent-cyan py-2 border-b border-white/5">
         + {{ t('btn.createEvent') }}
       </a>

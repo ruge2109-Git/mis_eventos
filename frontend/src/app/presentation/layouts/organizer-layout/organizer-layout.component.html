@@ -1,0 +1,85 @@
+<div class="flex min-h-screen bg-background-dark text-white" *transloco="let t">
+  <!-- Mobile header: only below lg -->
+  <header class="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center gap-3 px-4 py-3 bg-surface border-b border-white/10">
+    <button type="button" (click)="toggleSidebar()" class="p-2 -ml-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors" aria-label="Menú">
+      <span class="material-symbols-outlined text-2xl">{{ sidebarOpen ? 'close' : 'menu' }}</span>
+    </button>
+    <a routerLink="/" class="flex items-center gap-2 min-w-0">
+      <span class="material-symbols-outlined text-2xl text-accent-cyan symbol-filled shrink-0">rocket_launch</span>
+      <span class="font-bold text-base truncate">MisEventos</span>
+    </a>
+  </header>
+
+  <!-- Overlay when sidebar open on mobile -->
+  @if (sidebarOpen) {
+    <div class="lg:hidden fixed inset-0 z-40 bg-black/60 transition-opacity"
+         (click)="closeSidebar()"
+         role="button"
+         tabindex="-1"
+         aria-label="Cerrar menú"></div>
+  }
+
+  <!-- Sidebar: drawer on mobile, static on lg+ -->
+  <aside class="organizer-sidebar fixed lg:relative inset-y-0 left-0 z-50 w-64 shrink-0 border-r border-white/10 bg-surface flex flex-col transition-transform duration-300 ease-out lg:translate-x-0 pt-14 lg:pt-0"
+         [class.-translate-x-full]="!sidebarOpen"
+         [class.translate-x-0]="sidebarOpen">
+    <div class="p-4 lg:p-6 border-b border-white/5">
+      <a routerLink="/" (click)="closeSidebar()" class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-3xl text-accent-cyan symbol-filled">rocket_launch</span>
+        <div class="min-w-0">
+          <span class="font-bold text-lg block">MisEventos</span>
+          <span class="text-xs text-slate-500 hidden sm:inline">{{ t('dashboard.organizerBrand') }}</span>
+        </div>
+      </a>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+      <a routerLink="/dashboard/organizer" (click)="closeSidebar()" routerLinkActive="bg-accent-cyan/10 text-accent-cyan border-l-accent-cyan"
+         class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white transition-colors border-l-2 border-transparent">
+        <span class="material-symbols-outlined text-xl">home</span>
+        <span>{{ t('dashboard.navHome') }}</span>
+      </a>
+      <a routerLink="/dashboard/organizer" (click)="closeSidebar()" routerLinkActive="bg-accent-cyan/10 text-accent-cyan border-l-accent-cyan"
+         class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white transition-colors border-l-2 border-transparent">
+        <span class="material-symbols-outlined text-xl">event</span>
+        <span>{{ t('dashboard.navMyEvents') }}</span>
+      </a>
+      <a routerLink="/dashboard/organizer/crear" (click)="closeSidebar()" routerLinkActive="bg-accent-cyan/10 text-accent-cyan border-l-accent-cyan"
+         class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white transition-colors border-l-2 border-transparent">
+        <span class="material-symbols-outlined text-xl">add_circle</span>
+        <span>{{ t('btn.createEvent') }}</span>
+      </a>
+      <a routerLink="/dashboard/organizer" (click)="closeSidebar()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white transition-colors border-l-2 border-transparent">
+        <span class="material-symbols-outlined text-xl">calendar_month</span>
+        <span>{{ t('dashboard.navCalendar') }}</span>
+      </a>
+
+      <div class="pt-4 mt-4 border-t border-white/5">
+        <p class="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ t('dashboard.navSystem') }}</p>
+        <a routerLink="/dashboard/organizer" (click)="closeSidebar()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white transition-colors mt-1">
+          <span class="material-symbols-outlined text-xl">settings</span>
+          <span>{{ t('dashboard.navSettings') }}</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="p-4 border-t border-white/5 space-y-3">
+      <div class="flex items-center gap-3 px-2">
+        <app-avatar size="md"></app-avatar>
+        <div class="min-w-0">
+          <p class="text-sm font-medium truncate">{{ t('dashboard.organizerUser') }}</p>
+          <p class="text-xs text-slate-500 truncate">{{ t('dashboard.organizerPlan') }}</p>
+        </div>
+      </div>
+      <button type="button" (click)="logout()"
+              class="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors text-sm font-medium">
+        <span class="material-symbols-outlined text-lg">logout</span>
+        {{ t('dashboard.logout') }}
+      </button>
+    </div>
+  </aside>
+
+  <main class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-8 pt-20 lg:pt-8">
+    <router-outlet></router-outlet>
+  </main>
+</div>

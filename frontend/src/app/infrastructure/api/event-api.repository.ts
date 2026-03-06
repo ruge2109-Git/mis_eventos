@@ -44,6 +44,17 @@ export class EventApiRepository extends EventRepository {
     );
   }
 
+  getMine(skip: number = 0, limit: number = 12, search?: string): Observable<{ items: Event[], total: number }> {
+    const params: Record<string, number | string> = { skip, limit };
+    if (search != null && search !== '') params['search'] = search;
+    return this.http.get<PaginatedResponse<EventResponse>>(`${this.apiUrl}mine`, { params }).pipe(
+      map(response => ({
+        items: response.items.map(res => this.mapToEntity(res)),
+        total: response.total
+      }))
+    );
+  }
+
   getById(id: number): Observable<Event> {
     return this.http.get<EventResponse>(`${this.apiUrl}${id}`).pipe(
       map(res => this.mapToEntity(res))
@@ -51,7 +62,15 @@ export class EventApiRepository extends EventRepository {
   }
 
   create(event: CreateEventDTO): Observable<Event> {
-    return this.http.post<EventResponse>(this.apiUrl, event).pipe(
+    const body = {
+      title: event.title,
+      capacity: event.capacity,
+      start_date: event.startDate.toISOString(),
+      end_date: event.endDate.toISOString(),
+      location: event.location ?? undefined,
+      description: event.description ?? undefined
+    };
+    return this.http.post<EventResponse>(this.apiUrl, body).pipe(
       map(res => this.mapToEntity(res))
     );
   }
@@ -64,6 +83,26 @@ export class EventApiRepository extends EventRepository {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}${id}`);
+  }
+
+  publish(id: number): Observable<Event> {
+    return this.http.post<EventResponse>(`${this.apiUrl}${id}/publish`, {}).pipe(
+      map(res => this.mapToEntity(res))
+    );
+  }
+
+  cancel(id: number): Observable<Event> {
+    return this.http.post<EventResponse>(`${this.apiUrl}${id}/cancel`, {}).pipe(
+      map(res => this.mapToEntity(res))
+    );
+  }
+
+  uploadImage(eventId: number, file: File): Observable<Event> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<EventResponse>(`${this.apiUrl}${eventId}/image`, formData).pipe(
+      map(res => this.mapToEntity(res))
+    );
   }
 
   private mapToEntity(res: EventResponse): Event {

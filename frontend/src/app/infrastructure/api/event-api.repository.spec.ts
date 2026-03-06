@@ -81,16 +81,41 @@ describe('EventApiRepository', () => {
     req.flush(mockEvent);
   });
 
-  it('should create an event', () => {
-    const newEvent = { title: 'New' } as any;
-    const mockRes = { id: 1, ...newEvent, start_date: '2026-01-01', end_date: '2026-01-01' };
+  it('should create an event with snake_case body', () => {
+    const start = new Date('2026-06-01T10:00:00Z');
+    const end = new Date('2026-06-01T12:00:00Z');
+    const newEvent = {
+      title: 'New',
+      capacity: 50,
+      startDate: start,
+      endDate: end,
+      location: null,
+      description: null,
+      imageUrl: null
+    };
+    const mockRes = {
+      id: 1,
+      title: 'New',
+      capacity: 50,
+      status: 'DRAFT',
+      location: null,
+      description: null,
+      image_url: null,
+      start_date: start.toISOString(),
+      end_date: end.toISOString(),
+      organizer_id: 1
+    };
 
     repository.create(newEvent).subscribe(res => {
       expect(res.id).toBe(1);
+      expect(res.title).toBe('New');
     });
 
-    const req = httpMock.expectOne(req => req.url.endsWith('/events/') && req.method === 'POST');
-    expect(req.request.body).toEqual(newEvent);
+    const req = httpMock.expectOne(r => r.url.endsWith('/events/') && r.method === 'POST');
+    expect(req.request.body.title).toBe('New');
+    expect(req.request.body.capacity).toBe(50);
+    expect(req.request.body.start_date).toBe(start.toISOString());
+    expect(req.request.body.end_date).toBe(end.toISOString());
     req.flush(mockRes);
   });
 
@@ -112,5 +137,54 @@ describe('EventApiRepository', () => {
 
     const req = httpMock.expectOne(req => req.url.endsWith('/events/1') && req.method === 'DELETE');
     req.flush(null);
+  });
+
+  it('should fetch my events (organizer) with optional search', () => {
+    const mockResponse = {
+      items: [{ id: 2, title: 'My Event', description: null, capacity: 5, status: 'DRAFT', location: null, image_url: null, start_date: '2026-01-01T00:00:00Z', end_date: '2026-01-01T01:00:00Z', organizer_id: 1 }],
+      total: 1,
+      page: 1,
+      size: 12
+    };
+
+    repository.getMine(0, 12).subscribe(result => {
+      expect(result.items.length).toBe(1);
+      expect(result.total).toBe(1);
+      expect(result.items[0].title).toBe('My Event');
+    });
+
+    const req = httpMock.expectOne(r => r.url.includes('/events/mine') && r.params.get('skip') === '0');
+    expect(req.request.method).toBe('GET');
+    req.flush(mockResponse);
+  });
+
+  it('should publish an event', () => {
+    const mockRes = { id: 1, title: 'E', capacity: 10, status: 'PUBLISHED', location: null, description: null, image_url: null, start_date: '2026-01-01', end_date: '2026-01-01', organizer_id: 1 };
+    repository.publish(1).subscribe(res => {
+      expect(res.status).toBe('PUBLISHED');
+    });
+    const req = httpMock.expectOne(r => r.url.endsWith('/events/1/publish') && r.method === 'POST');
+    req.flush(mockRes);
+  });
+
+  it('should cancel an event', () => {
+    const mockRes = { id: 1, title: 'E', capacity: 10, status: 'CANCELLED', location: null, description: null, image_url: null, start_date: '2026-01-01', end_date: '2026-01-01', organizer_id: 1 };
+    repository.cancel(1).subscribe(res => {
+      expect(res.status).toBe('CANCELLED');
+    });
+    const req = httpMock.expectOne(r => r.url.endsWith('/events/1/cancel') && r.method === 'POST');
+    req.flush(mockRes);
+  });
+
+  it('should upload event image', () => {
+    const file = new File([''], 'img.jpg', { type: 'image/jpeg' });
+    const mockRes = { id: 1, title: 'E', capacity: 10, status: 'DRAFT', location: null, description: null, image_url: '/uploads/ev1.jpg', start_date: '2026-01-01', end_date: '2026-01-01', organizer_id: 1 };
+    repository.uploadImage(1, file).subscribe(res => {
+      expect(res.imageUrl).toContain('ev1.jpg');
+    });
+    const req = httpMock.expectOne(r => r.url.endsWith('/events/1/image') && r.method === 'POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+    expect((req.request.body as FormData).get('file')).toBe(file);
+    req.flush(mockRes);
   });
 });

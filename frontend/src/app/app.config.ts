@@ -10,6 +10,7 @@ import { AuthApiRepository } from './infrastructure/api/auth-api.repository';
 import { provideTransloco } from '@jsverse/transloco';
 import { isDevMode } from '@angular/core';
 import { TranslocoHttpLoader } from './transloco-loader';
+import { authInterceptor } from './infrastructure/interceptors/auth.interceptor';
 import { loadingInterceptor } from './infrastructure/interceptors/loading.interceptor';
 import { errorInterceptor } from './infrastructure/interceptors/error.interceptor';
 
@@ -20,7 +21,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withViewTransitions()),
     provideHttpClient(
       withFetch(),
-      withInterceptors([loadingInterceptor, errorInterceptor])
+      withInterceptors([authInterceptor, loadingInterceptor, errorInterceptor])
     ),
     { provide: EventRepository, useClass: EventApiRepository },
     { provide: AuthRepository, useClass: AuthApiRepository },

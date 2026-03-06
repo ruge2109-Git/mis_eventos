@@ -41,6 +41,25 @@
               }"
             />
           </ng-container>
+        } @else if (field.type === 'datetime-local') {
+          <ng-container>
+            @if (field.icon) {
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">{{ field.icon }}</span>
+            }
+            <input
+              [id]="field.name"
+              type="datetime-local"
+              [formControlName]="field.name"
+              [placeholder]="field.placeholder || ''"
+              class="w-full h-[44px] rounded-lg border bg-[#181a20] text-sm text-white focus:outline-none transition-all duration-200"
+              [ngClass]="{
+                'border-red-500/50 focus:border-red-500': getErrorMessage(field),
+                'border-white/10 focus:border-[#3b82f6] focus:bg-[#1a1f2e]': !getErrorMessage(field),
+                'pl-10': field.icon,
+                'px-4': !field.icon
+              }"
+            />
+          </ng-container>
         } @else if (field.type === 'password') {
           <ng-container>
             @if (field.icon) {
@@ -118,6 +137,47 @@
               }
             </select>
             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-lg">expand_more</span>
+          </ng-container>
+        } @else if (field.type === 'textarea') {
+          <ng-container>
+            @if (field.icon) {
+              <span class="material-symbols-outlined absolute left-3 top-4 text-gray-500 text-lg">{{ field.icon }}</span>
+            }
+            <textarea
+              [id]="field.name"
+              [formControlName]="field.name"
+              [placeholder]="field.placeholder || ''"
+              [attr.rows]="field.rows ?? 4"
+              class="w-full rounded-lg border bg-[#181a20] text-sm text-white focus:outline-none transition-all duration-200 resize-y min-h-[100px] py-3"
+              [ngClass]="{
+                'border-red-500/50 focus:border-red-500': getErrorMessage(field),
+                'border-white/10 focus:border-[#3b82f6] focus:bg-[#1a1f2e]': !getErrorMessage(field),
+                'pl-10': field.icon,
+                'px-4': !field.icon
+              }"
+            ></textarea>
+          </ng-container>
+        } @else if (field.type === 'file') {
+          <ng-container>
+            <div class="rounded-lg border border-white/10 bg-[#181a20] p-4 focus-within:border-[#3b82f6] focus-within:ring-1 focus-within:ring-[#3b82f6] transition-all"
+                 [class.border-red-500/50]="getErrorMessage(field)">
+              <input
+                type="file"
+                [id]="field.name"
+                [attr.accept]="field.accept ?? undefined"
+                (change)="onFileChange(field, $event)"
+                class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#3b82f6] file:text-white file:font-medium file:cursor-pointer hover:file:bg-[#2563eb]"
+              />
+              @if (form.get(field.name)?.value; as file) {
+                <p class="mt-2 text-xs text-gray-400 flex items-center gap-2">
+                  <span class="material-symbols-outlined text-base">image</span>
+                  {{ file.name }} ({{ (file.size / 1024).toFixed(1) }} KB)
+                </p>
+                @if (getFilePreviewUrl(field); as previewUrl) {
+                  <img [src]="previewUrl" [alt]="file.name" class="mt-2 rounded-lg max-h-32 w-auto object-cover" />
+                }
+              }
+            </div>
           </ng-container>
         }
       </div>

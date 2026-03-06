@@ -1,7 +1,9 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { EventStore } from '@core/application/store/event.store';
+import { AuthStore } from '@core/application/store/auth.store';
 
 function normalizeApiDetail(detail: unknown): string | null {
   if (detail == null) return null;
@@ -17,6 +19,7 @@ function normalizeApiDetail(detail: unknown): string | null {
 
 const AUTH_ERROR_MESSAGES_ES: Record<string, string> = {
   'Invalid credentials': 'Credenciales inválidas.',
+  'Could not validate credentials': 'Sesión expirada o token inválido. Inicia sesión de nuevo.',
   'The email': 'Este correo ya está registrado.',
   'Registration as Administrator is not allowed through this endpoint.': 'No se permite el registro como administrador.',
   'Password must contain at least one uppercase letter': 'La contraseña debe incluir al menos una mayúscula.',
@@ -35,6 +38,8 @@ function toAuthMessageEnEs(apiDetail: string): string {
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const eventStore = inject(EventStore);
+  const authStore = inject(AuthStore);
+  const router = inject(Router);
   const isAuthRequest = req.url.includes('/auth/');
 
   return next(req).pipe(
@@ -42,20 +47,33 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       let errorMessage = 'Ha ocurrido un error inesperado';
 
       if (error.error instanceof ErrorEvent) {
-        errorMessage = `Error: ${error.error.message}`;
+        const msg = error.error.message?.trim() || '';
+        if (!msg || msg === 'Unknown Error' || msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network')) {
+          errorMessage = 'No se pudo conectar con el servidor. Comprueba tu conexión a internet o que el servicio esté en marcha.';
+        } else {
+          errorMessage = msg;
+        }
       } else {
         const apiDetail = normalizeApiDetail(error.error?.detail);
         if (isAuthRequest && apiDetail) {
           errorMessage = toAuthMessageEnEs(apiDetail);
         } else {
           switch (error.status) {
+            case 0:
+              errorMessage = 'No se pudo conectar con el servidor. Comprueba tu conexión a internet o que el servicio esté en marcha.';
+              break;
             case 400:
             case 422:
               errorMessage = apiDetail || error.error?.message || 'Solicitud incorrecta';
               break;
-            case 401:
-              errorMessage = apiDetail || 'Sesión expirada. Por favor, inicia sesión de nuevo';
+            case 401: {
+              errorMessage = apiDetail ? toAuthMessageEnEs(apiDetail) : 'Sesión expirada. Por favor, inicia sesión de nuevo';
+              if (!isAuthRequest) {
+                authStore.logout();
+                router.navigate(['/auth/login'], { queryParams: { expired: '1' } });
+              }
               break;
+            }
             case 404:
               errorMessage = 'El recurso solicitado no existe';
               break;
@@ -66,7 +84,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
               errorMessage = 'Error interno del servidor. Por favor, inténtalo más tarde';
               break;
             default:
-              errorMessage = apiDetail || `Error ${error.status}: ${error.statusText}`;
+              errorMessage = apiDetail || (error.status ? `Error ${error.status}: ${error.statusText}` : 'No se pudo conectar con el servidor. Comprueba tu conexión.');
           }
         }
       }
