@@ -1,0 +1,73 @@
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6" *transloco="let t">
+  <section class="rounded-2xl border border-white/10 bg-[#181a20]/50 p-6">
+    <h2 class="text-xs font-semibold tracking-wider text-accent-cyan uppercase mb-4">
+      {{ t('dashboard.formImageCover') }}
+    </h2>
+    @if (coverPreviewUrl()) {
+      <div class="rounded-xl border border-white/10 bg-[#161a23]/80 overflow-hidden">
+        <div class="relative w-full h-[200px] cursor-zoom-in" (click)="coverPreviewClick.emit(coverPreviewUrl()!)" role="button"
+          tabindex="0" (keydown.enter)="coverPreviewClick.emit(coverPreviewUrl()!)">
+          <div class="absolute inset-0">
+            <app-img-with-loader [src]="coverPreviewUrl()!" alt="Portada" />
+          </div>
+        </div>
+        <div class="flex items-center gap-2 p-3 border-t border-white/10">
+          <label
+            class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-accent-cyan/20 text-accent-cyan hover:bg-accent-cyan/30 text-sm font-medium cursor-pointer transition-colors">
+            <span class="material-symbols-outlined text-lg">upload_file</span>
+            {{ t('dashboard.formChangeCover') }}
+            <input type="file" accept="image/*" (change)="onCoverChange($event)" class="hidden" />
+          </label>
+          <app-button type="button" variant="outline" size="sm"
+            customClass="border-red-500/50 text-red-400 hover:bg-red-500/10 cursor-pointer"
+            (clicked)="coverClear.emit()">
+            <span class="material-symbols-outlined text-lg">delete</span>
+            {{ t('dashboard.formRemoveCover') }}
+          </app-button>
+        </div>
+      </div>
+    } @else {
+      <label
+        class="block min-h-[200px] rounded-xl border-2 border-dashed border-white/10 bg-[#161a23]/80 hover:border-accent-cyan/50 hover:bg-[#161a23] transition-colors cursor-pointer overflow-hidden">
+        <div class="flex flex-col items-center justify-center min-h-[200px] py-6">
+          <span class="material-symbols-outlined text-5xl text-slate-500 mb-2">add_photo_alternate</span>
+          <span class="text-sm font-medium text-accent-cyan">{{ t('dashboard.formUploadCover') }}</span>
+        </div>
+        <input type="file" accept="image/*" (change)="onCoverChange($event)" class="hidden" />
+      </label>
+    }
+    <p class="text-xs text-slate-500 mt-3">{{ t('dashboard.formImageCoverHint') }}</p>
+  </section>
+  <section class="rounded-2xl border border-white/10 bg-[#181a20]/50 p-6">
+    <h2 class="text-xs font-semibold tracking-wider text-accent-cyan uppercase mb-4">
+      {{ t('dashboard.formAdditionalImages') }}
+    </h2>
+    <div class="rounded-xl border-2 border-dashed border-white/10 bg-[#161a23]/50 p-5 transition-colors"
+      [class.border-accent-cyan/50]="dragOver()" [class.bg-accent-cyan/5]="dragOver()"
+      (drop)="onDrop($event)" (dragover)="onDragover($event)" (dragleave)="onDragleave()">
+      <label class="cursor-pointer flex flex-col items-center justify-center w-full text-center py-6">
+        <span class="material-symbols-outlined text-4xl text-slate-500 mb-2">imagesmode</span>
+        <span class="text-sm text-slate-400">{{ t('dashboard.formAdditionalImagesDrag') }}</span>
+        <span class="text-xs text-slate-500 mt-1">{{ t('dashboard.formAdditionalImagesClick') }}</span>
+        <input type="file" accept="image/*" multiple (change)="onAdditionalInputChange($event)" class="hidden" />
+      </label>
+    </div>
+    @if (displayItems().length) {
+      <p class="text-xs font-medium text-slate-500 uppercase mt-4 mb-2">{{ t('dashboard.formImagePreviewList') }}</p>
+      <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+        @for (item of displayItems(); track item.isNew ? 'new-' + item.index : 'saved-' + item.index) {
+          <div
+            class="relative aspect-square rounded-xl overflow-hidden bg-[#161a23] border border-white/10 group cursor-zoom-in"
+            (click)="onItemPreviewClick(item.url)" role="button" tabindex="0" (keydown.enter)="onItemPreviewClick(item.url)">
+            <app-img-with-loader [src]="item.url" alt="" />
+            <app-button type="button" size="icon"
+              customClass="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 hover:bg-red-500 cursor-pointer z-10"
+              (clicked)="onRemoveItem($event, item)">
+              <span class="material-symbols-outlined text-lg">close</span>
+            </app-button>
+          </div>
+        }
+      </div>
+    }
+  </section>
+</div>

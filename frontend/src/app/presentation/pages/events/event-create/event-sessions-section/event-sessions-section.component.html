@@ -1,0 +1,57 @@
+<section class="rounded-2xl border border-white/10 bg-[#181a20]/50 p-6 sm:p-8">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <h2 class="text-xs font-semibold tracking-wider text-accent-cyan uppercase" *transloco="let t">
+      {{ t('dashboard.formSectionSessionsLabel') }}
+    </h2>
+    <app-button type="button" variant="ghost" size="sm"
+      customClass="text-accent-cyan hover:underline shrink-0 cursor-pointer" (clicked)="addSession.emit()">
+      {{ 'dashboard.formAddSessionButton' | transloco }}
+    </app-button>
+  </div>
+  <div class="space-y-3">
+    @for (session of sessions(); track session.id ?? 'new-' + $index) {
+    <article class="session-card rounded-xl border p-4 sm:p-5 transition-colors"
+      [class.border-red-500/60]="getSessionError()($index)" [class.bg-red-500/5]="getSessionError()($index)"
+      [class.border-white/10]="!getSessionError()($index)" [class.bg-[#161a23]/30]="!getSessionError()($index)">
+      <div class="space-y-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <input type="text" [(ngModel)]="session.title" [ngModelOptions]="{standalone: true}"
+            [placeholder]="'dashboard.formSessionTitlePlaceholder' | transloco"
+            class="input-event flex-1 min-w-[140px] h-10 rounded-lg border bg-[#161a23] px-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-accent-cyan" />
+          <span class="text-slate-500 shrink-0">–</span>
+          <input type="text" [(ngModel)]="session.speaker" [ngModelOptions]="{standalone: true}"
+            [placeholder]="'dashboard.formSessionSpeakerPlaceholder' | transloco"
+            class="input-event flex-1 min-w-[140px] h-10 rounded-lg border bg-[#161a23] px-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-accent-cyan" />
+          <app-button type="button" size="icon" variant="ghost"
+            customClass="text-slate-400 hover:text-red-400 hover:bg-red-500/10 shrink-0 cursor-pointer"
+            [attr.aria-label]="'dashboard.formRemoveSession' | transloco" (clicked)="removeSession.emit($index)">
+            <span class="material-symbols-outlined">delete</span>
+          </app-button>
+        </div>
+        <div class="space-y-1.5">
+          <span class="text-xs font-medium text-slate-500 uppercase" *transloco="let t">{{
+            t('dashboard.formTimeRangeLabel') }}</span>
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-slate-500 text-lg shrink-0">schedule</span>
+            <input type="datetime-local" [(ngModel)]="session.start_time" [ngModelOptions]="{standalone: true}"
+              class="flex-1 min-w-0 h-10 rounded-lg border bg-[#161a23] px-2.5 text-xs text-white focus:outline-none focus:border-accent-cyan"
+              [class.border-red-500/50]="getSessionError()($index)"
+              [class.border-white/10]="!getSessionError()($index)" />
+            <span class="text-slate-500 shrink-0">–</span>
+            <input type="datetime-local" [(ngModel)]="session.end_time" [ngModelOptions]="{standalone: true}"
+              class="flex-1 min-w-0 h-10 rounded-lg border bg-[#161a23] px-2.5 text-xs text-white focus:outline-none focus:border-accent-cyan"
+              [class.border-red-500/50]="getSessionError()($index)"
+              [class.border-white/10]="!getSessionError()($index)" />
+          </div>
+        </div>
+      </div>
+      @if (getSessionError()($index)) {
+      <p class="text-xs text-red-400 flex items-center gap-1 mt-3">
+        <span class="material-symbols-outlined text-sm">error</span>
+        {{ getSessionError()($index) }}
+      </p>
+      }
+    </article>
+    }
+  </div>
+</section>

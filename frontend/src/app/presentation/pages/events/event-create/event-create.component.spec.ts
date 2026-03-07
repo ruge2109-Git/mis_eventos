@@ -6,17 +6,22 @@ import { EventCreateComponent } from './event-create.component';
 import { EventRepository } from '@core/domain/ports/event.repository';
 import { EventStore } from '@core/application/store/event.store';
 import { ToastService } from '@core/application/services/toast.service';
-import { SessionApiService } from '@infrastructure/api/session-api.service';
+import { SessionRepository } from '@core/domain/ports/session.repository';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { vi } from 'vitest';
 import { environment } from '@environments/environment';
+import { API_BASE_URL } from '@core/application/tokens/api-base-url.token';
 import { Event as EventEntity } from '@core/domain/entities/event.entity';
 
 interface MockSession {
   id: number;
   title: string;
-  event_id: number;
+  description: string | null;
+  startTime: Date;
+  endTime: Date;
+  speaker: string;
+  eventId: number;
 }
 
 describe('EventCreateComponent', () => {
@@ -27,7 +32,15 @@ describe('EventCreateComponent', () => {
   const mockCreate = vi.fn().mockReturnValue(of({ id: 1, title: 'New', imageUrl: null } as unknown as EventEntity));
   const mockUploadImage = vi.fn().mockReturnValue(of({ id: 1, title: 'New', imageUrl: '/img.jpg' } as unknown as EventEntity));
   const mockUpdate = vi.fn().mockReturnValue(of({ id: 5, title: 'Updated', imageUrl: null, additionalImages: [] } as unknown as EventEntity));
-  const mockSessionCreate = vi.fn().mockReturnValue(of({ id: 1, title: 'Keynote', event_id: 1 } as unknown as MockSession));
+  const mockSessionCreate = vi.fn().mockReturnValue(of({
+    id: 1,
+    title: 'Keynote',
+    description: null,
+    startTime: new Date(),
+    endTime: new Date(),
+    speaker: '',
+    eventId: 1
+  } as MockSession));
   const mockGetByEventId = vi.fn().mockReturnValue(of([]));
   const mockRepository: EventRepository = {
     getAll: () => of({ items: [], total: 0 }),
@@ -73,8 +86,9 @@ describe('EventCreateComponent', () => {
         provideTransloco({ config: { availableLangs: ['es', 'en'], defaultLang: 'es' } }),
         EventStore,
         ToastService,
+        { provide: API_BASE_URL, useValue: environment.apiUrl },
         { provide: EventRepository, useValue: mockRepository },
-        { provide: SessionApiService, useValue: { createSession: mockSessionCreate, getByEventId: mockGetByEventId } }
+        { provide: SessionRepository, useValue: { create: mockSessionCreate, getByEventId: mockGetByEventId } }
       ]
     }).compileComponents();
 
@@ -280,7 +294,7 @@ describe('EventCreateComponent', () => {
 
   it('should call createSession for each session when sessions are provided', () => {
     mockCreate.mockReturnValue(of({ id: 99, title: 'E', imageUrl: null } as unknown as EventEntity));
-    mockSessionCreate.mockReturnValue(of({ id: 1, title: 'Keynote', event_id: 99 } as unknown as MockSession));
+    mockSessionCreate.mockReturnValue(of({ id: 1, title: 'Keynote', description: null, startTime: new Date(), endTime: new Date(), speaker: 'Jane', eventId: 99 } as MockSession));
     const navigateSpy = vi.spyOn(router, 'navigate');
     setEventFormValues({ title: 'Event', capacity: 10 });
     component.eventImage = null;
@@ -293,7 +307,7 @@ describe('EventCreateComponent', () => {
     expect(mockSessionCreate).toHaveBeenCalledWith(expect.objectContaining({
       title: 'Keynote',
       speaker: 'Jane',
-      event_id: 99
+      eventId: 99
     }));
     expect(navigateSpy).toHaveBeenCalledWith(['/dashboard/organizer']);
   });
@@ -379,13 +393,15 @@ describe('EventCreateComponent', () => {
     expect(component.savedAdditionalUrls[0]).toBe('https://a.com/2.jpg');
   });
 
-  it('allAdditionalDisplayItems should return saved then new items', () => {
+  it('onAdditionalFilesAdd should append files and create previews', () => {
     component.savedAdditionalUrls = ['https://example.com/saved.jpg'];
-    component.additionalImagePreviews = ['blob:xxx'];
-    const items = component.allAdditionalDisplayItems;
-    expect(items.length).toBe(2);
-    expect(items[0]).toEqual({ url: 'https://example.com/saved.jpg', isNew: false, index: 0 });
-    expect(items[1]).toEqual({ url: 'blob:xxx', isNew: true, index: 0 });
+    const file1 = new File(['a'], 'img1.jpg', { type: 'image/jpeg' });
+    const file2 = new File(['b'], 'img2.png', { type: 'image/png' });
+    vi.spyOn(URL, 'createObjectURL').mockImplementation(() => 'blob:mock');
+    component.onAdditionalFilesAdd([file1, file2]);
+    expect(component.additionalImages.length).toBe(2);
+    expect(component.additionalImagePreviews.length).toBe(2);
+    expect(component.savedAdditionalUrls.length).toBe(1);
   });
 
   it('clearCoverImage should clear eventImage and eventImagePreview', () => {
@@ -404,88 +420,42 @@ describe('EventCreateComponent', () => {
     expect(component.previewImageUrl).toBeNull();
   });
 
-  it('removeAdditionalImageAndStop should call stopPropagation and remove image', () => {
+  it('removeAdditionalImage should remove image and revoke blob url', () => {
     component.additionalImages = [new File([''], 'a.jpg', { type: 'image/jpeg' })];
     component.additionalImagePreviews = ['blob:url1'];
-    const ev = new MouseEvent('click', { bubbles: true });
-    const stopSpy = vi.spyOn(ev, 'stopPropagation');
-    component.removeAdditionalImageAndStop(ev, 0);
-    expect(stopSpy).toHaveBeenCalled();
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL');
+    component.removeAdditionalImage(0);
+    expect(revokeSpy).toHaveBeenCalledWith('blob:url1');
     expect(component.additionalImages.length).toBe(0);
     expect(component.additionalImagePreviews.length).toBe(0);
   });
 
-  it('removeSavedAdditionalUrlAndStop should call stopPropagation and remove saved url', () => {
+  it('removeSavedAdditionalUrl should remove url at index', () => {
     component.savedAdditionalUrls = ['url1', 'url2'];
-    const ev = new MouseEvent('click', { bubbles: true });
-    const stopSpy = vi.spyOn(ev, 'stopPropagation');
-    component.removeSavedAdditionalUrlAndStop(ev, 1);
-    expect(stopSpy).toHaveBeenCalled();
+    component.removeSavedAdditionalUrl(1);
     expect(component.savedAdditionalUrls).toEqual(['url1']);
   });
 
-  it('onAdditionalImagesChange should append valid image files and create previews', () => {
-    const file1 = new File(['a'], 'img1.jpg', { type: 'image/jpeg' });
-    const file2 = new File(['b'], 'img2.png', { type: 'image/png' });
-    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock1');
-    const input = document.createElement('input');
-    input.type = 'file';
-    Object.defineProperty(input, 'files', { value: [file1, file2], configurable: true });
-    component.onAdditionalImagesChange({ target: input } as unknown as Event);
-    expect(component.additionalImages.length).toBe(2);
-    expect(component.additionalImagePreviews.length).toBe(2);
-    expect(createObjectURLSpy).toHaveBeenCalledTimes(2);
-    createObjectURLSpy.mockRestore();
-  });
-
-  it('onAdditionalImagesChange should ignore files over 5MB or non-image', () => {
-    const bigFile = new File([new ArrayBuffer(6 * 1024 * 1024)], 'big.jpg', { type: 'image/jpeg' });
-    const pdfFile = new File(['x'], 'doc.pdf', { type: 'application/pdf' });
-    const input = document.createElement('input');
-    Object.defineProperty(input, 'files', { value: [bigFile, pdfFile], configurable: true });
-    component.onAdditionalImagesChange({ target: input } as unknown as Event);
-    expect(component.additionalImages.length).toBe(0);
-    expect(component.additionalImagePreviews.length).toBe(0);
-  });
-
-  it('onAdditionalImagesChange should do nothing when files is empty', () => {
-    const input = document.createElement('input');
-    Object.defineProperty(input, 'files', { value: [], configurable: true });
-    component.onAdditionalImagesChange({ target: input } as unknown as Event);
-    expect(component.additionalImages.length).toBe(0);
-  });
-
-  it('onAdditionalImagesDrop should preventDefault, set dragOver false and append files', () => {
+  it('onAdditionalDrop should append files and create previews', () => {
     const file = new File(['x'], 'drop.jpg', { type: 'image/jpeg' });
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:drop');
-    const preventSpy = vi.fn();
-    const ev = {
-      preventDefault: preventSpy,
-      stopPropagation: vi.fn(),
-      dataTransfer: { files: [file] }
-    } as unknown as DragEvent;
-    component.additionalImagesDragOver = true;
-    component.onAdditionalImagesDrop(ev);
-    expect(preventSpy).toHaveBeenCalled();
-    expect(component.additionalImagesDragOver).toBe(false);
+    component.onAdditionalDrop([file]);
     expect(component.additionalImages.length).toBe(1);
     expect(component.additionalImagePreviews.length).toBe(1);
   });
 
-  it('onAdditionalImagesDrop should do nothing when dataTransfer has no files', () => {
-    const ev = { preventDefault: vi.fn(), dataTransfer: { files: [] } } as unknown as DragEvent;
-    component.onAdditionalImagesDrop(ev);
+  it('onAdditionalDrop with empty array should not change length', () => {
+    component.onAdditionalDrop([]);
     expect(component.additionalImages.length).toBe(0);
+    expect(component.additionalImagePreviews.length).toBe(0);
   });
 
-  it('onAdditionalImagesDragOver should preventDefault, stopPropagation and set dragOver true', () => {
-    const preventSpy = vi.fn();
-    const stopSpy = vi.fn();
-    const ev = { preventDefault: preventSpy, stopPropagation: stopSpy } as unknown as DragEvent;
-    component.onAdditionalImagesDragOver(ev);
-    expect(preventSpy).toHaveBeenCalled();
-    expect(stopSpy).toHaveBeenCalled();
+  it('setAdditionalImagesDragOver should set dragOver state', () => {
+    expect(component.additionalImagesDragOver).toBe(false);
+    component.setAdditionalImagesDragOver(true);
     expect(component.additionalImagesDragOver).toBe(true);
+    component.setAdditionalImagesDragOver(false);
+    expect(component.additionalImagesDragOver).toBe(false);
   });
 
   it('edit mode submit with savedAdditionalUrls should call update with additional_images paths (line 352, additionalUrlToPath)', () => {
@@ -604,7 +574,7 @@ describe('EventCreateComponent', () => {
 
   it('should call createSession for each valid session when multiple sessions provided', () => {
     mockCreate.mockReturnValue(of({ id: 99, title: 'E', imageUrl: null } as unknown as EventEntity));
-    mockSessionCreate.mockReturnValue(of({ id: 1, title: 'Keynote', event_id: 99 } as unknown as MockSession));
+    mockSessionCreate.mockReturnValue(of({ id: 1, title: 'Keynote', description: null, startTime: new Date(), endTime: new Date(), speaker: 'Jane', eventId: 99 } as MockSession));
     setEventFormValues({ title: 'Event', capacity: 10 });
     component.sessions = [
       { title: 'Keynote', start_time: '2026-06-01T10:00', end_time: '2026-06-01T11:00', speaker: 'Jane', description: '' },
@@ -662,7 +632,15 @@ describe('EventCreateComponent', () => {
       organizerId: 4
     };
     const sessionsFromApi = [
-      { id: 1, title: 'S1', description: null, start_time: '2026-03-07T01:00:00', end_time: '2026-03-07T02:00:00', speaker: 'Jon', event_id: 5 }
+      {
+        id: 1,
+        title: 'S1',
+        description: null,
+        startTime: new Date('2026-03-07T01:00:00'),
+        endTime: new Date('2026-03-07T02:00:00'),
+        speaker: 'Jon',
+        eventId: 5
+      }
     ];
 
     beforeEach(async () => {
@@ -673,6 +651,7 @@ describe('EventCreateComponent', () => {
           provideTransloco({ config: { availableLangs: ['es', 'en'], defaultLang: 'es' } }),
           EventStore,
           ToastService,
+          { provide: API_BASE_URL, useValue: environment.apiUrl },
           {
             provide: EventRepository,
             useValue: {
@@ -681,9 +660,9 @@ describe('EventCreateComponent', () => {
             }
           },
           {
-            provide: SessionApiService,
+            provide: SessionRepository,
             useValue: {
-              createSession: mockSessionCreate,
+              create: mockSessionCreate,
               getByEventId: vi.fn().mockReturnValue(of(sessionsFromApi))
             }
           },

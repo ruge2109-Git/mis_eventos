@@ -7,9 +7,14 @@ import { ButtonComponent } from '@shared/components/button/button.component';
 import { ConfirmModalComponent } from '@shared/components/confirm-modal/confirm-modal.component';
 import { EventStore } from '@core/application/store/event.store';
 import { GetOrganizerEventsUseCase } from '@core/application/usecases/get-organizer-events.usecase';
+import { LoadingContextService } from '@core/application/services/loading-context.service';
 import { EventRepository } from '@core/domain/ports/event.repository';
 import { Event } from '@core/domain/entities/event.entity';
 import { ToastService } from '@core/application/services/toast.service';
+import { catchError } from 'rxjs/operators';
+import { EMPTY } from 'rxjs';
+
+const EVENTS_CONTEXT = 'events';
 
 @Component({
   selector: 'app-organizer-dashboard',
@@ -27,6 +32,7 @@ import { ToastService } from '@core/application/services/toast.service';
 })
 export class OrganizerDashboardComponent implements OnInit {
   store = inject(EventStore);
+  loadingContext = inject(LoadingContextService);
   private getOrganizerEventsUseCase = inject(GetOrganizerEventsUseCase);
   private eventRepository = inject(EventRepository);
   private toast = inject(ToastService);
@@ -35,6 +41,8 @@ export class OrganizerDashboardComponent implements OnInit {
   actionLoadingId = signal<number | null>(null);
   eventIdToDelete = signal<number | null>(null);
   showDeleteConfirm = computed(() => this.eventIdToDelete() != null);
+  eventsLoading = computed(() => this.loadingContext.loadingFor(EVENTS_CONTEXT)());
+  eventsError = computed(() => this.loadingContext.errorFor(EVENTS_CONTEXT)());
 
   private now = new Date();
   private startOfMonth = new Date(this.now.getFullYear(), this.now.getMonth(), 1);
@@ -68,8 +76,20 @@ export class OrganizerDashboardComponent implements OnInit {
   loadEvents(append = false) {
     const { skip, limit } = this.store.pagination();
     const nextSkip = append ? skip + limit : 0;
-    if (append) this.store.setPagination(nextSkip, limit);
-    this.getOrganizerEventsUseCase.execute(nextSkip, limit, undefined, append).subscribe();
+    this.loadingContext.setError(EVENTS_CONTEXT, null);
+
+    this.getOrganizerEventsUseCase.execute(nextSkip, limit).pipe(
+      catchError(() => EMPTY)
+    ).subscribe({
+      next: (response) => {
+        if (append) {
+          this.store.appendEvents(response.items, response.total);
+          this.store.setPagination(nextSkip, limit);
+        } else {
+          this.store.setEvents(response.items, response.total);
+        }
+      }
+    });
   }
 
   publishEvent(event: Event) {

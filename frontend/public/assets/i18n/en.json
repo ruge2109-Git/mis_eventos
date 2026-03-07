@@ -15,6 +15,7 @@
     "rights": "© 2026 MisEventos."
   },
   "events": {
+    "loadError": "Error loading events.",
     "loading": "Loading...",
     "noResults": "No events found for \"{{query}}\"",
     "noEvents": "No events available at the moment.",
@@ -138,7 +139,8 @@
     "toastEventCancelled": "Event cancelled successfully",
     "toastCancelError": "Error cancelling event",
     "toastRevertedToDraft": "Event reverted to draft. You can publish it again.",
-    "toastRevertError": "Error reverting to draft"
+    "toastRevertError": "Error reverting to draft",
+    "eventsLoadError": "Error loading your events."
   },
   "calendar": {
     "title": "Calendar",
@@ -158,7 +160,32 @@
     "prevEvent": "Previous event",
     "nextEvent": "Next event"
   },
+  "errors": {
+    "network": "Could not connect to the server. Check your internet connection or that the service is running.",
+    "unexpected": "An unexpected error occurred",
+    "http": {
+      "400": "Bad request",
+      "401": "Session expired. Please sign in again",
+      "404": "The requested resource does not exist",
+      "409": "Conflict: Resource already exists or overlap",
+      "422": "Bad request",
+      "500": "Internal server error. Please try again later"
+    },
+    "auth": {
+      "invalidCredentials": "Invalid credentials.",
+      "couldNotValidate": "Session expired or invalid token. Please sign in again.",
+      "emailAlreadyRegistered": "This email is already registered.",
+      "adminRegistrationNotAllowed": "Administrator registration is not allowed through this endpoint.",
+      "passwordUppercase": "Password must contain at least one uppercase letter.",
+      "passwordLowercase": "Password must contain at least one lowercase letter.",
+      "passwordNumber": "Password must contain at least one number.",
+      "passwordSpecial": "Password must contain at least one special character."
+    }
+  },
   "auth": {
+    "toastSessionClosed": "Session closed",
+    "toastSessionStarted": "Session started",
+    "toastAccountCreated": "Account created. You can now sign in.",
     "loginTitle": "Portal Access",
     "loginSubtitle": "Enter your credentials to continue.",
     "registerTitle": "Create your account",

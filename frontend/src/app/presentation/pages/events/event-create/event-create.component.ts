@@ -1,33 +1,42 @@
 import { ChangeDetectorRef, Component, ElementRef, inject, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { EventRepository } from '@core/domain/ports/event.repository';
-import { CreateEventDTO } from '@core/domain/entities/event.entity';
-import { environment } from '@environments/environment';
+import type { Session } from '@core/domain/entities/session.entity';
+import { API_BASE_URL } from '@core/application/tokens/api-base-url.token';
 import { EventStore } from '@core/application/store/event.store';
+import { SessionValidationService } from '@core/application/services/session-validation.service';
 import { ToastService } from '@core/application/services/toast.service';
-import { SessionApiService } from '@infrastructure/api/session-api.service';
-import { Subscription, from } from 'rxjs';
-import { finalize, concatMap, toArray, switchMap } from 'rxjs/operators';
-import { ImgWithLoaderComponent } from '@shared/components/img-with-loader/img-with-loader.component';
-import { ButtonComponent } from '@shared/components/button/button.component';
+import { GetSessionsByEventUseCase } from '@core/application/usecases/get-sessions-by-event.usecase';
+import { SaveEventUseCase } from '@core/application/usecases/save-event.usecase';
+import { Subscription } from 'rxjs';
+import { finalize, switchMap } from 'rxjs/operators';
 import { ConfirmModalComponent } from '@shared/components/confirm-modal/confirm-modal.component';
-
-export interface SessionFormItem {
-  id?: number;
-  title: string;
-  start_time: string;
-  end_time: string;
-  speaker: string;
-  description: string;
-}
+import { EventSessionsSectionComponent, type SessionFormItem } from './event-sessions-section/event-sessions-section.component';
+import { EventCreateHeaderComponent } from './event-create-header/event-create-header.component';
+import { EventDetailsSectionComponent } from './event-details-section/event-details-section.component';
+import { EventImagesSectionComponent } from './event-images-section/event-images-section.component';
+import { ImagePreviewModalComponent } from './image-preview-modal/image-preview-modal.component';
+import { EventFormActionsComponent } from './event-form-actions/event-form-actions.component';
 
 @Component({
   selector: 'app-event-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, TranslocoModule, RouterLink, ImgWithLoaderComponent, ButtonComponent, ConfirmModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    TranslocoModule,
+    ConfirmModalComponent,
+    EventSessionsSectionComponent,
+    EventCreateHeaderComponent,
+    EventDetailsSectionComponent,
+    EventImagesSectionComponent,
+    ImagePreviewModalComponent,
+    EventFormActionsComponent
+  ],
   templateUrl: './event-create.component.html',
   styleUrl: './event-create.component.scss'
 })
@@ -38,7 +47,10 @@ export class EventCreateComponent implements OnInit, OnDestroy {
   private store = inject(EventStore);
   private toast = inject(ToastService);
   private transloco = inject(TranslocoService);
-  private sessionApi = inject(SessionApiService);
+  private getSessionsByEventUseCase = inject(GetSessionsByEventUseCase);
+  private saveEventUseCase = inject(SaveEventUseCase);
+  private sessionValidation = inject(SessionValidationService);
+  private apiBaseUrl = inject(API_BASE_URL);
   private fb = inject(FormBuilder);
   private cdr = inject(ChangeDetectorRef);
 
@@ -91,7 +103,7 @@ export class EventCreateComponent implements OnInit, OnDestroy {
             });
             this.eventImagePreview = event.imageUrl ?? null;
             this.savedAdditionalUrls = event.additionalImages ?? [];
-            return this.sessionApi.getByEventId(id);
+            return this.getSessionsByEventUseCase.execute(id);
           }),
           finalize(() => {
             setTimeout(() => {
@@ -100,12 +112,12 @@ export class EventCreateComponent implements OnInit, OnDestroy {
             }, 0);
           })
         ).subscribe({
-          next: (sessionsList) => {
-            this.sessions = (sessionsList || []).map(s => ({
+          next: (sessionsList: Session[]) => {
+            this.sessions = (sessionsList || []).map((s: Session) => ({
               id: s.id,
               title: s.title,
-              start_time: this.toDatetimeLocal(s.start_time),
-              end_time: this.toDatetimeLocal(s.end_time),
+              start_time: this.toDatetimeLocal(s.startTime),
+              end_time: this.toDatetimeLocal(s.endTime),
               speaker: s.speaker ?? '',
               description: s.description ?? ''
             }));
@@ -132,6 +144,7 @@ export class EventCreateComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.langSub?.unsubscribe();
+    if (this.isLoading) return;
     if (this.eventImagePreview?.startsWith('blob:')) {
       URL.revokeObjectURL(this.eventImagePreview);
     }
@@ -156,50 +169,15 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     this.sessions = this.sessions.filter((_, i) => i !== index);
   }
 
-  /** Returns overlap error for session at index, or null. */
+  /** Returns overlap error message for session at index, or null. */
   getSessionOverlapError(index: number): string | null {
-    const s = this.sessions[index];
-    if (!s?.start_time || !s?.end_time) return null;
-    const start = new Date(s.start_time).getTime();
-    const end = new Date(s.end_time).getTime();
-    if (end <= start) return this.t('dashboard.formSessionInvalidTimes');
-    for (let i = 0; i < this.sessions.length; i++) {
-      if (i === index) continue;
-      const o = this.sessions[i];
-      if (!o?.start_time || !o?.end_time) continue;
-      const oStart = new Date(o.start_time).getTime();
-      const oEnd = new Date(o.end_time).getTime();
-      if (start < oEnd && end > oStart) return this.t('dashboard.formSessionOverlapError');
-    }
-    return null;
+    const key = this.sessionValidation.getOverlapErrorKey(this.sessions, index);
+    return key ? this.t(key) : null;
   }
 
-  private validateSessions(eventStart: Date, eventEnd: Date): string | null {
-    for (let i = 0; i < this.sessions.length; i++) {
-      if (this.getSessionOverlapError(i)) return this.t('dashboard.formSessionOverlapError');
-      const s = this.sessions[i];
-      const title = (s.title ?? '').trim();
-      if (title.length < 3) {
-        return this.transloco.translate('dashboard.formErrorTitleMin');
-      }
-      if (!s.start_time || !s.end_time) {
-        return this.transloco.translate('dashboard.formErrorStartRequired');
-      }
-      const start = new Date(s.start_time);
-      const end = new Date(s.end_time);
-      if (end <= start) {
-        return this.transloco.translate('dashboard.formSessionInvalidTimes');
-      }
-      const eventStartMs = eventStart.getTime();
-      const eventEndMs = eventEnd.getTime();
-      if (start.getTime() < eventStartMs || end.getTime() > eventEndMs) {
-        return this.transloco.translate('dashboard.formSessionOutsideEventDates');
-      }
-      if (!(s.speaker ?? '').trim()) {
-        return this.transloco.translate('dashboard.formSessionSpeaker') + ': ' + this.transloco.translate('dashboard.formErrorTitleRequired');
-      }
-    }
-    return null;
+  /** Bound function for the sessions section component. */
+  get sessionErrorFn(): (index: number) => string | null {
+    return (i) => this.getSessionOverlapError(i);
   }
 
   onImageChange(event: Event): void {
@@ -227,50 +205,20 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     this.eventImage = null;
   }
 
-  onAdditionalImagesChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const files = input.files;
-    if (!files?.length) return;
-    const maxSize = 5 * 1024 * 1024;
-    const list: File[] = [];
-    const previews: string[] = [];
-    for (const f of Array.from(files)) {
-      if (f.size <= maxSize && f.type.startsWith('image/')) {
-        list.push(f);
-        previews.push(URL.createObjectURL(f));
-      }
-    }
-    this.additionalImages = [...this.additionalImages, ...list];
-    this.additionalImagePreviews = [...this.additionalImagePreviews, ...previews];
-    input.value = '';
+  setAdditionalImagesDragOver(value: boolean): void {
+    this.additionalImagesDragOver = value;
   }
 
-  onAdditionalImagesDrop(e: DragEvent): void {
-    e.preventDefault();
-    this.additionalImagesDragOver = false;
-    const files = e.dataTransfer?.files;
-    if (!files?.length) return;
-    const maxSize = 5 * 1024 * 1024;
-    const list: File[] = [];
-    const previews: string[] = [];
-    for (const f of Array.from(files)) {
-      if (f.size <= maxSize && f.type.startsWith('image/')) {
-        list.push(f);
-        previews.push(URL.createObjectURL(f));
-      }
-    }
-    this.additionalImages = [...this.additionalImages, ...list];
+  onAdditionalFilesAdd(files: File[]): void {
+    const previews = files.map(f => URL.createObjectURL(f));
+    this.additionalImages = [...this.additionalImages, ...files];
     this.additionalImagePreviews = [...this.additionalImagePreviews, ...previews];
   }
 
-  onAdditionalImagesDragOver(e: DragEvent): void {
-    e.preventDefault();
-    e.stopPropagation();
-    this.additionalImagesDragOver = true;
-  }
-
-  onAdditionalImagesDragLeave(): void {
-    this.additionalImagesDragOver = false;
+  onAdditionalDrop(files: File[]): void {
+    const previews = files.map(f => URL.createObjectURL(f));
+    this.additionalImages = [...this.additionalImages, ...files];
+    this.additionalImagePreviews = [...this.additionalImagePreviews, ...previews];
   }
 
   removeAdditionalImage(index: number): void {
@@ -279,34 +227,8 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     this.additionalImagePreviews = this.additionalImagePreviews.filter((_, i) => i !== index);
   }
 
-  removeAdditionalImageAndStop(event: MouseEvent, index: number): void {
-    event.stopPropagation();
-    this.removeAdditionalImage(index);
-  }
-
-  /** Converts full URL to API path for PATCH additional_images. */
-  private additionalUrlToPath(url: string): string {
-    const base = environment.apiUrl.replace(/\/+$/, '');
-    if (url.startsWith(base)) {
-      const p = url.slice(base.length).replace(/^\/+/, '');
-      return p ? `/${p}` : '';
-    }
-    return url.startsWith('/') ? url : `/${url}`;
-  }
-
   removeSavedAdditionalUrl(index: number): void {
     this.savedAdditionalUrls = this.savedAdditionalUrls.filter((_, i) => i !== index);
-  }
-
-  removeSavedAdditionalUrlAndStop(e: MouseEvent, index: number): void {
-    e.stopPropagation();
-    this.removeSavedAdditionalUrl(index);
-  }
-
-  get allAdditionalDisplayItems(): { url: string; isNew: boolean; index: number }[] {
-    const saved = this.savedAdditionalUrls.map((url, i) => ({ url, isNew: false, index: i }));
-    const newOnes = this.additionalImagePreviews.map((url, i) => ({ url, isNew: true, index: i }));
-    return [...saved, ...newOnes];
   }
 
   openPreview(url: string): void {
@@ -317,7 +239,6 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     this.previewImageUrl = null;
   }
 
-  /** Scrolls to the top of the form (where the error message is) and marks invalid controls as touched. */
   private scrollToFormAndRevealErrors(): void {
     this.markInvalidControlsTouched();
     setTimeout(() => {
@@ -344,150 +265,40 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     }
     this.isLoading = true;
     const value = this.eventForm.value;
-
-    const startDate = new Date(value['start_date'] as string);
-    const endDate = new Date(value['end_date'] as string);
-    if (endDate <= startDate) {
-      this.globalError = this.transloco.translate('dashboard.formErrorEndAfterStart');
-      this.isLoading = false;
-      this.scrollToFormAndRevealErrors();
-      return;
-    }
-
-    const sessionError = this.validateSessions(startDate, endDate);
-    if (sessionError) {
-      this.globalError = sessionError;
-      this.isLoading = false;
-      this.scrollToFormAndRevealErrors();
-      return;
-    }
-
-    const description = (value['description'] as string)?.trim() || null;
-    const updateDto: CreateEventDTO & { additionalImages?: string[] } = {
-      title: (value['title'] as string).trim(),
-      capacity: Number(value['capacity']),
-      startDate,
-      endDate,
-      location: (value['location'] as string)?.trim() || null,
-      description: description || null,
-      imageUrl: null as string | null,
-      additionalImages: []
-    };
-    if (this.isEditMode && this.savedAdditionalUrls.length > 0) {
-      updateDto.additionalImages = this.savedAdditionalUrls
-        .map(u => this.additionalUrlToPath(u))
-        .filter(p => p.length > 0);
-    }
-
-    const imageFile = this.eventImage;
-    const newAdditionalFiles = this.additionalImages;
-    const sessionsToCreate = this.sessions.filter(
-      s => (s.title ?? '').trim().length >= 3 && s.id == null
-    );
-
-    const targetId = this.eventId;
-    const doAfterSave = (event: { id: number }) => {
-      const doAdditionalUploadsAndNavigate = () => {
-        if (newAdditionalFiles.length === 0) {
-          this.toast.success(this.isEditMode ? this.transloco.translate('dashboard.toastUpdated') : this.transloco.translate('dashboard.toastCreated'));
-          this.router.navigate(['/dashboard/organizer']);
-          return;
-        }
-        this.isLoading = true;
-        from(newAdditionalFiles).pipe(
-          concatMap(file => this.eventRepository.uploadAdditionalImage(event.id, file)),
-          toArray(),
-          finalize(() => { this.isLoading = false; })
-        ).subscribe({
-          next: (results) => {
-            if (results.length) this.store.updateEvent(results[results.length - 1]);
-            this.toast.success(this.isEditMode ? this.transloco.translate('dashboard.toastUpdated') : this.transloco.translate('dashboard.toastCreated'));
-            this.router.navigate(['/dashboard/organizer']);
-          },
-          error: () => {
-            this.toast.success(this.transloco.translate('dashboard.toastCreatedImageFailed'));
-            this.router.navigate(['/dashboard/organizer']);
-          }
-        });
-      };
-      const doImageAndNavigate = () => {
-        if (imageFile) {
-          this.isLoading = true;
-          this.eventRepository.uploadImage(event.id, imageFile).pipe(
-            finalize(() => { this.isLoading = false; })
-          ).subscribe({
-            next: (updated) => {
-              this.store.updateEvent(updated);
-              doAdditionalUploadsAndNavigate();
-            },
-            error: () => {
-              doAdditionalUploadsAndNavigate();
-            }
-          });
-        } else {
-          doAdditionalUploadsAndNavigate();
-        }
-      };
-      if (sessionsToCreate.length === 0) {
-        doImageAndNavigate();
-        return;
-      }
-      this.isLoading = true;
-      const payloads = sessionsToCreate.map(s => ({
-        title: (s.title ?? '').trim(),
-        start_time: new Date(s.start_time).toISOString(),
-        end_time: new Date(s.end_time).toISOString(),
-        speaker: (s.speaker ?? '').trim(),
-        event_id: event.id,
-        description: (s.description ?? '').trim() || undefined
-      }));
-      from(payloads).pipe(
-        concatMap(p => this.sessionApi.createSession(p)),
-        toArray(),
-        finalize(() => { this.isLoading = false; })
-      ).subscribe({
-        next: () => doImageAndNavigate(),
-        error: (err: { error?: { detail?: unknown }; message?: string }) => {
-          this.isLoading = false;
-          const d = err?.error?.detail;
-          const detail = typeof d === 'string' ? d : Array.isArray(d) && d.length && typeof d[0]?.msg === 'string' ? d[0].msg : null;
-          this.globalError = detail ?? err?.message ?? this.transloco.translate('dashboard.formErrorSessionCreate');
-          this.scrollToFormAndRevealErrors();
-        }
-      });
-    };
-
-    if (this.isEditMode && targetId != null) {
-      this.eventRepository.update(targetId, updateDto).pipe(
-        finalize(() => { if (sessionsToCreate.length === 0 && !imageFile) this.isLoading = false; })
-      ).subscribe({
-        next: (event) => {
+    this.saveEventUseCase.execute({
+      formValue: value,
+      eventImage: this.eventImage,
+      additionalImages: [...this.additionalImages],
+      savedAdditionalUrls: [...this.savedAdditionalUrls],
+      sessions: this.sessions,
+      isEditMode: this.isEditMode,
+      eventId: this.eventId,
+      apiBaseUrl: this.apiBaseUrl
+    }).pipe(
+      finalize(() => { this.isLoading = false; })
+    ).subscribe({
+      next: (event) => {
+        if (this.isEditMode) {
           this.store.updateEvent(event);
-          doAfterSave(event);
-        },
-        error: (err: { error?: { detail?: unknown }; message?: string }) => {
-          this.isLoading = false;
-          const detail = typeof err?.error?.detail === 'string' ? err.error.detail : null;
-          this.globalError = detail ?? err?.message ?? this.transloco.translate('dashboard.formErrorUpdate');
-          this.scrollToFormAndRevealErrors();
-        }
-      });
-    } else {
-      this.eventRepository.create(updateDto).pipe(
-        finalize(() => { if (sessionsToCreate.length === 0 && !imageFile) this.isLoading = false; })
-      ).subscribe({
-        next: (event) => {
+        } else {
           this.store.addEvent(event);
-          doAfterSave(event);
-        },
-        error: (err: { error?: { detail?: unknown }; message?: string }) => {
-          this.isLoading = false;
-          const detail = typeof err?.error?.detail === 'string' ? err.error.detail : null;
-          this.globalError = detail ?? err?.message ?? this.transloco.translate('dashboard.formErrorCreate');
-          this.scrollToFormAndRevealErrors();
         }
-      });
-    }
+        this.toast.success(this.isEditMode ? this.transloco.translate('dashboard.toastUpdated') : this.transloco.translate('dashboard.toastCreated'));
+        if (event.warning?.trim()) {
+          const msg = event.warning.startsWith('dashboard.') || event.warning.startsWith('errors.')
+            ? this.transloco.translate(event.warning) : event.warning;
+          this.toast.info(msg);
+        }
+        this.router.navigate(['/dashboard/organizer']);
+      },
+      error: (err: { error?: { detail?: unknown }; message?: string }) => {
+        const d = err?.error?.detail;
+        const apiDetail = typeof d === 'string' ? d : (Array.isArray(d) && d.length > 0 && typeof (d[0] as { msg?: string })?.msg === 'string' ? (d[0] as { msg: string }).msg : null);
+        const msg = err?.message ?? apiDetail;
+        this.globalError = (msg?.startsWith('dashboard.') ? this.transloco.translate(msg) : msg) ?? this.transloco.translate('dashboard.formErrorCreate');
+        this.scrollToFormAndRevealErrors();
+      }
+    });
   }
 
   openDeleteConfirm(): void {

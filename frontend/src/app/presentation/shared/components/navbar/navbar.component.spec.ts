@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NavbarComponent } from './navbar.component';
 import { RouterTestingModule } from '@angular/router/testing';
-import { provideTransloco } from '@jsverse/transloco';
+import { provideTransloco, TranslocoService } from '@jsverse/transloco';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AuthStore } from '@core/application/store/auth.store';
@@ -67,8 +67,9 @@ describe('NavbarComponent', () => {
   });
 
   it('should call toast.success with session closed message on logout', () => {
+    const transloco = TestBed.inject(TranslocoService);
     component.logout();
-    expect(mockToastService.success).toHaveBeenCalledWith('Sesión cerrada');
+    expect(mockToastService.success).toHaveBeenCalledWith(transloco.translate('auth.toastSessionClosed'));
   });
 
   it('should have a link to home', () => {

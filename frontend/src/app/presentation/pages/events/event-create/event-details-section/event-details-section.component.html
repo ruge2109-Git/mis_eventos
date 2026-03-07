@@ -1,0 +1,53 @@
+<section class="rounded-2xl border border-white/10 bg-[#181a20]/50 p-6 sm:p-8" [formGroup]="form()" *transloco="let t">
+  <h2 class="text-xs font-semibold tracking-wider text-accent-cyan uppercase mb-6">
+    {{ t('dashboard.formSectionGeneral') }}
+  </h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div class="space-y-1.5 md:col-span-2">
+      <label for="event-title" class="block text-sm font-medium text-white">{{ t('dashboard.formEventName') }}</label>
+      <input id="event-title" type="text" formControlName="title"
+        [placeholder]="t('dashboard.formTitlePlaceholder')"
+        class="input-event w-full h-11 rounded-lg border bg-[#161a23] px-4 text-sm text-white placeholder-slate-500" />
+      @if (form().get('title')?.invalid && form().get('title')?.touched) {
+        <p class="text-xs text-red-400">{{ t('dashboard.formErrorTitleRequired') }}</p>
+      }
+    </div>
+    <div class="space-y-1.5">
+      <label for="event-capacity" class="block text-sm font-medium text-white">{{ t('dashboard.formCapacityMax') }}</label>
+      <input id="event-capacity" type="number" formControlName="capacity" min="1"
+        [placeholder]="t('dashboard.formCapacityPlaceholder')"
+        class="input-event w-full h-11 rounded-lg border bg-[#161a23] px-4 text-sm text-white" />
+      @if (form().get('capacity')?.invalid && form().get('capacity')?.touched) {
+        <p class="text-xs text-red-400">{{ t('dashboard.formErrorCapacityRequired') }}</p>
+      }
+    </div>
+    <div class="space-y-1.5">
+      <label for="event-location" class="block text-sm font-medium text-white">{{ t('dashboard.formLocation') }}</label>
+      <input id="event-location" type="text" formControlName="location"
+        [placeholder]="t('dashboard.formLocationPlaceholder')"
+        class="input-event w-full h-11 rounded-lg border bg-[#161a23] px-4 text-sm text-white placeholder-slate-500" />
+    </div>
+    <div class="space-y-1.5 md:col-span-2">
+      <label for="event-description" class="block text-sm font-medium text-white">{{ t('dashboard.formDescription') }}</label>
+      <textarea id="event-description" formControlName="description" rows="4"
+        [placeholder]="t('dashboard.formDescriptionPlaceholder')"
+        class="input-event w-full rounded-lg border bg-[#161a23] px-4 py-3 text-sm text-white placeholder-slate-500 resize-y min-h-[100px]"></textarea>
+    </div>
+    <div class="space-y-1.5">
+      <label for="event-start" class="block text-sm font-medium text-white">{{ t('dashboard.formStartDate') }}</label>
+      <input id="event-start" type="datetime-local" formControlName="start_date"
+        class="input-event w-full h-11 rounded-lg border bg-[#161a23] px-4 text-sm text-white" />
+      @if (form().get('start_date')?.invalid && form().get('start_date')?.touched) {
+        <p class="text-xs text-red-400">{{ t('dashboard.formErrorStartRequired') }}</p>
+      }
+    </div>
+    <div class="space-y-1.5">
+      <label for="event-end" class="block text-sm font-medium text-white">{{ t('dashboard.formEndDate') }}</label>
+      <input id="event-end" type="datetime-local" formControlName="end_date"
+        class="input-event w-full h-11 rounded-lg border bg-[#161a23] px-4 text-sm text-white" />
+      @if (form().get('end_date')?.invalid && form().get('end_date')?.touched) {
+        <p class="text-xs text-red-400">{{ t('dashboard.formErrorEndRequired') }}</p>
+      }
+    </div>
+  </div>
+</section>

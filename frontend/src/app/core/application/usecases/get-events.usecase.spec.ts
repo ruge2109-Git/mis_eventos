@@ -1,15 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { GetEventsUseCase } from './get-events.usecase';
-import { EventRepository } from '@core/domain/ports/event.repository';
-import { EventStore } from '@core/application/store/event.store';
+import { EventReader } from '@core/domain/ports/event-reader';
 import { Event } from '@core/domain/entities/event.entity';
 import { vi } from 'vitest';
 
 describe('GetEventsUseCase', () => {
   let useCase: GetEventsUseCase;
   let repositoryMock: { getAll: ReturnType<typeof vi.fn> };
-  let store: EventStore;
 
   const mockEvent: Event = {
     id: 1,
@@ -33,44 +31,38 @@ describe('GetEventsUseCase', () => {
     TestBed.configureTestingModule({
       providers: [
         GetEventsUseCase,
-        { provide: EventRepository, useValue: repositoryMock },
-        EventStore
+        { provide: EventReader, useValue: repositoryMock }
       ]
     });
 
     useCase = TestBed.inject(GetEventsUseCase);
-    store = TestBed.inject(EventStore);
   });
 
-  it('should fetch events and update store via setEvents', () => {
+  it('should return observable from repository.getAll', () => {
     repositoryMock.getAll.mockReturnValue(of({ items: [mockEvent], total: 1 }));
-    vi.spyOn(store, 'setEvents');
 
-    useCase.execute(0, 12, false).subscribe();
-
-    expect(repositoryMock.getAll).toHaveBeenCalledWith(0, 12);
-    expect(store.setEvents).toHaveBeenCalledWith([mockEvent], 1);
+    useCase.execute(0, 12).subscribe({
+      next: (response) => {
+        expect(repositoryMock.getAll).toHaveBeenCalledWith(0, 12);
+        expect(response.items).toEqual([mockEvent]);
+        expect(response.total).toBe(1);
+      }
+    });
   });
 
-  it('should fetch events and update store via appendEvents when append is true', () => {
-    repositoryMock.getAll.mockReturnValue(of({ items: [mockEvent], total: 2 }));
-    vi.spyOn(store, 'appendEvents');
-
-    useCase.execute(12, 12, true).subscribe();
-
-    expect(repositoryMock.getAll).toHaveBeenCalledWith(12, 12);
-    expect(store.appendEvents).toHaveBeenCalledWith([mockEvent], 2);
+  it('should call repository with skip and limit', () => {
+    repositoryMock.getAll.mockReturnValue(of({ items: [], total: 0 }));
+    useCase.execute(5, 20).subscribe();
+    expect(repositoryMock.getAll).toHaveBeenCalledWith(5, 20);
   });
 
-  it('should call setError in store when repository fails', () => {
-    const errorMessage = 'API Error';
-    // Simpler way with RxJS throwError
-    repositoryMock.getAll.mockReturnValue(throwError(() => ({ message: errorMessage })));
-    vi.spyOn(store, 'setError');
+  it('should propagate error from repository', () => {
+    const err = { message: 'API Error' };
+    repositoryMock.getAll.mockReturnValue(throwError(() => err));
 
     useCase.execute().subscribe({
-      error: () => {
-        expect(store.setError).toHaveBeenCalledWith(errorMessage);
+      error: (e) => {
+        expect(e).toEqual(err);
       }
     });
   });

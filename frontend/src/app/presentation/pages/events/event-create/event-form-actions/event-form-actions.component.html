@@ -1,0 +1,13 @@
+<div class="flex flex-col-reverse sm:flex-row gap-3 sm:justify-center pt-4" *transloco="let t">
+  <a [routerLink]="['/dashboard/organizer']"
+    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-white/20 text-slate-300 hover:bg-white/5 hover:text-white transition-colors text-sm font-medium cursor-pointer">
+    {{ t('dashboard.formDiscard') }}
+  </a>
+  <app-button type="submit" [disabled]="isLoading()" [loading]="isLoading()" size="md"
+    customClass="btn-primary cursor-pointer">
+    @if (!isLoading()) {
+      <span class="material-symbols-outlined text-lg mr-2">check_circle</span>
+    }
+    {{ isEditMode() ? t('btn.saveChanges') : t('dashboard.formSaveEvent') }}
+  </app-button>
+</div>

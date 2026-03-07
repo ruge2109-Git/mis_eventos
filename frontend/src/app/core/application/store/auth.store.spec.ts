@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { AuthStore } from './auth.store';
 import { AuthRepository } from '@core/domain/ports/auth.repository';
+import { AuthStorage } from '@core/domain/ports/auth-storage';
+import { LocalStorageAuthStorage } from '@infrastructure/storage/local-storage-auth.storage';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
@@ -20,7 +22,8 @@ describe('AuthStore', () => {
     };
     TestBed.configureTestingModule({
       providers: [
-        { provide: AuthRepository, useValue: mockAuthRepository }
+        { provide: AuthRepository, useValue: mockAuthRepository },
+        { provide: AuthStorage, useClass: LocalStorageAuthStorage }
       ]
     });
     store = TestBed.inject(AuthStore);

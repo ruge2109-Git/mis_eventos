@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { authInterceptor } from './auth.interceptor';
+import { AuthStorage } from '@core/domain/ports/auth-storage';
+import { LocalStorageAuthStorage } from '../storage/local-storage-auth.storage';
 
 describe('AuthInterceptor', () => {
   let httpMock: HttpTestingController;
@@ -15,7 +17,8 @@ describe('AuthInterceptor', () => {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([authInterceptor])),
-        provideHttpClientTesting()
+        provideHttpClientTesting(),
+        { provide: AuthStorage, useClass: LocalStorageAuthStorage }
       ]
     });
     httpMock = TestBed.inject(HttpTestingController);
@@ -33,7 +36,8 @@ describe('AuthInterceptor', () => {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([authInterceptor])),
-        provideHttpClientTesting()
+        provideHttpClientTesting(),
+        { provide: AuthStorage, useClass: LocalStorageAuthStorage }
       ]
     });
     httpMock = TestBed.inject(HttpTestingController);

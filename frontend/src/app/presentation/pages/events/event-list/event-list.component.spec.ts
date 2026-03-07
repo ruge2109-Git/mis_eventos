@@ -5,6 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { GetEventsUseCase } from '@core/application/usecases/get-events.usecase';
 import { EventStore } from '@core/application/store/event.store';
+import { LoadingContextService } from '@core/application/services/loading-context.service';
 import { Event } from '@core/domain/entities/event.entity';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
@@ -15,6 +16,7 @@ describe('EventListComponent', () => {
   let fixture: ComponentFixture<EventListComponent>;
   let getEventsUseCase: GetEventsUseCase;
   let store: EventStore;
+  let loadingContext: LoadingContextService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -34,7 +36,8 @@ describe('EventListComponent', () => {
             execute: vi.fn().mockReturnValue(of({ items: [], total: 0 }))
           }
         },
-        EventStore
+        EventStore,
+        LoadingContextService
       ]
     }).compileComponents();
 
@@ -42,6 +45,7 @@ describe('EventListComponent', () => {
     component = fixture.componentInstance;
     getEventsUseCase = TestBed.inject(GetEventsUseCase);
     store = TestBed.inject(EventStore);
+    loadingContext = TestBed.inject(LoadingContextService);
     fixture.detectChanges();
   });
 
@@ -53,13 +57,13 @@ describe('EventListComponent', () => {
     expect(getEventsUseCase.execute).toHaveBeenCalled();
   });
 
-  it('should call execute with append when onLoadMore is called', () => {
+  it('should call execute with next skip when onLoadMore is called', () => {
     store.setEvents([], 24);
     store.setPagination(0, 12);
 
     component.onLoadMore();
 
-    expect(getEventsUseCase.execute).toHaveBeenCalledWith(12, 12, true);
+    expect(getEventsUseCase.execute).toHaveBeenCalledWith(12, 12);
   });
 
   it('should show "Load More" button only if hasMore is true', () => {
@@ -80,17 +84,16 @@ describe('EventListComponent', () => {
     expect(searchBar).toBeTruthy();
   });
 
-  it('should show loading state when store.loading is true', () => {
-    store.setLoading(true);
+  it('should show loading state when events context loading is true', () => {
+    loadingContext.setLoading('events', true);
     fixture.detectChanges();
     const loadingEl = fixture.debugElement.query(By.css('.animate-spin'));
     expect(loadingEl).toBeTruthy();
   });
 
-  it('should show error state and retry button when store.error is set', () => {
-    store.setError('Error de red');
+  it('should show error state and retry button when events context error is set', () => {
+    loadingContext.setError('events', 'events.loadError');
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Error de red');
     const retryBtn = fixture.debugElement.query(By.css('app-button'));
     expect(retryBtn).toBeTruthy();
   });

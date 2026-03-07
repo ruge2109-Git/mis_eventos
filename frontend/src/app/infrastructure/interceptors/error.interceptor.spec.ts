@@ -2,9 +2,23 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
+import { TranslocoService } from '@jsverse/transloco';
 import { errorInterceptor } from './error.interceptor';
 import { EventStore } from '@core/application/store/event.store';
 import { AuthStore } from '@core/application/store/auth.store';
+import { LoadingContextService } from '@core/application/services/loading-context.service';
+import { ERROR_KEYS } from './error-handler.registry';
+import { vi } from 'vitest';
+
+const ERROR_MESSAGES_ES: Record<string, string> = {
+  [ERROR_KEYS.NETWORK]: 'No se pudo conectar con el servidor. Comprueba tu conexión a internet o que el servicio esté en marcha.',
+  [ERROR_KEYS.HTTP_400]: 'Solicitud incorrecta',
+  [ERROR_KEYS.HTTP_401]: 'Sesión expirada. Por favor, inicia sesión de nuevo',
+  [ERROR_KEYS.HTTP_404]: 'El recurso solicitado no existe',
+  [ERROR_KEYS.HTTP_409]: 'Conflicto: El recurso ya existe o hay un solapamiento',
+  [ERROR_KEYS.HTTP_422]: 'Solicitud incorrecta',
+  [ERROR_KEYS.HTTP_500]: 'Error interno del servidor. Por favor, inténtalo más tarde'
+};
 
 describe('ErrorInterceptor', () => {
   let httpMock: HttpTestingController;
@@ -23,12 +37,27 @@ describe('ErrorInterceptor', () => {
           useValue: { setError: vi.fn() }
         },
         {
+          provide: LoadingContextService,
+          useValue: {
+            setError: vi.fn(),
+            setLoading: vi.fn(),
+            loadingFor: () => () => false,
+            errorFor: () => () => null
+          }
+        },
+        {
           provide: AuthStore,
           useValue: authStore
         },
         {
           provide: Router,
           useValue: { navigate: vi.fn() }
+        },
+        {
+          provide: TranslocoService,
+          useValue: {
+            translate: (key: string) => ERROR_MESSAGES_ES[key] ?? key
+          }
         }
       ]
     });

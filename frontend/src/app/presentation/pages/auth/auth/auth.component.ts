@@ -1,12 +1,14 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { DynamicFormComponent } from '@components/dynamic-form/dynamic-form.component';
 import { FieldConfig } from '@components/dynamic-form/field-config';
 import { AuthStore } from '@core/application/store/auth.store';
 import { ToastService } from '@core/application/services/toast.service';
-import { TranslocoModule } from '@jsverse/transloco';
+import { canAccessOrganizerDashboard, USER_ROLE_OPTIONS_REGISTER } from '@core/domain/constants/user-role';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-auth',
@@ -15,11 +17,13 @@ import { TranslocoModule } from '@jsverse/transloco';
   templateUrl: './auth.component.html',
   styleUrl: './auth.component.scss' // Optional, can be empty
 })
-export class AuthComponent implements OnInit {
+export class AuthComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   authStore = inject(AuthStore);
   private toast = inject(ToastService);
+  private transloco = inject(TranslocoService);
+  private routeSub?: Subscription;
 
   mode: 'login' | 'register' = 'login';
   fields: FieldConfig[] = [];
@@ -63,13 +67,10 @@ export class AuthComponent implements OnInit {
   private registerFields: FieldConfig[] = [
     {
       name: 'role',
-      label: '', 
+      label: '',
       type: 'radio-group',
       required: true,
-      options: [
-        { label: 'Asistente', value: 'Attendee', icon: 'person' },
-        { label: 'Organizador', value: 'Organizer', icon: 'business_center' }
-      ],
+      options: USER_ROLE_OPTIONS_REGISTER,
       errorMessages: {
         required: 'Debe seleccionar un perfil'
       }
@@ -141,11 +142,15 @@ export class AuthComponent implements OnInit {
   ];
 
   ngOnInit() {
-    this.route.url.subscribe(segments => {
+    this.routeSub = this.route.url.subscribe(segments => {
       this.mode = segments[0]?.path === 'register' ? 'register' : 'login';
       this.authStore.clearError();
       this.setFields();
     });
+  }
+
+  ngOnDestroy() {
+    this.routeSub?.unsubscribe();
   }
 
   setFields() {
@@ -162,9 +167,8 @@ export class AuthComponent implements OnInit {
     if (this.mode === 'login') {
       this.authStore.login(data.email, data.password).subscribe({
         next: () => {
-          this.toast.success('Sesión iniciada');
-          const role = this.authStore.userRole();
-          if (role === 'Organizer' || role === 'Admin') {
+          this.toast.success(this.transloco.translate('auth.toastSessionStarted'));
+          if (canAccessOrganizerDashboard(this.authStore.userRole())) {
             this.router.navigate(['/dashboard/organizer']);
           } else {
             this.router.navigate(['/']);
@@ -179,7 +183,7 @@ export class AuthComponent implements OnInit {
         data.role ?? ''
       ).subscribe({
         next: () => {
-          this.toast.success('Cuenta creada. Ya puedes iniciar sesión.');
+          this.toast.success(this.transloco.translate('auth.toastAccountCreated'));
           this.router.navigate(['/auth/login']);
         }
       });

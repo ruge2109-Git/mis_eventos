@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { AuthRepository } from '@core/domain/ports/auth.repository';
+import { AuthStorage } from '@core/domain/ports/auth-storage';
 import { AuthResponse, RegisterResponse } from '@core/domain/entities/auth.entity';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -13,21 +14,26 @@ export interface AuthState {
   error: string | null;
 }
 
-const initialState: AuthState = {
-  isAuthenticated: !!localStorage.getItem('access_token'),
-  accessToken: localStorage.getItem('access_token'),
-  userId: localStorage.getItem('user_id') ? Number(localStorage.getItem('user_id')) : null,
-  role: localStorage.getItem('user_role'),
-  loading: false,
-  error: null,
-};
-
 @Injectable({
   providedIn: 'root',
 })
 export class AuthStore {
   private authRepository = inject(AuthRepository);
-  private state = signal<AuthState>(initialState);
+  private storage = inject(AuthStorage);
+  private state = signal<AuthState>(this.getInitialState());
+
+  private getInitialState(): AuthState {
+    const token = this.storage.getToken();
+    const userIdStr = this.storage.getUserId();
+    return {
+      isAuthenticated: !!token,
+      accessToken: token,
+      userId: userIdStr ? Number(userIdStr) : null,
+      role: this.storage.getRole(),
+      loading: false,
+      error: null
+    };
+  }
 
   readonly isAuthenticated = computed(() => this.state().isAuthenticated);
   readonly userRole = computed(() => this.state().role);
@@ -39,9 +45,9 @@ export class AuthStore {
     return this.authRepository.login(email, password).pipe(
       tap({
         next: (res) => {
-          localStorage.setItem('access_token', res.access_token);
-          localStorage.setItem('user_id', res.user_id.toString());
-          localStorage.setItem('user_role', res.role);
+          this.storage.setToken(res.access_token);
+          this.storage.setUserId(res.user_id.toString());
+          this.storage.setRole(res.role);
           this.state.update((s) => ({
             ...s,
             isAuthenticated: true,
@@ -74,9 +80,7 @@ export class AuthStore {
   }
 
   logout(): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('user_role');
+    this.storage.clear();
     this.state.set({
       isAuthenticated: false,
       accessToken: null,

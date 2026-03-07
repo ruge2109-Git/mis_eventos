@@ -5,26 +5,14 @@ import { map } from 'rxjs/operators';
 import { environment } from '@environments/environment';
 import { Event, CreateEventDTO, UpdateEventDTO } from '@core/domain/entities/event.entity';
 import { EventRepository } from '@core/domain/ports/event.repository';
-
-interface EventResponse {
-  id: number;
-  title: string;
-  description: string | null;
-  capacity: number;
-  status: 'PUBLISHED' | 'DRAFT' | 'CANCELLED';
-  location: string | null;
-  image_url: string | null;
-  additional_images?: string[];
-  start_date: string;
-  end_date: string;
-  organizer_id: number;
-}
+import { EventApiMapper } from './mappers/event-api.mapper';
+import type { EventResponse } from './mappers/event-api.mapper';
 
 interface PaginatedResponse<T> {
   items: T[];
   total: number;
-  page: number;
-  size: number;
+  skip: number;
+  limit: number;
 }
 
 @Injectable({
@@ -33,13 +21,14 @@ interface PaginatedResponse<T> {
 export class EventApiRepository extends EventRepository {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/events/`;
+  private mapper = new EventApiMapper(environment.apiUrl);
 
   getAll(skip = 0, limit = 12): Observable<{ items: Event[], total: number }> {
     return this.http.get<PaginatedResponse<EventResponse>>(this.apiUrl, {
       params: { skip, limit }
     }).pipe(
       map(response => ({
-        items: response.items.map(res => this.mapToEntity(res)),
+        items: response.items.map(res => this.mapper.mapResponseToEntity(res)),
         total: response.total
       }))
     );
@@ -50,7 +39,7 @@ export class EventApiRepository extends EventRepository {
     if (search != null && search !== '') params['search'] = search;
     return this.http.get<PaginatedResponse<EventResponse>>(`${this.apiUrl}mine`, { params }).pipe(
       map(response => ({
-        items: response.items.map(res => this.mapToEntity(res)),
+        items: response.items.map(res => this.mapper.mapResponseToEntity(res)),
         total: response.total
       }))
     );
@@ -58,7 +47,7 @@ export class EventApiRepository extends EventRepository {
 
   getById(id: number): Observable<Event> {
     return this.http.get<EventResponse>(`${this.apiUrl}${id}`).pipe(
-      map(res => this.mapToEntity(res))
+      map(res => this.mapper.mapResponseToEntity(res))
     );
   }
 
@@ -72,7 +61,7 @@ export class EventApiRepository extends EventRepository {
       description: event.description ?? undefined
     };
     return this.http.post<EventResponse>(this.apiUrl, body).pipe(
-      map(res => this.mapToEntity(res))
+      map(res => this.mapper.mapResponseToEntity(res))
     );
   }
 
@@ -86,7 +75,7 @@ export class EventApiRepository extends EventRepository {
     if (event.description !== undefined) body['description'] = event.description;
     if (event.additionalImages !== undefined) body['additional_images'] = event.additionalImages;
     return this.http.patch<EventResponse>(`${this.apiUrl}${id}`, body).pipe(
-      map(res => this.mapToEntity(res))
+      map(res => this.mapper.mapResponseToEntity(res))
     );
   }
 
@@ -96,19 +85,19 @@ export class EventApiRepository extends EventRepository {
 
   publish(id: number): Observable<Event> {
     return this.http.post<EventResponse>(`${this.apiUrl}${id}/publish`, {}).pipe(
-      map(res => this.mapToEntity(res))
+      map(res => this.mapper.mapResponseToEntity(res))
     );
   }
 
   cancel(id: number): Observable<Event> {
     return this.http.post<EventResponse>(`${this.apiUrl}${id}/cancel`, {}).pipe(
-      map(res => this.mapToEntity(res))
+      map(res => this.mapper.mapResponseToEntity(res))
     );
   }
 
   revertToDraft(id: number): Observable<Event> {
     return this.http.post<EventResponse>(`${this.apiUrl}${id}/revert-to-draft`, {}).pipe(
-      map(res => this.mapToEntity(res))
+      map(res => this.mapper.mapResponseToEntity(res))
     );
   }
 
@@ -116,7 +105,7 @@ export class EventApiRepository extends EventRepository {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<EventResponse>(`${this.apiUrl}${eventId}/image`, formData).pipe(
-      map(res => this.mapToEntity(res))
+      map(res => this.mapper.mapResponseToEntity(res))
     );
   }
 
@@ -124,28 +113,8 @@ export class EventApiRepository extends EventRepository {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<EventResponse>(`${this.apiUrl}${eventId}/additional-images`, formData).pipe(
-      map(res => this.mapToEntity(res))
+      map(res => this.mapper.mapResponseToEntity(res))
     );
   }
 
-  private mapToEntity(res: EventResponse): Event {
-    const additionalImages = (res.additional_images ?? []).map(
-      url => (url.startsWith('http') ? url : `${environment.apiUrl}${url}`)
-    );
-    return {
-      id: res.id,
-      title: res.title,
-      description: res.description,
-      startDate: new Date(res.start_date),
-      endDate: new Date(res.end_date),
-      location: res.location,
-      imageUrl: res.image_url ? `${environment.apiUrl}${res.image_url}` : null,
-      additionalImages,
-      capacity: res.capacity,
-      status: res.status as Event['status'],
-      organizerId: res.organizer_id,
-      category: 'General',
-      isFeatured: res.id % 5 === 0
-    };
-  }
 }

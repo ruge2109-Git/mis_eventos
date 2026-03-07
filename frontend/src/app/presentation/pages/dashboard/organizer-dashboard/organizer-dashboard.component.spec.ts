@@ -6,6 +6,7 @@ import { EventStore } from '@core/application/store/event.store';
 import { GetOrganizerEventsUseCase } from '@core/application/usecases/get-organizer-events.usecase';
 import { EventRepository } from '@core/domain/ports/event.repository';
 import { ToastService } from '@core/application/services/toast.service';
+import { LoadingContextService } from '@core/application/services/loading-context.service';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { vi } from 'vitest';
@@ -39,6 +40,7 @@ describe('OrganizerDashboardComponent', () => {
         provideRouter([]),
         provideTransloco({ config: { availableLangs: ['es', 'en'], defaultLang: 'es' } }),
         EventStore,
+        LoadingContextService,
         ToastService,
         {
           provide: GetOrganizerEventsUseCase,
@@ -93,16 +95,17 @@ describe('OrganizerDashboardComponent', () => {
     expect(statCards.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('should show loading state when store is loading', () => {
-    store.setLoading(true);
+  it('should show loading state when events context is loading', () => {
+    const loadingContext = TestBed.inject(LoadingContextService);
+    loadingContext.setLoading('events', true);
     fixture.detectChanges();
     expect(fixture.debugElement.query(By.css('.animate-spin'))).toBeTruthy();
   });
 
-  it('should show error and retry when store has error', () => {
-    store.setError('Error de red');
+  it('should show error and retry when events context has error', () => {
+    const loadingContext = TestBed.inject(LoadingContextService);
+    loadingContext.setError('events', 'events.loadError');
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Error de red');
     const retryBtn = fixture.debugElement.query(By.css('app-button'));
     expect(retryBtn).toBeTruthy();
   });
@@ -205,12 +208,13 @@ describe('OrganizerDashboardComponent', () => {
     expect(eventRepository.delete).not.toHaveBeenCalled();
   });
 
-  it('loadEvents with append should update pagination and call use case with append true', () => {
+  it('loadEvents with append should call use case and update store on success', () => {
     store.setPagination(10, 10);
     vi.mocked(getOrganizerEventsUseCase.execute).mockClear();
+    vi.mocked(getOrganizerEventsUseCase.execute).mockReturnValue(of({ items: [mockEvent], total: 30 }));
     component.loadEvents(true);
+    expect(getOrganizerEventsUseCase.execute).toHaveBeenCalledWith(20, 10);
     expect(store.pagination().skip).toBe(20);
-    expect(getOrganizerEventsUseCase.execute).toHaveBeenCalledWith(20, 10, undefined, true);
   });
 
   it('should show confirm modal when showDeleteConfirm is true', () => {

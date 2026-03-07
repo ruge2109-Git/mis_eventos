@@ -1,4 +1,5 @@
-import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, ValidationErrors } from '@angular/forms';
 import { FieldConfig } from './field-config';
@@ -10,7 +11,7 @@ import { RouterModule } from '@angular/router';
   templateUrl: './dynamic-form.component.html',
   styleUrl: './dynamic-form.component.scss'
 })
-export class DynamicFormComponent implements OnInit {
+export class DynamicFormComponent implements OnInit, OnChanges {
   @Input() fields: FieldConfig[] = [];
   @Input() submitLabel = 'Submit';
   @Input() isLoading = false;
@@ -21,9 +22,17 @@ export class DynamicFormComponent implements OnInit {
   showPasswordMap = new Map<string, boolean>();
   private filePreviewUrls = new Map<string, string>();
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
 
   constructor() {
     this.form = this.fb.group({});
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['fields'] && !changes['fields'].firstChange && this.fields?.length !== undefined) {
+      this.form = this.createControl();
+      this.applyCrossFieldValidators();
+    }
   }
 
   ngOnInit() {
@@ -72,7 +81,9 @@ export class DynamicFormComponent implements OnInit {
 
       control.addValidators(mustMatchValidator);
       control.updateValueAndValidity();
-      otherControl.valueChanges.subscribe(() => control.updateValueAndValidity());
+      otherControl.valueChanges
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => control.updateValueAndValidity());
     });
   }
 

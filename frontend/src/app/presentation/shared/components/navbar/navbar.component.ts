@@ -1,7 +1,7 @@
 import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { AvatarComponent } from '@shared/components/avatar/avatar.component';
 import { ButtonComponent } from '@shared/components/button/button.component';
 import { AuthStore } from '@core/application/store/auth.store';
@@ -18,6 +18,8 @@ export class NavbarComponent {
   authStore = inject(AuthStore);
   router = inject(Router);
   private toast = inject(ToastService);
+  private transloco = inject(TranslocoService);
+
   isMobileMenuOpen = signal(false);
 
   toggleMenu() {
@@ -26,7 +28,7 @@ export class NavbarComponent {
 
   logout() {
     this.authStore.logout();
-    this.toast.success('Sesión cerrada');
+    this.toast.success(this.transloco.translate('auth.toastSessionClosed'));
     this.router.navigate(['/auth/login']);
   }
 }

@@ -1,30 +1,15 @@
 import { Injectable, inject } from '@angular/core';
-import { EventRepository } from '@core/domain/ports/event.repository';
-import { EventStore } from '@core/application/store/event.store';
-import { finalize, tap } from 'rxjs/operators';
+import { Event } from '@core/domain/entities/event.entity';
+import { EventReader } from '@core/domain/ports/event-reader';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class GetEventsUseCase {
-  private repository = inject(EventRepository);
-  private store = inject(EventStore);
+  private repository = inject(EventReader);
 
-  execute(skip = 0, limit = 12, append = false) {
-    this.store.setLoading(true);
-    
-    return this.repository.getAll(skip, limit).pipe(
-      tap({
-        next: (response) => {
-          if (append) {
-            this.store.appendEvents(response.items, response.total);
-          } else {
-            this.store.setEvents(response.items, response.total);
-          }
-        },
-        error: (err) => this.store.setError(err.message || 'Error fetching events')
-      }),
-      finalize(() => this.store.setLoading(false))
-    );
+  execute(skip = 0, limit = 12): Observable<{ items: Event[]; total: number }> {
+    return this.repository.getAll(skip, limit);
   }
 }

@@ -43,8 +43,8 @@ describe('EventApiRepository', () => {
         }
       ],
       total: 100,
-      page: 1,
-      size: 1
+      skip: 0,
+      limit: 10
     };
 
     repository.getAll(0, 10).subscribe(result => {
@@ -145,8 +145,8 @@ describe('EventApiRepository', () => {
     const mockResponse = {
       items: [{ id: 2, title: 'My Event', description: null, capacity: 5, status: 'DRAFT', location: null, image_url: null, start_date: '2026-01-01T00:00:00Z', end_date: '2026-01-01T01:00:00Z', organizer_id: 1 }],
       total: 1,
-      page: 1,
-      size: 12
+      skip: 0,
+      limit: 12
     };
 
     repository.getMine(0, 12).subscribe(result => {
@@ -274,6 +274,6 @@ describe('EventApiRepository', () => {
     const req = httpMock.expectOne(r => r.url.includes('/events/mine') && r.params.get('search') === 'conference');
     expect(req.request.params.get('skip')).toBe('0');
     expect(req.request.params.get('limit')).toBe('12');
-    req.flush({ items: [], total: 0, page: 1, size: 12 });
+    req.flush({ items: [], total: 0, skip: 0, limit: 12 });
   });
 });

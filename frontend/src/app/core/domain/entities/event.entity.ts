@@ -12,6 +12,7 @@ export interface Event {
   organizerId: number;
   category?: string;
   isFeatured?: boolean;
+  warning?: string;
 }
 
 export type CreateEventDTO = Omit<Event, 'id' | 'status' | 'organizerId'>;

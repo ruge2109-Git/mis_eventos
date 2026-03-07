@@ -3,7 +3,7 @@ import { AuthComponent } from './auth.component';
 import { Router, ActivatedRoute, UrlSegment } from '@angular/router';
 import { AuthStore } from '@core/application/store/auth.store';
 import { ToastService } from '@core/application/services/toast.service';
-import { provideTransloco } from '@jsverse/transloco';
+import { provideTransloco, TranslocoService } from '@jsverse/transloco';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
@@ -134,10 +134,11 @@ describe('AuthComponent', () => {
   });
 
   it('should call toast.success with session message on successful login', () => {
+    const transloco = TestBed.inject(TranslocoService);
     component.mode = 'login';
     component.setFields();
     component.onSubmit({ email: 'u@u.com', password: 'Pass1!' });
-    expect(mockToastService.success).toHaveBeenCalledWith('Sesión iniciada');
+    expect(mockToastService.success).toHaveBeenCalledWith(transloco.translate('auth.toastSessionStarted'));
   });
 
   it('should call clearError and authStore.register on submit in register mode', () => {
@@ -186,7 +187,8 @@ describe('AuthComponent', () => {
       role: 'Organizer',
       terms: true
     });
-    expect(mockToastService.success).toHaveBeenCalledWith('Cuenta creada. Ya puedes iniciar sesión.');
+    const transloco = TestBed.inject(TranslocoService);
+    expect(mockToastService.success).toHaveBeenCalledWith(transloco.translate('auth.toastAccountCreated'));
   });
 
   it('should render app-dynamic-form', () => {

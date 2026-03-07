@@ -1,0 +1,17 @@
+@if (imageUrl()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+    (click)="close.emit()" (keydown.escape)="close.emit()" tabindex="0"
+    role="dialog" aria-modal="true" aria-label="Vista previa de imagen" *transloco="let t">
+    <div class="relative max-w-[90vw] max-h-[90vh] w-full h-full flex items-center justify-center"
+      (click)="$event.stopPropagation()" (keydown.escape)="$event.stopPropagation()" tabindex="0">
+      <app-button type="button" size="icon" variant="ghost"
+        customClass="absolute -top-12 right-0 p-2 rounded-full text-white hover:bg-white/10 cursor-pointer z-10"
+        [attr.aria-label]="t('dashboard.formClosePreview')" (clicked)="close.emit()">
+        <span class="material-symbols-outlined text-3xl">close</span>
+      </app-button>
+      <div class="max-w-full max-h-[85vh] w-full h-[85vh] rounded-lg overflow-hidden bg-[#161a23]">
+        <app-img-with-loader [src]="imageUrl()!" alt="Vista previa" objectFit="contain" />
+      </div>
+    </div>
+  </div>
+}

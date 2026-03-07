@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { AvatarComponent } from '@shared/components/avatar/avatar.component';
 import { AuthStore } from '@core/application/store/auth.store';
 import { ToastService } from '@core/application/services/toast.service';
@@ -24,6 +24,7 @@ export class OrganizerLayoutComponent {
   private authStore = inject(AuthStore);
   private toast = inject(ToastService);
   private router = inject(Router);
+  private transloco = inject(TranslocoService);
 
   sidebarOpen = false;
 
@@ -37,7 +38,7 @@ export class OrganizerLayoutComponent {
 
   logout() {
     this.authStore.logout();
-    this.toast.success('Sesión cerrada');
+    this.toast.success(this.transloco.translate('auth.toastSessionClosed'));
     this.router.navigate(['/auth/login']);
   }
 }

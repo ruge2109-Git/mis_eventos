@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthStore } from '@core/application/store/auth.store';
+import { canAccessOrganizerDashboard } from '@core/domain/constants/user-role';
 
 export const organizerGuard: CanActivateFn = () => {
   const authStore = inject(AuthStore);
@@ -11,8 +12,7 @@ export const organizerGuard: CanActivateFn = () => {
     return false;
   }
 
-  const role = authStore.userRole();
-  if (role !== 'Organizer' && role !== 'Admin') {
+  if (!canAccessOrganizerDashboard(authStore.userRole())) {
     router.navigate(['/']);
     return false;
   }

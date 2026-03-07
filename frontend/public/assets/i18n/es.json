@@ -15,6 +15,7 @@
     "rights": "© 2026 MisEventos."
   },
   "events": {
+    "loadError": "Error al cargar los eventos.",
     "loading": "Cargando...",
     "noResults": "No se encontraron eventos para \"{{query}}\"",
     "noEvents": "No hay eventos disponibles en este momento.",
@@ -138,7 +139,8 @@
     "toastEventCancelled": "Evento cancelado correctamente",
     "toastCancelError": "Error al cancelar el evento",
     "toastRevertedToDraft": "Evento pasado a borrador. Ya puedes publicarlo de nuevo.",
-    "toastRevertError": "Error al volver a borrador"
+    "toastRevertError": "Error al volver a borrador",
+    "eventsLoadError": "Error al cargar tus eventos."
   },
   "calendar": {
     "title": "Calendario",
@@ -158,7 +160,32 @@
     "prevEvent": "Evento anterior",
     "nextEvent": "Evento siguiente"
   },
+  "errors": {
+    "network": "No se pudo conectar con el servidor. Comprueba tu conexión a internet o que el servicio esté en marcha.",
+    "unexpected": "Ha ocurrido un error inesperado",
+    "http": {
+      "400": "Solicitud incorrecta",
+      "401": "Sesión expirada. Por favor, inicia sesión de nuevo",
+      "404": "El recurso solicitado no existe",
+      "409": "Conflicto: El recurso ya existe o hay un solapamiento",
+      "422": "Solicitud incorrecta",
+      "500": "Error interno del servidor. Por favor, inténtalo más tarde"
+    },
+    "auth": {
+      "invalidCredentials": "Credenciales inválidas.",
+      "couldNotValidate": "Sesión expirada o token inválido. Inicia sesión de nuevo.",
+      "emailAlreadyRegistered": "Este correo ya está registrado.",
+      "adminRegistrationNotAllowed": "No se permite el registro como administrador.",
+      "passwordUppercase": "La contraseña debe incluir al menos una mayúscula.",
+      "passwordLowercase": "La contraseña debe incluir al menos una minúscula.",
+      "passwordNumber": "La contraseña debe incluir al menos un número.",
+      "passwordSpecial": "La contraseña debe incluir al menos un carácter especial."
+    }
+  },
   "auth": {
+    "toastSessionClosed": "Sesión cerrada",
+    "toastSessionStarted": "Sesión iniciada",
+    "toastAccountCreated": "Cuenta creada. Ya puedes iniciar sesión.",
     "loginTitle": "Acceso al portal",
     "loginSubtitle": "Ingresa tus credenciales para continuar.",
     "registerTitle": "Crea tu cuenta",
