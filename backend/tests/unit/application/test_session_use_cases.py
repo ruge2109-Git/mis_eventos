@@ -24,7 +24,7 @@ class TestSessionUseCases:
         mock_repos["event_repo"].get_by_id.return_value = None
         new_session = Session(
             title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(),
-            speaker="Sp", capacity=10, event_id=1
+            speaker="Sp", event_id=1
         )
         with pytest.raises(ResourceNotFoundError):
             use_cases.create_session(new_session)
@@ -36,7 +36,7 @@ class TestSessionUseCases:
         
         new_session = Session(
             title="S", start_time=now - timedelta(hours=1), end_time=now + timedelta(hours=1),
-            speaker="Sp", capacity=10, event_id=1
+            speaker="Sp", event_id=1
         )
         with pytest.raises(InvalidEventStateError, match="Session must be within event dates"):
             use_cases.create_session(new_session)
@@ -48,7 +48,7 @@ class TestSessionUseCases:
         
         new_session = Session(
             title="S", start_time=now + timedelta(hours=2), end_time=now + timedelta(hours=1),
-            speaker="Sp", capacity=10, event_id=1
+            speaker="Sp", event_id=1
         )
         with pytest.raises(InvalidEventStateError, match="Session end time must be after start time"):
             use_cases.create_session(new_session)
@@ -60,13 +60,13 @@ class TestSessionUseCases:
         
         new_session = Session(
             title="S2", start_time=now, end_time=now + timedelta(hours=1),
-            speaker="Sp", capacity=10, event_id=1, id=None
+            speaker="Sp", event_id=1, id=None
         )
         
         mock_repos["session_repo"].list_by_event.return_value = [
             Session(
                 title="S1", start_time=now, end_time=now + timedelta(hours=1),
-                speaker="Sp1", capacity=10, event_id=1, id=99
+                speaker="Sp1", event_id=1, id=99
             )
         ]
         
@@ -82,7 +82,7 @@ class TestSessionUseCases:
         # Updating an existing session (same ID)
         session = Session(
             title="S1 Updated", start_time=now, end_time=now + timedelta(hours=1),
-            speaker="Sp1", capacity=10, event_id=1, id=99
+            speaker="Sp1", event_id=1, id=99
         )
         
         # Existing sessions list includes the same session

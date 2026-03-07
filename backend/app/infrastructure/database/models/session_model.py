@@ -18,7 +18,6 @@ class SessionModel(SQLModel, table=True):
     start_time: datetime
     end_time: datetime
     speaker: str
-    capacity: int
     event_id: int = Field(foreign_key="events.id")
 
     event: "EventModel" = Relationship(back_populates="sessions")
@@ -32,7 +31,6 @@ class SessionModel(SQLModel, table=True):
             start_time=self.start_time,
             end_time=self.end_time,
             speaker=self.speaker,
-            capacity=self.capacity,
             event_id=self.event_id,
         )
 
@@ -45,6 +43,5 @@ class SessionModel(SQLModel, table=True):
             start_time=session.start_time,
             end_time=session.end_time,
             speaker=session.speaker,
-            capacity=session.capacity,
             event_id=session.event_id,
         )

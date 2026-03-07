@@ -16,7 +16,6 @@ class SessionController:
         start_time: datetime,
         end_time: datetime,
         speaker: str,
-        capacity: int,
         event_id: int,
         description: str | None,
     ):
@@ -26,7 +25,6 @@ class SessionController:
                 start_time=start_time,
                 end_time=end_time,
                 speaker=speaker,
-                capacity=capacity,
                 event_id=event_id,
                 description=description,
             )

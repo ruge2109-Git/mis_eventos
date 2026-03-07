@@ -27,6 +27,16 @@ router = APIRouter(
 )
 
 
+class EventUpdateRequest(BaseModel):
+    title: str | None = Field(None, min_length=3, max_length=100)
+    capacity: int | None = Field(None, gt=0)
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    location: str | None = None
+    description: str | None = None
+    additional_images: list[str] | None = None
+
+
 class EventCreateRequest(BaseModel):
     title: str = Field(
         ...,
@@ -74,6 +84,10 @@ class EventResponse(BaseModel):
         None, description="Physical location or link for the event"
     )
     image_url: str | None = Field(None, description="URL pointing to the cover image")
+    additional_images: list[str] = Field(
+        default_factory=list,
+        description="List of URLs for additional event images",
+    )
     start_date: datetime = Field(..., description="Start date and time of the event")
     end_date: datetime = Field(..., description="End date and time of the event")
     organizer_id: int = Field(
@@ -158,6 +172,25 @@ def upload_event_image(
     return controller.upload_image(event_id, file)
 
 
+@router.post(
+    "/{event_id}/additional-images",
+    response_model=EventResponse,
+    summary="Upload additional event image",
+    description="Uploads an image and appends its URL to the event's additional_images. Requires Organizer.",
+    responses={
+        403: {"model": ErrorResponse, "description": "Forbidden: User is not an Organizer."},
+        404: {"model": ErrorResponse, "description": "Not Found: Event does not exist."},
+    },
+)
+def upload_event_additional_image(
+    event_id: int,
+    file: UploadFile = File(...),
+    controller: EventController = Depends(get_event_controller),
+    current_user: User = Depends(RequireOrganizer),
+):
+    return controller.upload_additional_image(event_id, file)
+
+
 @router.get(
     "/",
     response_model=PaginatedEventResponse,
@@ -226,6 +259,33 @@ def get_event(
     if not event:
         raise ResourceNotFoundError(f"Event with ID {event_id} not found")
     return event
+
+
+@router.patch(
+    "/{event_id}",
+    response_model=EventResponse,
+    summary="Update event",
+    description="Updates event details. Requires Organizer/Admin.",
+    responses={
+        404: {"model": ErrorResponse, "description": "Not Found: Event does not exist."},
+    },
+)
+def update_event(
+    event_id: int,
+    body: EventUpdateRequest,
+    controller: EventController = Depends(get_event_controller),
+    current_user: User = Depends(RequireOrganizer),
+):
+    return controller.update_event(
+        event_id,
+        title=body.title,
+        capacity=body.capacity,
+        start_date=body.start_date,
+        end_date=body.end_date,
+        location=body.location,
+        description=body.description,
+        additional_images=body.additional_images,
+    )
 
 
 @router.post(

@@ -54,7 +54,7 @@ class TestRegistrationUseCases:
             title="T", capacity=10, start_date=datetime.utcnow(), 
             end_date=datetime.utcnow(), organizer_id=2, status=EventStatus.DRAFT, id=10
         )
-        with pytest.raises(InvalidEventStateError, match="Cannot register for an event in 'Draft' state"):
+        with pytest.raises(InvalidEventStateError, match=r"Cannot register for an event in .+ state\. It must be Published\."):
             use_cases.register_to_event(user_id=1, event_id=10)
 
     def test_register_already_registered(self, use_cases, mock_repos):

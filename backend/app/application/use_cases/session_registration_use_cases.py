@@ -6,7 +6,6 @@ from app.domain.entities.session_registration import SessionRegistration
 from app.domain.entities.user import UserRole
 from app.domain.exceptions import (
     AuthorizationError,
-    EventCapacityExceededError,
     ResourceAlreadyExistsError,
     ResourceNotFoundError,
 )
@@ -50,12 +49,7 @@ class SessionRegistrationUseCases:
         if self.session_reg_repo.get_by_user_and_session(user_id, session_id):
             raise ResourceAlreadyExistsError("You are already registered for this session")
 
-        # 5. Check capacity
-        current_regs = self.session_reg_repo.list_by_session(session_id)
-        if len(current_regs) >= session.capacity:
-            raise EventCapacityExceededError("This session has no more available spots")
-
-        # 6. Save
+        # 5. Save
         new_reg = SessionRegistration(user_id=user_id, session_id=session_id)
         return self.session_reg_repo.save(new_reg)
 

@@ -24,7 +24,6 @@ class SessionCreateRequest(BaseModel):
     start_time: datetime = Field(..., description="Start date and time of the session", examples=["2026-05-10T10:00:00Z"])
     end_time: datetime = Field(..., description="End date and time of the session", examples=["2026-05-10T11:00:00Z"])
     speaker: str = Field(..., description="Name of the person giving the session", examples=["Jane Smith"])
-    capacity: int = Field(..., gt=0, description="Maximum number of attendees allowed for this specific session", examples=[100])
     event_id: int = Field(..., description="The ID of the parent event this session belongs to", examples=[1])
     description: str | None = Field(None, description="Detailed description of what the session is about")
 
@@ -36,7 +35,6 @@ class SessionResponse(BaseModel):
     start_time: datetime = Field(..., description="Start date and time of the session")
     end_time: datetime = Field(..., description="End date and time of the session")
     speaker: str = Field(..., description="Name of the person giving the session")
-    capacity: int = Field(..., description="Maximum number of attendees allowed for this specific session")
     event_id: int = Field(..., description="The ID of the parent event this session belongs to")
 
 
@@ -66,7 +64,6 @@ def create_session(
         start_time=session_data.start_time,
         end_time=session_data.end_time,
         speaker=session_data.speaker,
-        capacity=session_data.capacity,
         event_id=session_data.event_id,
         description=session_data.description,
     )

@@ -8,7 +8,6 @@ class Session:
     start_time: datetime
     end_time: datetime
     speaker: str
-    capacity: int
     event_id: int
     description: str | None = None
     id: int | None = None

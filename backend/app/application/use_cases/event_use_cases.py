@@ -152,14 +152,76 @@ class EventUseCases:
 
         return events, total
 
+    def update_event(
+        self,
+        event_id: int,
+        *,
+        title: str | None = None,
+        capacity: int | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        location: str | None = None,
+        description: str | None = None,
+        additional_images: list[str] | None = None,
+    ) -> Event:
+        event = self.event_repo.get_by_id(event_id)
+        if not event:
+            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
+
+        if title is not None:
+            event.title = title
+        if capacity is not None:
+            event.capacity = capacity
+        if start_date is not None:
+            event.start_date = start_date
+        if end_date is not None:
+            event.end_date = end_date
+        if location is not None:
+            event.location = location
+        if description is not None:
+            event.description = description
+        if additional_images is not None:
+            event.additional_images = list(additional_images)
+
+        self._validate_event_dates(event.start_date, event.end_date)
+        self._check_overlaps(
+            event.start_date, event.end_date, event.location, exclude_id=event_id
+        )
+
+        updated = self.event_repo.save(event)
+        if self.cache:
+            self.cache.delete("events_paginated_list")
+            self.cache.delete(f"event_{event_id}")
+        return updated
+
+    def add_event_additional_image(self, event_id: int, file: UploadFile) -> Event:
+        event = self.event_repo.get_by_id(event_id)
+        if not event:
+            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
+        if not self.storage:
+            raise Exception("Storage service not configured")
+        image_url = self.storage.save_image(file, folder="events")
+        event.additional_images = list(event.additional_images) + [image_url]
+        updated = self.event_repo.save(event)
+        if self.cache:
+            self.cache.delete("events_paginated_list")
+            self.cache.delete(f"event_{event_id}")
+        return updated
+
     def _validate_event_dates(self, start_date: datetime, end_date: datetime):
         if end_date <= start_date:
             raise InvalidEventStateError("The end date must be after the start date")
 
     def _check_overlaps(
-        self, start_date: datetime, end_date: datetime, location: str | None = None
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        location: str | None = None,
+        exclude_id: int | None = None,
     ) -> str | None:
-        overlapping_events = self.event_repo.find_overlapping(start_date, end_date)
+        overlapping_events = self.event_repo.find_overlapping(
+            start_date, end_date, exclude_id=exclude_id
+        )
         warning = None
         for other in overlapping_events:
             if (

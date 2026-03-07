@@ -9,7 +9,6 @@ class TestSessionEntity:
             start_time=now,
             end_time=now + timedelta(hours=1),
             speaker="A",
-            capacity=10,
             event_id=1
         )
         s2 = Session(
@@ -17,7 +16,6 @@ class TestSessionEntity:
             start_time=now + timedelta(minutes=30),
             end_time=now + timedelta(hours=1.5),
             speaker="B",
-            capacity=10,
             event_id=1
         )
         assert s1.overlaps_with(s2) is True
@@ -29,7 +27,6 @@ class TestSessionEntity:
             start_time=now,
             end_time=now + timedelta(hours=1),
             speaker="A",
-            capacity=10,
             event_id=1
         )
         s2 = Session(
@@ -37,7 +34,6 @@ class TestSessionEntity:
             start_time=now + timedelta(hours=1.5),
             end_time=now + timedelta(hours=2),
             speaker="B",
-            capacity=10,
             event_id=1
         )
         assert s1.overlaps_with(s2) is False
@@ -46,10 +42,10 @@ class TestSessionEntity:
         now = datetime.utcnow()
         s1 = Session(
             title="S1", start_time=now, end_time=now + timedelta(hours=1),
-            speaker="Speaker X", capacity=10, event_id=1
+            speaker="Speaker X", event_id=1
         )
         s2 = Session(
             title="S2", start_time=now + timedelta(minutes=30), end_time=now + timedelta(hours=1.5),
-            speaker="Speaker X", capacity=10, event_id=2
+            speaker="Speaker X", event_id=2
         )
         assert s1.overlaps_with(s2) is True

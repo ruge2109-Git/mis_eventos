@@ -59,6 +59,34 @@ class EventController:
     def get_event(self, event_id: int):
         return self.event_use_cases.get_event(event_id)
 
+    def update_event(
+        self,
+        event_id: int,
+        *,
+        title: str | None = None,
+        capacity: int | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        location: str | None = None,
+        description: str | None = None,
+        additional_images: list[str] | None = None,
+    ):
+        updated = self.event_use_cases.update_event(
+            event_id,
+            title=title,
+            capacity=capacity,
+            start_date=start_date,
+            end_date=end_date,
+            location=location,
+            description=description,
+            additional_images=additional_images,
+        )
+        return dataclasses.asdict(updated)
+
+    def upload_additional_image(self, event_id: int, file: UploadFile):
+        updated = self.event_use_cases.add_event_additional_image(event_id, file)
+        return dataclasses.asdict(updated)
+
     def publish_event(self, event_id: int):
         return self.event_use_cases.publish_event(event_id)
 

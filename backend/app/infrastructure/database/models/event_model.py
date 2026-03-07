@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Column, JSON
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.domain.entities.event import Event as DomainEvent
@@ -20,6 +21,7 @@ class EventModel(SQLModel, table=True):
     status: str
     location: str | None = None
     image_url: str | None = None
+    additional_images: list[str] | None = Field(default=None, sa_column=Column(JSON, nullable=True))
     start_date: datetime
     end_date: datetime
     organizer_id: int = Field(foreign_key="users.id")
@@ -37,6 +39,7 @@ class EventModel(SQLModel, table=True):
             status=self.status,
             location=self.location,
             image_url=self.image_url,
+            additional_images=self.additional_images or [],
             start_date=self.start_date,
             end_date=self.end_date,
             organizer_id=self.organizer_id,
@@ -52,6 +55,7 @@ class EventModel(SQLModel, table=True):
             status=event.status,
             location=event.location,
             image_url=event.image_url,
+            additional_images=event.additional_images or [],
             start_date=event.start_date,
             end_date=event.end_date,
             organizer_id=event.organizer_id,

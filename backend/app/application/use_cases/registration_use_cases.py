@@ -39,7 +39,7 @@ class RegistrationUseCases:
             raise ResourceNotFoundError(f"Event with ID {event_id} not found")
 
         # 3. Check event status
-        if event.status != EventStatus.PUBLISHED:
+        if event.status != EventStatus.PUBLISHED.value:
             raise InvalidEventStateError(
                 f"Cannot register for an event in '{event.status}' state. It must be Published."
             )

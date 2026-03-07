@@ -1,7 +1,15 @@
+from datetime import timezone
+
 from app.application.ports.event_repository import EventRepository
 from app.application.ports.session_repository import SessionRepository
 from app.domain.entities.session import Session
 from app.domain.exceptions import InvalidEventStateError, ResourceNotFoundError, SessionOverlapError
+
+
+def _naive_utc(dt):
+    if dt.tzinfo is not None:
+        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
 
 
 class SessionUseCases:
@@ -14,13 +22,21 @@ class SessionUseCases:
         if not event:
             raise ResourceNotFoundError(f"Event with ID {session.event_id} not found")
 
-        if session.start_time < event.start_date or session.end_time > event.end_date:
+        session_start = _naive_utc(session.start_time)
+        session_end = _naive_utc(session.end_time)
+        event_start = _naive_utc(event.start_date)
+        event_end = _naive_utc(event.end_date)
+
+        if session_start < event_start or session_end > event_end:
             raise InvalidEventStateError(
-                f"Session must be within event dates: ({event.start_date} to {event.end_date})"
+                f"Session must be within event dates: ({event_start} to {event_end})"
             )
 
-        if session.end_time <= session.start_time:
+        if session_end <= session_start:
             raise InvalidEventStateError("Session end time must be after start time")
+
+        session.start_time = session_start
+        session.end_time = session_end
 
         existing_sessions = self.session_repo.list_by_event(session.event_id)
         for s in existing_sessions:

@@ -54,7 +54,7 @@ class PostgresEventRepository(BaseRepository[EventModel], EventRepository):
             and_(
                 EventModel.start_date < end_date,
                 EventModel.end_date > start_date,
-                EventModel.status != EventStatus.CANCELLED,
+                EventModel.status != EventStatus.CANCELLED.value,
             )
         )
         if exclude_id:

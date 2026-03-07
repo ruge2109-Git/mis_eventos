@@ -6,7 +6,7 @@ from app.domain.entities.session import Session
 from app.domain.entities.registration import Registration
 from app.domain.entities.session_registration import SessionRegistration
 from app.domain.exceptions import (
-    ResourceNotFoundError, AuthorizationError, ResourceAlreadyExistsError, EventCapacityExceededError
+    ResourceNotFoundError, AuthorizationError, ResourceAlreadyExistsError,
 )
 
 class TestSessionRegistrationUseCases:
@@ -53,8 +53,8 @@ class TestSessionRegistrationUseCases:
             email="a@a.com", full_name="A", hashed_password="X", role=UserRole.ATTENDEE, id=1
         )
         mock_repos["session_repo"].get_by_id.return_value = Session(
-            title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(), 
-            speaker="Sp", capacity=10, event_id=100, id=10
+            title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(),
+            speaker="Sp", event_id=100, id=10
         )
         mock_repos["registration_repo"].get_by_user_and_event.return_value = None
         
@@ -66,8 +66,8 @@ class TestSessionRegistrationUseCases:
             email="a@a.com", full_name="A", hashed_password="X", role=UserRole.ATTENDEE, id=1
         )
         mock_repos["session_repo"].get_by_id.return_value = Session(
-            title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(), 
-            speaker="Sp", capacity=10, event_id=100, id=10
+            title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(),
+            speaker="Sp", event_id=100, id=10
         )
         mock_repos["registration_repo"].get_by_user_and_event.return_value = True
         mock_repos["session_reg_repo"].get_by_user_and_session.return_value = True
@@ -80,29 +80,30 @@ class TestSessionRegistrationUseCases:
             email="a@a.com", full_name="A", hashed_password="X", role=UserRole.ATTENDEE, id=1
         )
         mock_repos["session_repo"].get_by_id.return_value = Session(
-            title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(), 
-            speaker="Sp", capacity=2, event_id=100, id=10
+            title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(),
+            speaker="Sp", event_id=100, id=10
         )
         mock_repos["registration_repo"].get_by_user_and_event.return_value = True
         mock_repos["session_reg_repo"].get_by_user_and_session.return_value = None
         mock_repos["session_reg_repo"].list_by_session.return_value = [1, 2]
-        
-        with pytest.raises(EventCapacityExceededError):
-            use_cases.register_to_session(user_id=1, session_id=10)
+        mock_repos["session_reg_repo"].save.side_effect = lambda x: x
+        # Session capacity was removed; registration now succeeds
+        result = use_cases.register_to_session(user_id=1, session_id=10)
+        assert result.session_id == 10
 
     def test_session_reg_success(self, use_cases, mock_repos):
         mock_repos["user_repo"].get_by_id.return_value = User(
             email="a@a.com", full_name="A", hashed_password="X", role=UserRole.ATTENDEE, id=1
         )
         mock_repos["session_repo"].get_by_id.return_value = Session(
-            title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(), 
-            speaker="Sp", capacity=10, event_id=100, id=10
+            title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(),
+            speaker="Sp", event_id=100, id=10
         )
         mock_repos["registration_repo"].get_by_user_and_event.return_value = True
         mock_repos["session_reg_repo"].get_by_user_and_session.return_value = None
         mock_repos["session_reg_repo"].list_by_session.return_value = []
         mock_repos["session_reg_repo"].save.side_effect = lambda x: x
-        
+
         result = use_cases.register_to_session(user_id=1, session_id=10)
         assert result.session_id == 10
 
