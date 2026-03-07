@@ -62,5 +62,57 @@ class SessionUseCases:
 
         return self.session_repo.save(new_session)
 
+    def update_session(
+        self,
+        session_id: int,
+        *,
+        title: str,
+        start_time: datetime,
+        end_time: datetime,
+        speaker: str,
+        description: str | None = None,
+    ) -> Session:
+        """Update an existing session."""
+        existing = self.session_repo.get_by_id(session_id)
+        if not existing:
+            raise ResourceNotFoundError(f"Session with ID {session_id} not found")
+
+        session_start = _naive_utc(start_time)
+        session_end = _naive_utc(end_time)
+        event = self.event_repo.get_by_id(existing.event_id)
+        if event:
+            event_start = _naive_utc(event.start_date)
+            event_end = _naive_utc(event.end_date)
+            if session_start < event_start or session_end > event_end:
+                raise InvalidEventStateError(
+                    f"Session must be within event dates: ({event_start} to {event_end})"
+                )
+        if session_end <= session_start:
+            raise InvalidEventStateError("Session end time must be after start time")
+
+        updated = Session(
+            id=session_id,
+            title=title,
+            start_time=session_start,
+            end_time=session_end,
+            speaker=speaker,
+            event_id=existing.event_id,
+            description=description,
+        )
+        existing_sessions = self.session_repo.list_by_event(existing.event_id)
+        for s in existing_sessions:
+            if s.id != session_id and s.overlaps_with(updated):
+                raise SessionOverlapError(
+                    f"This session overlaps with another session: '{s.title}'"
+                )
+        return self.session_repo.save(updated)
+
+    def delete_session(self, session_id: int) -> None:
+        """Delete a session by id."""
+        existing = self.session_repo.get_by_id(session_id)
+        if not existing:
+            raise ResourceNotFoundError(f"Session with ID {session_id} not found")
+        self.session_repo.delete(session_id)
+
     def get_sessions_by_event(self, event_id: int) -> list[Session]:
         return self.session_repo.list_by_event(event_id)

@@ -27,5 +27,27 @@ class SessionController:
             description=description,
         )
 
+    def update_session(
+        self,
+        session_id: int,
+        *,
+        title: str,
+        start_time: datetime,
+        end_time: datetime,
+        speaker: str,
+        description: str | None = None,
+    ):
+        return self.session_use_cases.update_session(
+            session_id,
+            title=title,
+            start_time=start_time,
+            end_time=end_time,
+            speaker=speaker,
+            description=description,
+        )
+
+    def delete_session(self, session_id: int) -> None:
+        self.session_use_cases.delete_session(session_id)
+
     def get_event_sessions(self, event_id: int):
         return self.session_use_cases.get_sessions_by_event(event_id)

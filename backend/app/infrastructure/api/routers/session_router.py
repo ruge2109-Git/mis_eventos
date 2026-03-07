@@ -58,6 +58,25 @@ class SessionCreateRequest(BaseModel):
     )
 
 
+class SessionUpdateRequest(BaseModel):
+    title: str = Field(
+        ...,
+        min_length=3,
+        max_length=100,
+        description="The title of the session/activity",
+    )
+    start_time: datetime = Field(
+        ..., description="Start date and time of the session"
+    )
+    end_time: datetime = Field(
+        ..., description="End date and time of the session"
+    )
+    speaker: str = Field(..., description="Name of the person giving the session")
+    description: str | None = Field(
+        None, description="Detailed description of what the session is about"
+    )
+
+
 class SessionResponse(BaseModel):
     id: int = Field(..., description="The unique system ID of the session")
     title: str = Field(..., description="The title of the session/activity")
@@ -110,6 +129,51 @@ def create_session(
         event_id=session_data.event_id,
         description=session_data.description,
     )
+
+
+@router.patch(
+    "/{session_id}",
+    response_model=SessionResponse,
+    summary="Update a session",
+    description="Updates an existing session. Only Organizers or Admins.",
+    responses={
+        403: {"model": ErrorResponse, "description": "Forbidden."},
+        404: {"model": ErrorResponse, "description": "Not Found: Session does not exist."},
+        409: {"model": ErrorResponse, "description": "Conflict: Session overlaps with another."},
+    },
+)
+def update_session(
+    session_id: int,
+    session_data: SessionUpdateRequest,
+    controller: SessionController = Depends(get_session_controller),
+    current_user: User = Depends(RequireOrganizer),
+):
+    return controller.update_session(
+        session_id,
+        title=session_data.title,
+        start_time=session_data.start_time,
+        end_time=session_data.end_time,
+        speaker=session_data.speaker,
+        description=session_data.description,
+    )
+
+
+@router.delete(
+    "/{session_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a session",
+    description="Deletes a session. Only Organizers or Admins.",
+    responses={
+        403: {"model": ErrorResponse, "description": "Forbidden."},
+        404: {"model": ErrorResponse, "description": "Not Found: Session does not exist."},
+    },
+)
+def delete_session(
+    session_id: int,
+    controller: SessionController = Depends(get_session_controller),
+    current_user: User = Depends(RequireOrganizer),
+):
+    controller.delete_session(session_id)
 
 
 @router.get(
