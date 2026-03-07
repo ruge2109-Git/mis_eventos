@@ -106,6 +106,12 @@ export class EventApiRepository extends EventRepository {
     );
   }
 
+  revertToDraft(id: number): Observable<Event> {
+    return this.http.post<EventResponse>(`${this.apiUrl}${id}/revert-to-draft`, {}).pipe(
+      map(res => this.mapToEntity(res))
+    );
+  }
+
   uploadImage(eventId: number, file: File): Observable<Event> {
     const formData = new FormData();
     formData.append('file', file);

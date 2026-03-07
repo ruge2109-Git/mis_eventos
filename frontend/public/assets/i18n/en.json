@@ -36,6 +36,8 @@
     "searchPlaceholder": "Search my events...",
     "publish": "Publish",
     "cancel": "Cancel",
+    "cancelEvent": "Cancel event",
+    "revertToDraft": "Revert to draft",
     "uploadImage": "Upload image",
     "noEvents": "You don't have any events yet. Create the first one.",
     "createEventTitle": "Create event",
@@ -125,7 +127,18 @@
     "statsAttendance": "Attendance Rate",
     "upcomingEvents": "My Upcoming Events",
     "seeFullCalendar": "See full calendar",
-    "viewDetails": "View Details"
+    "viewDetails": "View Details",
+    "deleteEvent": "Delete event",
+    "deleteEventConfirmTitle": "Delete event?",
+    "deleteEventConfirmMessage": "This action cannot be undone. The event and its sessions will be deleted.",
+    "deleteConfirm": "Delete",
+    "toastEventDeleted": "Event deleted successfully",
+    "toastEventPublished": "Event published successfully",
+    "toastPublishError": "Error publishing event",
+    "toastEventCancelled": "Event cancelled successfully",
+    "toastCancelError": "Error cancelling event",
+    "toastRevertedToDraft": "Event reverted to draft. You can publish it again.",
+    "toastRevertError": "Error reverting to draft"
   },
   "auth": {
     "loginTitle": "Portal Access",

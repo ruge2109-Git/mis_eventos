@@ -36,6 +36,8 @@
     "searchPlaceholder": "Buscar mis eventos...",
     "publish": "Publicar",
     "cancel": "Cancelar",
+    "cancelEvent": "Cancelar evento",
+    "revertToDraft": "Volver a borrador",
     "uploadImage": "Subir imagen",
     "noEvents": "Aún no tienes eventos. Crea el primero.",
     "createEventTitle": "Crear evento",
@@ -125,7 +127,18 @@
     "statsAttendance": "Tasa de Asistencia",
     "upcomingEvents": "Mis Próximos Eventos",
     "seeFullCalendar": "Ver todo el calendario",
-    "viewDetails": "Ver Detalles"
+    "viewDetails": "Ver Detalles",
+    "deleteEvent": "Eliminar evento",
+    "deleteEventConfirmTitle": "¿Eliminar evento?",
+    "deleteEventConfirmMessage": "Esta acción no se puede deshacer. Se eliminará el evento y sus sesiones.",
+    "deleteConfirm": "Eliminar",
+    "toastEventDeleted": "Evento eliminado correctamente",
+    "toastEventPublished": "Evento publicado correctamente",
+    "toastPublishError": "Error al publicar el evento",
+    "toastEventCancelled": "Evento cancelado correctamente",
+    "toastCancelError": "Error al cancelar el evento",
+    "toastRevertedToDraft": "Evento pasado a borrador. Ya puedes publicarlo de nuevo.",
+    "toastRevertError": "Error al volver a borrador"
   },
   "auth": {
     "loginTitle": "Acceso al portal",

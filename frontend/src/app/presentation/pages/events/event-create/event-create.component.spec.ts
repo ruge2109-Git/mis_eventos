@@ -31,6 +31,7 @@ describe('EventCreateComponent', () => {
     delete: () => of(undefined),
     publish: () => of({} as any),
     cancel: () => of({} as any),
+    revertToDraft: () => of({} as any),
     uploadImage: mockUploadImage,
     uploadAdditionalImage: () => of({ id: 1, title: 'New', imageUrl: null, additionalImages: [] } as any)
   };

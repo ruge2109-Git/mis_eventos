@@ -177,6 +177,15 @@ describe('EventApiRepository', () => {
     req.flush(mockRes);
   });
 
+  it('should revert event to draft', () => {
+    const mockRes = { id: 1, title: 'E', capacity: 10, status: 'DRAFT', location: null, description: null, image_url: null, start_date: '2026-01-01', end_date: '2026-01-01', organizer_id: 1 };
+    repository.revertToDraft(1).subscribe(res => {
+      expect(res.status).toBe('DRAFT');
+    });
+    const req = httpMock.expectOne(r => r.url.endsWith('/events/1/revert-to-draft') && r.method === 'POST');
+    req.flush(mockRes);
+  });
+
   it('should upload event image', () => {
     const file = new File([''], 'img.jpg', { type: 'image/jpeg' });
     const mockRes = { id: 1, title: 'E', capacity: 10, status: 'DRAFT', location: null, description: null, image_url: '/uploads/ev1.jpg', start_date: '2026-01-01', end_date: '2026-01-01', organizer_id: 1 };

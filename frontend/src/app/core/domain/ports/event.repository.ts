@@ -10,6 +10,7 @@ export abstract class EventRepository {
   abstract delete(id: number): Observable<void>;
   abstract publish(id: number): Observable<Event>;
   abstract cancel(id: number): Observable<Event>;
+  abstract revertToDraft(id: number): Observable<Event>;
   abstract uploadImage(eventId: number, file: File): Observable<Event>;
   abstract uploadAdditionalImage(eventId: number, file: File): Observable<Event>;
 }

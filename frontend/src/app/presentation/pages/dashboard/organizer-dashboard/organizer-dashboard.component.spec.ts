@@ -50,6 +50,7 @@ describe('OrganizerDashboardComponent', () => {
             getMine: vi.fn().mockReturnValue(of({ items: [], total: 0 })),
             publish: vi.fn().mockReturnValue(of({ ...mockEvent, status: 'PUBLISHED' })),
             cancel: vi.fn().mockReturnValue(of({ ...mockEvent, status: 'CANCELLED' })),
+            revertToDraft: vi.fn().mockReturnValue(of({ ...mockEvent, status: 'DRAFT' })),
             uploadImage: vi.fn().mockReturnValue(of(mockEvent))
           }
         }

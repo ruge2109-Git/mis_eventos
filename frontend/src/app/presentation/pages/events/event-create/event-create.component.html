@@ -5,13 +5,23 @@
        aria-label="Volver">
       <span class="material-symbols-outlined">arrow_back</span>
     </a>
-    <div>
+    <div class="flex-1 min-w-0">
       <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">{{ isEditMode ? t('dashboard.editEventTitle') : t('dashboard.createEventTitle') }}</h1>
       <p class="text-slate-400 text-sm mt-0.5">{{ isEditMode ? t('dashboard.editEventSubtitle') : t('dashboard.createEventSubtitle') }}</p>
     </div>
+    @if (isEditMode) {
+      <app-button type="button"
+                  variant="ghost"
+                  [disabled]="isLoading"
+                  customClass="border border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                  (clicked)="openDeleteConfirm()">
+        <span class="material-symbols-outlined text-lg">delete</span>
+        {{ t('dashboard.deleteEvent') }}
+      </app-button>
+    }
   </header>
 
-  <form [formGroup]="eventForm" (ngSubmit)="submit()" class="space-y-8">
+  <form #formStart [formGroup]="eventForm" (ngSubmit)="submit()" class="space-y-8">
     @if (globalError) {
       <div class="p-3 rounded-lg text-sm text-red-400 bg-red-500/10 border border-red-500/30" role="alert">
         {{ globalError }}
@@ -216,6 +226,16 @@
       </app-button>
     </div>
   </form>
+
+  <app-confirm-modal
+    [isOpen]="showDeleteConfirm"
+    [title]="t('dashboard.deleteEventConfirmTitle')"
+    [message]="t('dashboard.deleteEventConfirmMessage')"
+    [confirmLabel]="t('dashboard.deleteConfirm')"
+    [cancelLabel]="t('dashboard.cancel')"
+    confirmVariant="danger"
+    (confirm)="confirmDelete()"
+    (cancel)="closeDeleteConfirm()" />
 
   @if (previewImageUrl) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"

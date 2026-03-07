@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, inject, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -13,6 +13,7 @@ import { Subscription, from, of } from 'rxjs';
 import { finalize, concatMap, toArray, switchMap } from 'rxjs/operators';
 import { ImgWithLoaderComponent } from '@shared/components/img-with-loader/img-with-loader.component';
 import { ButtonComponent } from '@shared/components/button/button.component';
+import { ConfirmModalComponent } from '@shared/components/confirm-modal/confirm-modal.component';
 
 export interface SessionFormItem {
   id?: number;
@@ -26,7 +27,7 @@ export interface SessionFormItem {
 @Component({
   selector: 'app-event-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, TranslocoModule, RouterLink, ImgWithLoaderComponent, ButtonComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, TranslocoModule, RouterLink, ImgWithLoaderComponent, ButtonComponent, ConfirmModalComponent],
   templateUrl: './event-create.component.html',
   styleUrl: './event-create.component.scss'
 })
@@ -56,6 +57,9 @@ export class EventCreateComponent implements OnInit, OnDestroy {
   eventId: number | null = null;
   additionalImagesDragOver = false;
   previewImageUrl: string | null = null;
+  showDeleteConfirm = false;
+
+  @ViewChild('formStart') formStartRef?: ElementRef<HTMLFormElement>;
 
   ngOnInit() {
     this.eventForm = this.fb.group({
@@ -109,6 +113,7 @@ export class EventCreateComponent implements OnInit, OnDestroy {
           },
           error: (err) => {
             this.globalError = err?.error?.detail ?? err?.message ?? this.transloco.translate('dashboard.formErrorLoadEvent');
+            setTimeout(() => this.scrollToFormAndRevealErrors(), 100);
           }
         });
       }
@@ -205,9 +210,10 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     }
     if (this.eventImagePreview) this.eventImagePreview = null;
     if (file && file.size > 5 * 1024 * 1024) {
-      this.globalError = this.t('dashboard.formErrorImageSize');
+      this.globalError = this.transloco.translate('dashboard.formErrorImageSize');
       input.value = '';
       this.eventImage = null;
+      this.scrollToFormAndRevealErrors();
       return;
     }
     this.eventImage = file;
@@ -313,10 +319,26 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     this.previewImageUrl = null;
   }
 
+  /** Scrolls to the top of the form (where the error message is) and marks invalid controls as touched. */
+  private scrollToFormAndRevealErrors(): void {
+    this.markInvalidControlsTouched();
+    setTimeout(() => {
+      this.formStartRef?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+  }
+
+  private markInvalidControlsTouched(): void {
+    Object.keys(this.eventForm.controls).forEach(key => {
+      const c = this.eventForm.get(key);
+      if (c?.invalid) c.markAsTouched();
+    });
+  }
+
   submit(): void {
     this.globalError = null;
     if (!this.eventForm.valid) {
       this.eventForm.markAllAsTouched();
+      this.scrollToFormAndRevealErrors();
       return;
     }
     this.isLoading = true;
@@ -327,6 +349,7 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     if (endDate <= startDate) {
       this.globalError = this.transloco.translate('dashboard.formErrorEndAfterStart');
       this.isLoading = false;
+      this.scrollToFormAndRevealErrors();
       return;
     }
 
@@ -334,6 +357,7 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     if (sessionError) {
       this.globalError = sessionError;
       this.isLoading = false;
+      this.scrollToFormAndRevealErrors();
       return;
     }
 
@@ -427,6 +451,7 @@ export class EventCreateComponent implements OnInit, OnDestroy {
           const d = err?.error?.detail;
           const detail = typeof d === 'string' ? d : Array.isArray(d) && d.length && typeof d[0]?.msg === 'string' ? d[0].msg : null;
           this.globalError = detail ?? err?.message ?? this.transloco.translate('dashboard.formErrorSessionCreate');
+          this.scrollToFormAndRevealErrors();
         }
       });
     };
@@ -443,6 +468,7 @@ export class EventCreateComponent implements OnInit, OnDestroy {
           this.isLoading = false;
           const detail = typeof err?.error?.detail === 'string' ? err.error.detail : null;
           this.globalError = detail ?? err?.message ?? this.transloco.translate('dashboard.formErrorUpdate');
+          this.scrollToFormAndRevealErrors();
         }
       });
     } else {
@@ -457,8 +483,38 @@ export class EventCreateComponent implements OnInit, OnDestroy {
           this.isLoading = false;
           const detail = typeof err?.error?.detail === 'string' ? err.error.detail : null;
           this.globalError = detail ?? err?.message ?? this.transloco.translate('dashboard.formErrorCreate');
+          this.scrollToFormAndRevealErrors();
         }
       });
     }
+  }
+
+  openDeleteConfirm(): void {
+    this.showDeleteConfirm = true;
+  }
+
+  closeDeleteConfirm(): void {
+    this.showDeleteConfirm = false;
+  }
+
+  confirmDelete(): void {
+    if (!this.isEditMode || this.eventId == null) return;
+    this.showDeleteConfirm = false;
+    this.isLoading = true;
+    const id = this.eventId;
+    this.eventRepository.delete(id).pipe(
+      finalize(() => { this.isLoading = false; this.cdr.markForCheck(); })
+    ).subscribe({
+      next: () => {
+        this.store.removeEvent(id);
+        this.toast.success(this.transloco.translate('dashboard.toastEventDeleted'));
+        this.router.navigate(['/dashboard/organizer']);
+      },
+      error: (err: { error?: { detail?: unknown }; message?: string }) => {
+        const detail = typeof err?.error?.detail === 'string' ? err.error.detail : null;
+        this.globalError = detail ?? err?.message ?? this.transloco.translate('dashboard.formErrorLoadEvent');
+        this.scrollToFormAndRevealErrors();
+      }
+    });
   }
 }
