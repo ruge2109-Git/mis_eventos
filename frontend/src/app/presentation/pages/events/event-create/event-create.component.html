@@ -1,41 +1,100 @@
-<div class="max-w-4xl mx-auto space-y-8 pb-12 font-sans" *transloco="let t">
-  <app-event-create-header
-    [isEditMode]="isEditMode"
-    [isLoading]="isLoading"
+<div class="font-sans pb-12" *transloco="let t">
+  <app-event-create-header [isEditMode]="isEditMode" [isLoading]="isLoading" [backLink]="backLink"
     (deleteClick)="openDeleteConfirm()" />
 
-  <form #formStart [formGroup]="eventForm" (ngSubmit)="submit()" class="flex flex-col space-y-8 mt-12 ">
-    @if (globalError) {
-      <div class="p-3 rounded-lg text-sm text-red-400 bg-red-500/10 border border-red-500/30" role="alert">
-        {{ globalError }}
+  <div class="mt-8 grid grid-cols-12 gap-8 mx-auto">
+    <div class="min-w-0 space-y-8 col-span-12" [class.lg:col-span-8]="isEditMode && eventId">
+      <form #formStart [formGroup]="eventForm" (ngSubmit)="submit()" class="flex flex-col space-y-8">
+        @if (globalError) {
+        <div class="p-3 rounded-lg text-sm text-red-400 bg-red-500/10 border border-red-500/30" role="alert">
+          {{ globalError }}
+        </div>
+        }
+
+        <app-event-details-section [form]="eventForm" />
+
+        <app-event-images-section [coverPreviewUrl]="eventImagePreview" [savedUrls]="savedAdditionalUrls"
+          [newPreviewUrls]="additionalImagePreviews" [dragOver]="additionalImagesDragOver"
+          (coverChange)="onImageChange($event)" (coverClear)="clearCoverImage()"
+          (coverPreviewClick)="openPreview($event)" (additionalFilesAdd)="onAdditionalFilesAdd($event)"
+          (additionalDrop)="onAdditionalDrop($event)" (dragOverChange)="setAdditionalImagesDragOver($event)"
+          (removeNewAt)="removeAdditionalImage($event)" (removeSavedAt)="removeSavedAdditionalUrl($event)"
+          (previewClick)="openPreview($event)" />
+
+        <app-event-sessions-section [sessions]="sessions" [getSessionError]="sessionErrorFn" (addSession)="addSession()"
+          (removeSession)="removeSession($event)" />
+
+        <app-event-form-actions [isLoading]="isLoading" [isEditMode]="isEditMode" />
+      </form>
+    </div>
+
+    @if (isEditMode && eventId) {
+    <aside class="col-span-12 lg:col-span-4 lg:sticky lg:top-6 h-fit space-y-4">
+      <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+        <h2 class="text-lg font-semibold mb-3">{{ t('dashboard.attendeesTitle') }}</h2>
+        <div class="mb-3 w-full">
+          <app-search-bar
+            [placeholder]="t('dashboard.attendeesSearchPlaceholder')"
+            inputClass="rounded-lg py-2.5 !pl-10 pr-3 text-sm bg-surface/40 hover:bg-surface/60 border border-white/10"
+            (searchChange)="onAttendeesSearchFromBar($event)">
+          </app-search-bar>
+        </div>
+        @if (attendeesLoading) {
+        <p class="text-sm text-white/60">{{ t('events.loading') }}</p>
+        } @else if (attendees.length === 0) {
+        <p class="text-sm text-white/60">{{ t('dashboard.attendeesEmpty') }}</p>
+        } @else {
+        <ul class="space-y-2 divide-y divide-white/10">
+          @for (a of attendees; track a.id) {
+          <li class="pt-2 first:pt-0">
+            <p class="font-medium text-sm truncate" [title]="a.full_name">{{ a.full_name }}</p>
+            <p class="text-xs text-white/60 truncate" [title]="a.email">{{ a.email }}</p>
+            <p class="text-xs text-white/40 mt-0.5">{{ formatAttendeeDate(a.registration_date) }}</p>
+          </li>
+          }
+        </ul>
+        @if (attendeesTotalPages > 1) {
+        <nav class="w-full flex flex-wrap items-center justify-center gap-2 py-4 mt-3" aria-label="Paginación de asistentes">
+          <button
+            type="button"
+            [disabled]="attendeesCurrentPage <= 1"
+            (click)="attendeeGoToPage(attendeesCurrentPage - 1)"
+            [attr.aria-label]="t('btn.prevPage')"
+            class="p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:pointer-events-none transition-colors">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          @for (p of attendeePageNumbers(); track p) {
+            @if (p === -1) {
+          <span class="px-2 text-slate-500">…</span>
+            } @else {
+          <button
+            type="button"
+            (click)="attendeeGoToPage(p)"
+            [attr.aria-label]="t('events.pageOf', { current: p, total: attendeesTotalPages })"
+            class="min-w-[40px] py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+            [class.bg-accent-cyan]="attendeesCurrentPage === p"
+            [class.text-primary]="attendeesCurrentPage === p"
+            [class.text-slate-400]="attendeesCurrentPage !== p"
+            [class.hover:bg-white/5]="attendeesCurrentPage !== p">
+            {{ p }}
+          </button>
+            }
+          }
+          <button
+            type="button"
+            [disabled]="attendeesCurrentPage >= attendeesTotalPages"
+            (click)="attendeeGoToPage(attendeesCurrentPage + 1)"
+            [attr.aria-label]="t('btn.nextPage')"
+            class="p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:pointer-events-none transition-colors">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </nav>
+        }
+        }
       </div>
+    </aside>
     }
-
-    <app-event-details-section [form]="eventForm" />
-
-    <app-event-images-section
-      [coverPreviewUrl]="eventImagePreview"
-      [savedUrls]="savedAdditionalUrls"
-      [newPreviewUrls]="additionalImagePreviews"
-      [dragOver]="additionalImagesDragOver"
-      (coverChange)="onImageChange($event)"
-      (coverClear)="clearCoverImage()"
-      (coverPreviewClick)="openPreview($event)"
-      (additionalFilesAdd)="onAdditionalFilesAdd($event)"
-      (additionalDrop)="onAdditionalDrop($event)"
-      (dragOverChange)="setAdditionalImagesDragOver($event)"
-      (removeNewAt)="removeAdditionalImage($event)"
-      (removeSavedAt)="removeSavedAdditionalUrl($event)"
-      (previewClick)="openPreview($event)" />
-
-    <app-event-sessions-section
-      [sessions]="sessions"
-      [getSessionError]="sessionErrorFn"
-      (addSession)="addSession()"
-      (removeSession)="removeSession($event)" />
-
-    <app-event-form-actions [isLoading]="isLoading" [isEditMode]="isEditMode" />
-  </form>
+  </div>
 
   <app-confirm-modal [isOpen]="showDeleteConfirm" [title]="t('dashboard.deleteEventConfirmTitle')"
     [message]="t('dashboard.deleteEventConfirmMessage')" [confirmLabel]="t('dashboard.deleteConfirm')"

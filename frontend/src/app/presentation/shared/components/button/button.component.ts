@@ -1,10 +1,11 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-button',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './button.component.html',
   styleUrl: './button.component.scss'
 })
@@ -15,7 +16,13 @@ export class ButtonComponent {
   disabled = input<boolean>(false);
   loading = input<boolean>(false);
   customClass = input<string>('');
-  
+  /** When set, renders an <a> with routerLink instead of <button>. */
+  routerLink = input<string | string[] | null>(null);
+  /** Optional aria-label for icon-only or accessibility. */
+  ariaLabel = input<string | null>(null);
+  /** Optional label text (e.g. translated). When set, shown before projected content. */
+  label = input<string | null>(null);
+
   clicked = output<MouseEvent>();
 
   buttonClasses() {

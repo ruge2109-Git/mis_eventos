@@ -12,10 +12,10 @@ function createAuthStoreMock(authenticated: boolean, role: string | null) {
 }
 
 describe('organizerGuard', () => {
-  let router: { navigate: ReturnType<typeof vi.fn> };
+  let router: { navigate: ReturnType<typeof vi.fn>; url: string };
 
   beforeEach(() => {
-    router = { navigate: vi.fn() };
+    router = { navigate: vi.fn(), url: '/dashboard/organizer' };
   });
 
   it('should allow access when authenticated as Organizer', () => {
@@ -55,7 +55,7 @@ describe('organizerGuard', () => {
 
     TestBed.runInInjectionContext(() => organizerGuard(null!, null!));
 
-    expect(router.navigate).toHaveBeenCalledWith(['/auth/login']);
+    expect(router.navigate).toHaveBeenCalledWith(['/auth/login'], { queryParams: { returnUrl: router.url } });
   });
 
   it('should redirect to home when authenticated but not Organizer/Admin', () => {

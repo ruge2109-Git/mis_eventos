@@ -1,0 +1,9 @@
+:host {
+  display: block;
+}
+
+.admin-sidebar {
+  @media (min-width: 1024px) {
+    transform: none;
+  }
+}

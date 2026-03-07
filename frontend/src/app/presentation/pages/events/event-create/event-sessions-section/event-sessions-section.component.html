@@ -4,8 +4,8 @@
       {{ t('dashboard.formSectionSessionsLabel') }}
     </h2>
     <app-button type="button" variant="ghost" size="sm"
+      [label]="'dashboard.formAddSessionButton' | transloco"
       customClass="text-accent-cyan hover:underline shrink-0 cursor-pointer" (clicked)="addSession.emit()">
-      {{ 'dashboard.formAddSessionButton' | transloco }}
     </app-button>
   </div>
   <div class="space-y-3">

@@ -1,0 +1,99 @@
+<div class="space-y-6" *transloco="let t">
+  <header>
+    <h1 class="text-2xl font-bold text-white tracking-tight">{{ t('assistant.myEventsTitle') }}</h1>
+    <p class="text-slate-400 text-sm mt-1">{{ t('assistant.myEventsSubtitle') }}</p>
+  </header>
+
+  @if (loading() && events().length === 0) {
+  <div class="flex flex-col items-center justify-center py-16 gap-4">
+    <span class="animate-spin material-symbols-outlined text-5xl text-accent-cyan">progress_activity</span>
+    <p class="text-slate-400">{{ t('events.loading') }}</p>
+  </div>
+  }
+
+  @if (!loading() || events().length > 0) {
+  <!-- Tabs -->
+  <div class="flex gap-1 p-1 rounded-xl bg-surface border border-white/10 w-fit">
+    <button
+      type="button"
+      (click)="setTab('upcoming')"
+      class="px-5 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
+      [class.bg-accent-cyan]="activeTab() === 'upcoming'"
+      [class.text-primary]="activeTab() === 'upcoming'"
+      [class.text-slate-400]="activeTab() !== 'upcoming'"
+      [class.hover:text-white]="activeTab() !== 'upcoming'"
+    >
+      <span class="material-symbols-outlined text-lg">calendar_today</span>
+      {{ t('assistant.tabUpcoming') }}
+    </button>
+    <button
+      type="button"
+      (click)="setTab('past')"
+      class="px-5 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
+      [class.bg-accent-cyan]="activeTab() === 'past'"
+      [class.text-primary]="activeTab() === 'past'"
+      [class.text-slate-400]="activeTab() !== 'past'"
+      [class.hover:text-white]="activeTab() !== 'past'"
+    >
+      <span class="material-symbols-outlined text-lg">schedule</span>
+      {{ t('assistant.tabPast') }}
+    </button>
+  </div>
+
+  <!-- Event cards -->
+  <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (event of filteredEvents(); track event.id) {
+    <article class="rounded-2xl border border-white/10 bg-surface overflow-hidden flex flex-col">
+      <div class="relative h-40 bg-slate-800 shrink-0">
+        @if (event.imageUrl) {
+        <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" />
+        } @else {
+        <div class="w-full h-full flex items-center justify-center">
+          <span class="material-symbols-outlined text-5xl text-slate-600">event</span>
+        </div>
+        }
+        <span
+          class="absolute top-3 right-3 px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-white/10 text-white backdrop-blur-sm">
+          {{ eventStatusLabel(event) }}
+        </span>
+      </div>
+      <div class="p-5 flex-1 flex flex-col">
+        <h3 class="font-bold text-white text-lg line-clamp-2">{{ event.title }}</h3>
+        <div class="mt-3 space-y-1.5 text-slate-400 text-sm">
+          <p class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-accent-cyan text-base">calendar_today</span>
+            {{ event.startDate | date:'d MMM, y' }} · {{ event.startDate | date:'shortTime' }}
+          </p>
+          @if (event.location) {
+          <p class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-accent-cyan text-base">location_on</span>
+            <span class="truncate">{{ event.location }}</span>
+          </p>
+          }
+        </div>
+        <div class="mt-4 flex gap-2">
+          <app-button [routerLink]="['/evento', event.id.toString()]" [label]="t('assistant.viewTicket')" variant="outline" size="sm"
+            customClass="flex-1 border-accent-cyan/40 text-accent-cyan hover:bg-accent-cyan/20">
+            <span class="material-symbols-outlined text-lg mr-1.5">confirmation_number</span>
+          </app-button>
+          <app-button [routerLink]="['/evento', event.id.toString()]" [label]="t('assistant.details')" variant="ghost" size="sm"
+            customClass="border border-white/20 text-slate-300">
+          </app-button>
+        </div>
+      </div>
+    </article>
+    }
+
+    @if (filteredEvents().length === 0) {
+    <div class="md:col-span-2 lg:col-span-3 rounded-2xl bg-surface/50 border border-white/5 py-16 text-center">
+      <span class="material-symbols-outlined text-6xl text-slate-600 block mb-4">event_busy</span>
+      <p class="text-slate-500 text-lg">
+        {{ activeTab() === 'upcoming' ? t('assistant.noUpcoming') : t('assistant.noPast') }}
+      </p>
+      <app-button [routerLink]="['/']" [label]="t('assistant.exploreEvents')" variant="outline" size="sm" customClass="mt-4 text-accent-cyan">
+      </app-button>
+    </div>
+    }
+  </section>
+  }
+</div>

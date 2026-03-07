@@ -15,3 +15,13 @@ export const USER_ROLE_OPTIONS_REGISTER: { label: string; value: UserRoleType; i
 export function canAccessOrganizerDashboard(role: string | null): boolean {
   return role === UserRole.ORGANIZER || role === UserRole.ADMIN;
 }
+
+/** Solo administrador puede acceder al panel admin. */
+export function canAccessAdminPanel(role: string | null): boolean {
+  return role === UserRole.ADMIN;
+}
+
+/** Roles que ven el panel de asistente (Inicio, Mis Eventos, Calendario del asistente). */
+export function canAccessAssistantDashboard(role: string | null): boolean {
+  return role === UserRole.ATTENDEE;
+}

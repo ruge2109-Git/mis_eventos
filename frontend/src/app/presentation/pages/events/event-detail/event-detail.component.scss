@@ -1,0 +1,42 @@
+:host {
+  display: block;
+}
+
+.gallery-thumb {
+  cursor: pointer;
+}
+
+.lightbox-backdrop {
+  animation: lightboxFadeIn 0.2s ease-out;
+}
+
+@keyframes lightboxFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Timeline */
+.timeline {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.timeline-dot {
+  flex-shrink: 0;
+  box-shadow: 0 0 0 4px var(--surface, #1e293b);
+}
+
+.timeline-card-cyan .timeline-card-purple,
+.timeline-recess {
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.timeline-card-cyan:hover,
+.timeline-card-purple:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}

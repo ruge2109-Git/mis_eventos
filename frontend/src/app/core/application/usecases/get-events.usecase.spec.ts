@@ -43,7 +43,7 @@ describe('GetEventsUseCase', () => {
 
     useCase.execute(0, 12).subscribe({
       next: (response) => {
-        expect(repositoryMock.getAll).toHaveBeenCalledWith(0, 12);
+        expect(repositoryMock.getAll).toHaveBeenCalledWith(0, 12, undefined);
         expect(response.items).toEqual([mockEvent]);
         expect(response.total).toBe(1);
       }
@@ -53,7 +53,7 @@ describe('GetEventsUseCase', () => {
   it('should call repository with skip and limit', () => {
     repositoryMock.getAll.mockReturnValue(of({ items: [], total: 0 }));
     useCase.execute(5, 20).subscribe();
-    expect(repositoryMock.getAll).toHaveBeenCalledWith(5, 20);
+    expect(repositoryMock.getAll).toHaveBeenCalledWith(5, 20, undefined);
   });
 
   it('should propagate error from repository', () => {

@@ -1,5 +1,22 @@
+@if (routerLink()) {
+<a
+  [routerLink]="routerLink()"
+  [attr.aria-label]="ariaLabel()"
+  [class]="buttonClasses()"
+  class="inline-flex no-underline"
+>
+  @if (loading()) {
+    <span class="mr-2 animate-spin material-symbols-outlined text-sm">progress_activity</span>
+  }
+  @if (label()) {
+    <span>{{ label() }}</span>
+  }
+  <ng-content></ng-content>
+</a>
+} @else {
 <button
   [type]="type()"
+  [attr.aria-label]="ariaLabel()"
   [disabled]="disabled() || loading()"
   (click)="clicked.emit($event)"
   [class]="buttonClasses()"
@@ -7,5 +24,9 @@
   @if (loading()) {
     <span class="mr-2 animate-spin material-symbols-outlined text-sm">progress_activity</span>
   }
+  @if (label()) {
+    <span>{{ label() }}</span>
+  }
   <ng-content></ng-content>
 </button>
+}

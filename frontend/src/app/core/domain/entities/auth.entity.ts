@@ -8,6 +8,7 @@ export interface AuthResponse {
   token_type: string;
   user_id: number;
   role: string;
+  full_name?: string;
 }
 
 export interface RegisterResponse {

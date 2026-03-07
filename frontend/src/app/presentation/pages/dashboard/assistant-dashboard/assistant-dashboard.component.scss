@@ -1,0 +1,86 @@
+:host {
+  display: block;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.anim-header {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.anim-loading {
+  animation: fadeIn 0.35s ease-out forwards;
+}
+
+.anim-content {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.anim-section {
+  opacity: 0;
+  animation: fadeInUp 0.45s ease-out forwards;
+}
+
+.anim-card {
+  opacity: 0;
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.anim-item {
+  opacity: 0;
+  animation: fadeInUp 0.35s ease-out forwards;
+}
+
+.anim-content > .anim-section:nth-child(1) { animation-delay: 0.05s; }
+.anim-content > .anim-section:nth-child(2) { animation-delay: 0.15s; }
+
+.anim-cards > * {
+  opacity: 0;
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+.anim-cards > *:nth-child(1) { animation-delay: 0.08s; }
+.anim-cards > *:nth-child(2) { animation-delay: 0.14s; }
+.anim-cards > *:nth-child(3) { animation-delay: 0.2s; }
+
+.anim-recs article {
+  opacity: 0;
+  animation: fadeInUp 0.35s ease-out forwards;
+}
+.anim-recs article:nth-child(1) { animation-delay: 0.08s; }
+.anim-recs article:nth-child(2) { animation-delay: 0.12s; }
+.anim-recs article:nth-child(3) { animation-delay: 0.16s; }
+.anim-recs article:nth-child(4) { animation-delay: 0.2s; }
+.anim-recs article:nth-child(5) { animation-delay: 0.24s; }
+.anim-recs article:nth-child(6) { animation-delay: 0.28s; }
+
+.anim-list > li {
+  opacity: 0;
+  animation: fadeInUp 0.35s ease-out forwards;
+}
+.anim-list > li:nth-child(1) { animation-delay: 0.1s; }
+.anim-list > li:nth-child(2) { animation-delay: 0.14s; }
+.anim-list > li:nth-child(3) { animation-delay: 0.18s; }
+.anim-list > li:nth-child(4) { animation-delay: 0.22s; }
+.anim-list > li:nth-child(5) { animation-delay: 0.26s; }
+.anim-list > li:nth-child(6) { animation-delay: 0.3s; }
+.anim-list > li:nth-child(7) { animation-delay: 0.34s; }
+.anim-list > li:nth-child(8) { animation-delay: 0.38s; }
+.anim-list > li:nth-child(n+9) { animation-delay: 0.42s; }

@@ -6,6 +6,7 @@ import { AvatarComponent } from '@shared/components/avatar/avatar.component';
 import { ButtonComponent } from '@shared/components/button/button.component';
 import { AuthStore } from '@core/application/store/auth.store';
 import { ToastService } from '@core/application/services/toast.service';
+import { canAccessOrganizerDashboard, canAccessAdminPanel, canAccessAssistantDashboard } from '@core/domain/constants/user-role';
 
 @Component({
   selector: 'app-navbar',
@@ -21,6 +22,10 @@ export class NavbarComponent {
   private transloco = inject(TranslocoService);
 
   isMobileMenuOpen = signal(false);
+
+  showOrganizerNav = () => canAccessOrganizerDashboard(this.authStore.userRole());
+  showAssistantNav = () => canAccessAssistantDashboard(this.authStore.userRole());
+  showAdminNav = () => canAccessAdminPanel(this.authStore.userRole());
 
   toggleMenu() {
     this.isMobileMenuOpen.update(v => !v);

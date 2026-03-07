@@ -13,6 +13,7 @@ export interface EventResponse {
   end_date: string;
   organizer_id: number;
   warning?: string;
+  registered_count?: number;
 }
 
 export class EventApiMapper {
@@ -36,7 +37,8 @@ export class EventApiMapper {
       status: res.status as Event['status'],
       organizerId: res.organizer_id,
       category: 'General',
-      ...(res.warning != null && { warning: res.warning })
+      ...(res.warning != null && { warning: res.warning }),
+      ...(res.registered_count != null && { registeredCount: res.registered_count })
     };
   }
 }

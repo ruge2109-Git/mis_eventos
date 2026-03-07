@@ -12,7 +12,12 @@ import { debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
 })
 export class SearchBarComponent implements OnInit, OnDestroy {
   placeholder = input<string>('Buscar eventos...');
+  /** Optional: override input styles (e.g. smaller bar for side panels). */
+  inputClass = input<string>('');
   searchChange = output<string>();
+
+  protected readonly defaultInputClass =
+    'rounded-full py-5 !pl-14 pr-6 text-xl shadow-2xl backdrop-blur-sm bg-surface/40 hover:bg-surface/60 border-none';
 
   searchControl = new FormControl('');
   private subscription: Subscription = new Subscription();
@@ -20,7 +25,7 @@ export class SearchBarComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.subscription = this.searchControl.valueChanges
       .pipe(
-        debounceTime(300),
+        debounceTime(400),
         distinctUntilChanged()
       )
       .subscribe(value => {

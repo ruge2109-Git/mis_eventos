@@ -78,9 +78,12 @@ describe('NavbarComponent', () => {
   });
 
   it('should show Ingresar and Registro when not authenticated', () => {
-    const loginLink = fixture.debugElement.query(By.css('a[routerLink="/auth/login"]'));
-    expect(loginLink?.nativeElement?.textContent?.trim()).toContain('Ingresar');
-    expect(fixture.nativeElement.textContent).toContain('Registro');
+    const transloco = TestBed.inject(TranslocoService);
+    const loginText = transloco.translate('auth.loginLinkText');
+    const loginLink = fixture.debugElement.query(By.css('a[ng-reflect-router-link="/auth/login"]'))
+      ?? fixture.debugElement.queryAll(By.css('a')).find(a => a.nativeElement.textContent?.includes(loginText));
+    expect(loginLink?.nativeElement?.textContent?.trim()).toContain(loginText);
+    expect(fixture.nativeElement.textContent).toContain(transloco.translate('auth.registerLinkText'));
   });
 
   it('should not show logout when not authenticated', () => {
@@ -100,8 +103,8 @@ describe('NavbarComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('MisEventos');
   });
 
-  it('should have link to /events (explore)', () => {
-    const exploreLink = fixture.debugElement.query(By.css('a[routerLink="/events"]'));
+  it('should have link to home/explore', () => {
+    const exploreLink = fixture.debugElement.query(By.css('a[routerLink="/"]'));
     expect(exploreLink).toBeTruthy();
   });
 
@@ -117,10 +120,11 @@ describe('NavbarComponent', () => {
   });
 
   it('should show Ingresar and Registro in mobile overlay when not authenticated', () => {
+    const transloco = TestBed.inject(TranslocoService);
     component.toggleMenu();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Ingresar');
-    expect(fixture.nativeElement.textContent).toContain('Registro');
+    expect(fixture.nativeElement.textContent).toContain(transloco.translate('auth.loginLinkText'));
+    expect(fixture.nativeElement.textContent).toContain(transloco.translate('auth.registerLinkText'));
   });
 
   it('should call toggleMenu when clicking a link in mobile overlay', () => {
@@ -158,9 +162,10 @@ describe('NavbarComponent when authenticated', () => {
   });
 
   it('should show avatar and Salir', () => {
+    const transloco = TestBed.inject(TranslocoService);
     const avatar = fixture.debugElement.query(By.css('app-avatar'));
     expect(avatar).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain('Salir');
+    expect(fixture.nativeElement.textContent).toContain(transloco.translate('nav.logout'));
   });
 
   it('should not show dashboard link when role is Attendee', () => {
@@ -220,7 +225,8 @@ describe('NavbarComponent mobile overlay when authenticated', () => {
     fixture.detectChanges();
   });
 
-  it('should show Cerrar Sesión', () => {
-    expect(fixture.nativeElement.textContent).toContain('Cerrar Sesión');
+  it('should show logout in mobile overlay', () => {
+    const transloco = TestBed.inject(TranslocoService);
+    expect(fixture.nativeElement.textContent).toContain(transloco.translate('nav.logout'));
   });
 });

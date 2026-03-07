@@ -57,26 +57,20 @@ describe('EventListComponent', () => {
     expect(getEventsUseCase.execute).toHaveBeenCalled();
   });
 
-  it('should call execute with next skip when onLoadMore is called', () => {
-    store.setEvents([], 24);
-    store.setPagination(0, 12);
-
-    component.onLoadMore();
-
-    expect(getEventsUseCase.execute).toHaveBeenCalledWith(12, 12);
+  it('should call execute with page and search when goToPage is called', () => {
+    (getEventsUseCase.execute as ReturnType<typeof vi.fn>).mockClear();
+    component.goToPage(2);
+    expect(getEventsUseCase.execute).toHaveBeenCalledWith(5, 5, undefined);
   });
 
-  it('should show "Load More" button only if hasMore is true', () => {
-    store.setEvents([], 24);
+  it('should show pagination when total pages > 1', () => {
+    store.setEvents(
+      Array.from({ length: 5 }, (_, i) => ({ id: i + 1, title: `Event ${i + 1}`, status: 'PUBLISHED' } as unknown as Event)),
+      10
+    );
     fixture.detectChanges();
-    let loadMoreBtn = fixture.debugElement.query(By.css('app-button'));
-    expect(loadMoreBtn).toBeTruthy();
-
-    const fullEvents = Array.from({ length: 24 }, (_, i) => ({ id: i + 1, title: `Event ${i + 1}`, status: 'PUBLISHED' } as unknown as Event));
-    store.setEvents(fullEvents, 24);
-    fixture.detectChanges();
-    loadMoreBtn = fixture.debugElement.query(By.css('app-button[customClass*="min-w-[200px]"]'));
-    expect(loadMoreBtn).toBeFalsy();
+    const nav = fixture.debugElement.query(By.css('nav'));
+    expect(nav).toBeTruthy();
   });
 
   it('should render app-search-bar', () => {
@@ -105,17 +99,11 @@ describe('EventListComponent', () => {
     expect(spy).toHaveBeenCalledWith('test');
   });
 
-  it('should filter events by searchQuery', () => {
-    store.setEvents(
-      [
-        { id: 1, title: 'Angular Meetup', description: null, startDate: new Date(), endDate: new Date(), location: null, imageUrl: null, additionalImages: [], capacity: 10, status: 'PUBLISHED', organizerId: 1 },
-        { id: 2, title: 'React Conference', description: null, startDate: new Date(), endDate: new Date(), location: null, imageUrl: null, additionalImages: [], capacity: 20, status: 'PUBLISHED', organizerId: 1 }
-      ],
-      2
-    );
-    component.searchQuery.set('Angular');
-    fixture.detectChanges();
-    expect(component.filteredEvents().length).toBe(1);
-    expect(component.filteredEvents()[0].title).toBe('Angular Meetup');
+  it('should call loadPage(1) and set searchQuery when onSearch is called', () => {
+    (getEventsUseCase.execute as ReturnType<typeof vi.fn>).mockClear();
+    component.onSearch('conferencia');
+    expect(component.searchQuery()).toBe('conferencia');
+    expect(component.currentPage()).toBe(1);
+    expect(getEventsUseCase.execute).toHaveBeenCalledWith(0, 5, 'conferencia');
   });
 });

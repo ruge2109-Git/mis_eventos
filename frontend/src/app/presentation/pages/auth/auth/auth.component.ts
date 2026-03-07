@@ -7,7 +7,7 @@ import { DynamicFormComponent } from '@components/dynamic-form/dynamic-form.comp
 import { FieldConfig } from '@components/dynamic-form/field-config';
 import { AuthStore } from '@core/application/store/auth.store';
 import { ToastService } from '@core/application/services/toast.service';
-import { canAccessOrganizerDashboard, USER_ROLE_OPTIONS_REGISTER } from '@core/domain/constants/user-role';
+import { canAccessOrganizerDashboard, canAccessAdminPanel, USER_ROLE_OPTIONS_REGISTER } from '@core/domain/constants/user-role';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 @Component({
@@ -168,7 +168,17 @@ export class AuthComponent implements OnInit, OnDestroy {
       this.authStore.login(data.email, data.password).subscribe({
         next: () => {
           this.toast.success(this.transloco.translate('auth.toastSessionStarted'));
-          if (canAccessOrganizerDashboard(this.authStore.userRole())) {
+          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+          const safeReturn = returnUrl?.startsWith('/') && !returnUrl.startsWith('//') &&
+            returnUrl !== '/auth/login' && returnUrl !== '/auth/register';
+          if (safeReturn && returnUrl) {
+            this.router.navigateByUrl(returnUrl);
+            return;
+          }
+          const role = this.authStore.userRole();
+          if (canAccessAdminPanel(role)) {
+            this.router.navigate(['/admin']);
+          } else if (canAccessOrganizerDashboard(role)) {
             this.router.navigate(['/dashboard/organizer']);
           } else {
             this.router.navigate(['/']);

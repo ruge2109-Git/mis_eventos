@@ -1,0 +1,12 @@
+@if (role(); as r) {
+<span
+  class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+  [class.bg-purple-500/20]="r === UserRole.ADMIN"
+  [class.text-purple-400]="r === UserRole.ADMIN"
+  [class.bg-amber-500/20]="r === UserRole.ORGANIZER"
+  [class.text-amber-400]="r === UserRole.ORGANIZER"
+  [class.bg-teal-500/20]="r === UserRole.ATTENDEE"
+  [class.text-teal-400]="r === UserRole.ATTENDEE">
+  {{ getRoleTranslationKey(r) | transloco }}
+</span>
+}

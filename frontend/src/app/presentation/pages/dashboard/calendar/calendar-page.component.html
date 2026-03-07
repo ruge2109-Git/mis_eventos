@@ -65,10 +65,9 @@
                 </li>
               </ul>
               <div class="mt-6">
-                <app-button [routerLink]="['/dashboard/organizer/evento', event.id]"
+                <app-button [routerLink]="['/dashboard/organizer/evento', event.id.toString()]" [label]="t('calendar.viewDetails')"
                   customClass="bg-accent-cyan hover:bg-accent-cyan/90 text-primary font-bold w-full py-3 text-base">
                   <span class="material-symbols-outlined text-xl mr-2">visibility</span>
-                  {{ t('calendar.viewDetails') }}
                 </app-button>
               </div>
             </div>

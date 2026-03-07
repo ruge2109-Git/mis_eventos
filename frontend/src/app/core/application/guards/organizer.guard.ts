@@ -8,7 +8,7 @@ export const organizerGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (!authStore.isAuthenticated()) {
-    router.navigate(['/auth/login']);
+    router.navigate(['/auth/login'], { queryParams: { returnUrl: router.url } });
     return false;
   }
 

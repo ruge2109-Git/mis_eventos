@@ -11,9 +11,14 @@ export abstract class AuthStorage {
   abstract setRole(value: string): void;
   abstract removeRole(): void;
 
+  abstract getFullName(): string | null;
+  abstract setFullName(value: string): void;
+  abstract removeFullName(): void;
+
   clear(): void {
     this.removeToken();
     this.removeUserId();
     this.removeRole();
+    this.removeFullName();
   }
 }

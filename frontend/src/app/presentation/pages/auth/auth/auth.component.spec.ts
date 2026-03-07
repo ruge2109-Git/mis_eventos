@@ -44,7 +44,10 @@ describe('AuthComponent', () => {
         { provide: ToastService, useValue: mockToastService },
         {
           provide: ActivatedRoute,
-          useValue: { url: of([new UrlSegment('login', {})]) }
+          useValue: {
+            url: of([new UrlSegment('login', {})]),
+            snapshot: { queryParamMap: { get: (k: string) => (k === 'returnUrl' ? null : null) } }
+          }
         }
       ]
     }).compileComponents();
@@ -131,6 +134,28 @@ describe('AuthComponent', () => {
     component.onSubmit({ email: 'org@test.com', password: 'Pass1!' });
 
     expect(router.navigate).toHaveBeenCalledWith(['/dashboard/organizer']);
+  });
+
+  it('should navigate to /admin after successful login when role is Admin', () => {
+    vi.mocked(mockAuthStore.userRole).mockReturnValue('Admin');
+    component.mode = 'login';
+    component.setFields();
+    component.onSubmit({ email: 'admin@test.com', password: 'Pass1!' });
+
+    expect(router.navigate).toHaveBeenCalledWith(['/admin']);
+  });
+
+  it('should navigate to returnUrl after successful login when returnUrl is in queryParams', () => {
+    const route = TestBed.inject(ActivatedRoute) as { snapshot?: unknown };
+    const origSnapshot = route.snapshot;
+    route.snapshot = { queryParamMap: { get: (k: string) => (k === 'returnUrl' ? '/evento/42' : null) } };
+    component.mode = 'login';
+    component.setFields();
+    const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    component.onSubmit({ email: 'u@u.com', password: 'Pass1!' });
+
+    expect(navigateByUrlSpy).toHaveBeenCalledWith('/evento/42');
+    route.snapshot = origSnapshot;
   });
 
   it('should call toast.success with session message on successful login', () => {

@@ -1,0 +1,338 @@
+<div class="min-h-screen" *transloco="let t">
+  @if (loading() && !event()) {
+  <div class="flex flex-col items-center justify-center py-20 gap-4">
+    <span class="animate-spin material-symbols-outlined text-5xl text-accent-cyan">progress_activity</span>
+    <p class="text-slate-400">{{ t('events.loading') }}</p>
+  </div>
+  }
+
+  @if (!event() && !loading()) {
+  <div class="rounded-2xl bg-surface border border-white/10 p-12 text-center">
+    <span class="material-symbols-outlined text-6xl text-slate-600 block mb-4">event_busy</span>
+    <p class="text-slate-400 text-lg">{{ t('eventDetail.notFound') }}</p>
+    <a routerLink="/"
+      class="mt-4 inline-flex items-center gap-2 text-accent-cyan font-medium hover:underline cursor-pointer">{{
+      t('eventDetail.backHome') }}</a>
+  </div>
+  }
+
+  @if (event(); as ev) {
+  <article>
+    <!-- Banner -->
+    <div class="relative h-64 sm:h-80 lg:h-96 bg-slate-800 overflow-hidden">
+      @if (ev.imageUrl) {
+      <img [src]="ev.imageUrl" [alt]="ev.title" class="w-full h-full object-cover" />
+      } @else {
+      <div class="w-full h-full flex items-center justify-center">
+        <span class="material-symbols-outlined text-8xl text-slate-600">event</span>
+      </div>
+      }
+      <div class="absolute inset-0 bg-gradient-to-t from-surface via-black/40 to-transparent"></div>
+      <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
+          [class.bg-green-500/20]="ev.status === 'PUBLISHED'" [class.text-green-400]="ev.status === 'PUBLISHED'"
+          [class.bg-slate-500/20]="ev.status !== 'PUBLISHED'" [class.text-slate-400]="ev.status !== 'PUBLISHED'">
+          {{ ev.status === 'PUBLISHED' ? t('events.published') : ev.status }}
+        </span>
+        <h1 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">{{ ev.title }}</h1>
+        <p class="text-slate-300 text-sm mt-2 flex flex-wrap items-center gap-4">
+          <span class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-lg text-accent-cyan">calendar_today</span>
+            {{ ev.startDate | date:'longDate' }} · {{ ev.startDate | date:'shortTime' }} – {{ ev.endDate |
+            date:'shortTime' }}
+          </span>
+          @if (ev.location) {
+          <span class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-lg text-accent-cyan">location_on</span>
+            {{ ev.location }}
+          </span>
+          }
+        </p>
+      </div>
+    </div>
+
+    <!-- Metrics (capacity / sessions) -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 -mt-8 relative z-10">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="rounded-xl bg-surface border border-white/10 p-4 flex flex-col items-center text-center">
+          <span class="material-symbols-outlined text-2xl text-accent-cyan mb-1">groups</span>
+          <span class="text-xl font-bold text-white">{{ ev.capacity }}</span>
+          <span class="text-[10px] font-medium uppercase tracking-wider text-slate-500">{{
+            t('eventDetail.totalCapacity') }}</span>
+        </div>
+        @if (ev.registeredCount !== undefined && ev.registeredCount !== null) {
+        <div class="rounded-xl bg-surface border border-white/10 p-4 flex flex-col items-center text-center">
+          <span class="material-symbols-outlined text-2xl text-accent-purple mb-1">person_add</span>
+          <span class="text-xl font-bold text-white">{{ ev.registeredCount }}</span>
+          <span class="text-[10px] font-medium uppercase tracking-wider text-slate-500">{{
+            t('eventDetail.registeredCount') }}</span>
+        </div>
+        }
+        <div class="rounded-xl bg-surface border border-white/10 p-4 flex flex-col items-center text-center">
+          <span class="material-symbols-outlined text-2xl text-green-400 mb-1">schedule</span>
+          <span class="text-xl font-bold text-white">{{ sessions().length }}</span>
+          <span class="text-[10px] font-medium uppercase tracking-wider text-slate-500">{{ t('eventDetail.sessions')
+            }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main content -->
+        <div class="lg:col-span-2 space-y-10">
+          <!-- Sobre el Evento -->
+          <section>
+            <h2 class="text-lg font-bold text-white border-b-2 border-accent-cyan w-fit pb-1 mb-4">{{
+              t('eventDetail.aboutEvent') }}</h2>
+            @if (ev.description) {
+            <div class="text-slate-300 leading-relaxed">
+              @if (descriptionExpanded() || ev.description.length <= descriptionTruncateLimit) { <p>{{ ev.description }}
+                </p>
+                @if (ev.description.length > descriptionTruncateLimit) {
+                <button type="button" (click)="toggleDescription()"
+                  class="mt-2 text-accent-cyan font-medium hover:underline cursor-pointer">
+                  {{ t('eventDetail.readLess') }}
+                </button>
+                }
+                } @else {
+                <p>{{ ev.description | truncate:descriptionTruncateLimit }}</p>
+                <button type="button" (click)="toggleDescription()"
+                  class="mt-2 text-accent-cyan font-medium hover:underline cursor-pointer">
+                  {{ t('eventDetail.readMore') }}
+                </button>
+                }
+            </div>
+            } @else {
+            <p class="text-slate-500 text-sm">{{ t('eventDetail.noDescription') }}</p>
+            }
+          </section>
+
+          <!-- Galería de imágenes adicionales -->
+          @if (ev.additionalImages && ev.additionalImages.length) {
+          <section>
+            <h2 class="text-lg font-bold text-white border-b-2 border-accent-cyan w-fit pb-1 mb-4">
+              <span class="inline-flex items-center gap-2">
+                <span class="material-symbols-outlined text-accent-cyan text-xl">photo_library</span>
+                {{ t('eventDetail.gallery') }}
+              </span>
+            </h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              @for (img of ev.additionalImages; track img; let i = $index) {
+              <button type="button" (click)="openLightbox(i)"
+                class="gallery-thumb aspect-[4/3] rounded-xl overflow-hidden border border-white/10 bg-slate-800 focus:outline-none focus:ring-2 focus:ring-accent-cyan/50 hover:border-accent-cyan/40 transition-all">
+                <img [src]="img" [alt]="ev.title + ' - ' + (i + 1)" class="w-full h-full object-cover" loading="lazy" />
+              </button>
+              }
+            </div>
+          </section>
+          }
+
+          <!-- Cronograma de Sesiones (línea de tiempo) -->
+          <section>
+            <h2 class="text-lg font-bold text-white border-b-2 border-accent-purple w-fit pb-1 mb-6">{{
+              t('eventDetail.schedule') }}</h2>
+            @if (timelineItems().length > 0) {
+            <div class="timeline relative">
+              <!-- Línea vertical: centro en md+, izquierda en móvil -->
+              <div class="timeline-line absolute top-0 bottom-0 w-0.5 bg-gradient-to-b from-accent-cyan via-accent-purple to-accent-cyan left-4 md:left-1/2 md:-translate-x-1/2"></div>
+
+              @for (item of timelineItems(); track item.type === 'session' ? item.session.id : item.start.getTime()) {
+              <div class="timeline-row relative grid grid-cols-[1fr_2rem_1fr] md:grid-cols-[1fr_2rem_1fr] gap-0 items-start min-h-[80px] mb-6 last:mb-0">
+                <!-- Contenido: en móvil siempre col 3; en md par=col 1 (derecha), impar=col 3 -->
+                <div class="min-w-0 col-start-3 col-end-4 pl-4"
+                  [class.md:col-start-1]="$index % 2 === 0"
+                  [class.md:col-end-2]="$index % 2 === 0"
+                  [class.md:justify-self-end]="$index % 2 === 0"
+                  [class.md:pr-4]="$index % 2 === 0"
+                  [class.md:pl-0]="$index % 2 === 0">
+                  @if (item.type === 'session') {
+                  <div class="timeline-card w-full max-w-md rounded-xl border border-white/10 bg-surface/80 p-5"
+                    [class.text-right]="$index % 2 === 0"
+                    [class.text-left]="$index % 2 === 1"
+                    [class.timeline-card-cyan]="$index % 2 === 0"
+                    [class.timeline-card-purple]="$index % 2 === 1">
+                    <p class="font-bold text-sm" [class.text-accent-cyan]="$index % 2 === 0" [class.text-accent-purple]="$index % 2 === 1">{{ item.session.startTime | date:'shortTime' }} – {{ item.session.endTime | date:'shortTime' }}</p>
+                    <h3 class="font-bold text-white mt-1">{{ item.session.title }}</h3>
+                    @if (item.session.description) {
+                    <p class="text-slate-400 text-sm mt-2">{{ item.session.description | truncate:120 }}</p>
+                    }
+                    <p class="text-slate-500 text-xs mt-2 flex items-center gap-1" [class.justify-end]="$index % 2 === 0">
+                      <span class="material-symbols-outlined text-sm">mic</span>
+                      {{ item.session.speaker }}
+                    </p>
+                  </div>
+                  } @else if (item.type === 'recess') {
+                  <div class="timeline-recess w-full max-w-md rounded-xl border border-dashed border-white/20 bg-white/5 p-4"
+                    [class.text-right]="$index % 2 === 0"
+                    [class.text-left]="$index % 2 === 1">
+                    <span class="inline-flex items-center gap-1.5 text-slate-500 text-sm">
+                      <span class="material-symbols-outlined text-lg">free_breakfast</span>
+                      {{ t('eventDetail.recess') }}
+                    </span>
+                    <p class="text-slate-500 text-xs mt-1">{{ item.start | date:'shortTime' }} – {{ item.end | date:'shortTime' }}</p>
+                  </div>
+                  }
+                </div>
+
+                <!-- Punto en la línea -->
+                <div class="timeline-dot-wrap flex-shrink-0 flex items-center justify-center relative z-10 col-start-2 row-start-1">
+                  <div class="timeline-dot w-4 h-4 rounded-full border-2 bg-surface flex items-center justify-center"
+                    [class.border-accent-purple]="$index % 2 === 1"
+                    [class.border-accent-cyan]="$index % 2 === 0">
+                    <span class="w-2 h-2 rounded-full"
+                      [class.bg-accent-purple]="$index % 2 === 1"
+                      [class.bg-accent-cyan]="$index % 2 === 0"></span>
+                  </div>
+                </div>
+              </div>
+              }
+            </div>
+            } @else {
+            <div class="rounded-2xl border border-white/5 bg-surface/50 py-10 text-center">
+              <span class="material-symbols-outlined text-5xl text-slate-600 block mb-2">event_note</span>
+              <p class="text-slate-500 text-sm">{{ t('eventDetail.noSessionsPublished') }}</p>
+            </div>
+            }
+          </section>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-1 space-y-6">
+          <!-- Registration card -->
+          <div class="rounded-2xl bg-surface border border-white/10 p-6 sticky top-24">
+            @if (ev.status === 'PUBLISHED') {
+            <div class="flex items-center gap-2 text-green-400 text-sm font-medium mb-4">
+              <span class="w-2 h-2 rounded-full bg-green-400"></span>
+              {{ t('events.open') }}
+            </div>
+            <p class="text-slate-400 text-xs uppercase tracking-wider mb-1">{{ t('eventDetail.totalCapacity') }}</p>
+            <p class="text-2xl font-bold text-white mb-4">{{ ev.capacity }}</p>
+            @if (ev.registeredCount !== undefined && ev.registeredCount !== null) {
+            <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden mb-2">
+              <div class="h-full bg-gradient-to-r from-accent-cyan to-accent-purple transition-all"
+                [style.width.%]="capacityPercent(ev)"></div>
+            </div>
+            <p class="text-slate-400 text-xs mb-4">{{ ev.registeredCount }} {{ t('eventDetail.registeredCount') }} · {{
+              capacityPercent(ev) | number:'1.0-0' }}% {{ t('eventDetail.complete') }}</p>
+            }
+            @if (isAuthenticated()) {
+            @if (myEventRegistration()) {
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+              <span
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/20 text-green-400 text-sm font-medium">
+                <span class="material-symbols-outlined text-lg">check_circle</span>
+                {{ t('eventDetail.youAreRegistered') }}
+              </span>
+            </div>
+            <app-button variant="outline" [disabled]="actionLoading() !== null"
+              [label]="t('eventDetail.cancelRegistration')"
+              customClass="w-full border-red-500/40 text-red-400 hover:bg-red-500/10 cursor-pointer"
+              (clicked)="openConfirmUnregister()">
+            </app-button>
+            } @else {
+            <app-button size="lg" [disabled]="actionLoading() !== null || spotsLeft(ev) <= 0"
+              [loading]="actionLoading() === 'event'" [label]="t('eventDetail.registerNow')"
+              customClass="w-full bg-gradient-to-r from-accent-cyan to-accent-purple text-white font-bold cursor-pointer"
+              (clicked)="openConfirmRegister()">
+            </app-button>
+            }
+            } @else {
+            <p class="text-slate-400 text-sm mb-3">{{ t('eventDetail.loginToRegister') }}</p>
+            <app-button [routerLink]="['/auth/login']" [queryParams]="{ returnUrl: router.url }" [label]="t('eventDetail.login')" variant="outline" size="md"
+              customClass="w-full text-accent-cyan cursor-pointer">
+            </app-button>
+            }
+            } @else {
+            <p class="text-slate-500 text-sm">{{ t('eventDetail.eventNotOpen') }}</p>
+            }
+          </div>
+
+          @if (ev.location) {
+          <div class="rounded-2xl bg-surface border border-white/10 p-6">
+            <h3 class="font-bold text-white mb-2 flex items-center gap-2">
+              <span class="material-symbols-outlined text-accent-cyan">location_on</span>
+              {{ t('eventDetail.locationTitle') }}
+            </h3>
+            <p class="text-slate-400 text-sm">{{ ev.location }}</p>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal confirmación inscripción / cancelación -->
+    @if (confirmModal() === 'register') {
+    <div class="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/70" role="dialog" aria-labelledby="confirm-register-title" tabindex="0"
+      (click)="closeConfirmModal()" (keydown.escape)="closeConfirmModal()" (keydown.enter)="closeConfirmModal()">
+      <div class="rounded-2xl bg-surface border border-white/10 shadow-xl max-w-md w-full p-6" tabindex="-1"
+        (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+        <h3 id="confirm-register-title" class="text-lg font-bold text-white mb-2">{{ t('eventDetail.confirmRegisterTitle') }}</h3>
+        <p class="text-slate-400 text-sm mb-6">{{ t('eventDetail.confirmRegisterMessage') }}</p>
+        <div class="flex gap-3 justify-end">
+          <app-button [label]="t('eventDetail.cancel')" variant="outline" size="sm"
+            customClass="border-white/30 text-slate-300"
+            (clicked)="closeConfirmModal()">
+          </app-button>
+          <app-button [label]="t('eventDetail.confirm')" size="sm" [loading]="actionLoading() === 'event'"
+            customClass="bg-accent-cyan text-white"
+            (clicked)="onConfirmRegister()">
+          </app-button>
+        </div>
+      </div>
+    </div>
+    }
+    @if (confirmModal() === 'unregister') {
+    <div class="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/70" role="dialog" aria-labelledby="confirm-unregister-title" tabindex="0"
+      (click)="closeConfirmModal()" (keydown.escape)="closeConfirmModal()" (keydown.enter)="closeConfirmModal()">
+      <div class="rounded-2xl bg-surface border border-white/10 shadow-xl max-w-md w-full p-6" tabindex="-1"
+        (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+        <h3 id="confirm-unregister-title" class="text-lg font-bold text-white mb-2">{{ t('eventDetail.confirmUnregisterTitle') }}</h3>
+        <p class="text-slate-400 text-sm mb-6">{{ t('eventDetail.confirmUnregisterMessage') }}</p>
+        <div class="flex gap-3 justify-end">
+          <app-button [label]="t('eventDetail.cancel')" variant="outline" size="sm"
+            customClass="border-white/30 text-slate-300"
+            (clicked)="closeConfirmModal()">
+          </app-button>
+          <app-button [label]="t('eventDetail.confirm')" size="sm" [loading]="actionLoading() === 'event'"
+            customClass="bg-red-500/80 text-white hover:bg-red-500"
+            (clicked)="onConfirmUnregister()">
+          </app-button>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Lightbox -->
+    @if (ev.additionalImages && ev.additionalImages.length && lightboxIndex() !== null) {
+    <div class="lightbox-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+      (click)="closeLightbox()" (keydown.escape)="closeLightbox()" tabindex="0" role="dialog" aria-label="{{ t('eventDetail.gallery') }}">
+      <button type="button" (click)="closeLightbox(); $event.stopPropagation()"
+        class="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+        [attr.aria-label]="t('btn.close')">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      @if (ev.additionalImages.length > 1) {
+      <button type="button" (click)="lightboxPrev(); $event.stopPropagation()"
+        class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+        aria-label="{{ t('eventDetail.prevImage') }}">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+      <button type="button" (click)="lightboxNext(); $event.stopPropagation()"
+        class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+        aria-label="{{ t('eventDetail.nextImage') }}">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+      }
+      <p class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 text-slate-400 text-sm">
+        {{ lightboxIndex()! + 1 }} / {{ ev.additionalImages.length }}
+      </p>
+      <div class="flex items-center justify-center min-h-[50vh]" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" tabindex="0">
+        <img [src]="ev.additionalImages[lightboxIndex()!]" [alt]="ev.title"
+          class="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-lg shadow-2xl" />
+      </div>
+    </div>
+    }
+  </article>
+  }
+</div>

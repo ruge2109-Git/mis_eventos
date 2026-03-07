@@ -10,6 +10,7 @@ export interface AuthState {
   accessToken: string | null;
   userId: number | null;
   role: string | null;
+  fullName: string | null;
   loading: boolean;
   error: string | null;
 }
@@ -30,6 +31,7 @@ export class AuthStore {
       accessToken: token,
       userId: userIdStr ? Number(userIdStr) : null,
       role: this.storage.getRole(),
+      fullName: this.storage.getFullName(),
       loading: false,
       error: null
     };
@@ -37,6 +39,8 @@ export class AuthStore {
 
   readonly isAuthenticated = computed(() => this.state().isAuthenticated);
   readonly userRole = computed(() => this.state().role);
+  readonly userId = computed(() => this.state().userId);
+  readonly fullName = computed(() => this.state().fullName);
   readonly isLoading = computed(() => this.state().loading);
   readonly error = computed(() => this.state().error);
 
@@ -48,12 +52,14 @@ export class AuthStore {
           this.storage.setToken(res.access_token);
           this.storage.setUserId(res.user_id.toString());
           this.storage.setRole(res.role);
+          if (res.full_name != null) this.storage.setFullName(res.full_name);
           this.state.update((s) => ({
             ...s,
             isAuthenticated: true,
             accessToken: res.access_token,
             userId: res.user_id,
             role: res.role,
+            fullName: res.full_name ?? null,
             loading: false,
             error: null,
           }));
@@ -86,6 +92,7 @@ export class AuthStore {
       accessToken: null,
       userId: null,
       role: null,
+      fullName: null,
       loading: false,
       error: null,
     });

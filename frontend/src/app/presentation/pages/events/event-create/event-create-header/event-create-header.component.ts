@@ -14,6 +14,8 @@ import { ButtonComponent } from '@shared/components/button/button.component';
 export class EventCreateHeaderComponent {
   isEditMode = input.required<boolean>();
   isLoading = input(false);
+  /** When set, used as routerLink for the back button (e.g. admin panel). */
+  backLink = input<string[]>(['/dashboard/organizer']);
 
   deleteClick = output<void>();
 }

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '@environments/environment';
 import { Event, CreateEventDTO, UpdateEventDTO } from '@core/domain/entities/event.entity';
-import { EventRepository } from '@core/domain/ports/event.repository';
+import { EventRepository, type EventAttendee } from '@core/domain/ports/event.repository';
 import { dateToLocalISOString } from '@core/application/utils/date.util';
 import { EventApiMapper } from './mappers/event-api.mapper';
 import type { EventResponse } from './mappers/event-api.mapper';
@@ -24,10 +24,10 @@ export class EventApiRepository extends EventRepository {
   private apiUrl = `${environment.apiUrl}/events/`;
   private mapper = new EventApiMapper(environment.apiUrl);
 
-  getAll(skip = 0, limit = 12): Observable<{ items: Event[], total: number }> {
-    return this.http.get<PaginatedResponse<EventResponse>>(this.apiUrl, {
-      params: { skip, limit }
-    }).pipe(
+  getAll(skip = 0, limit = 12, search?: string): Observable<{ items: Event[]; total: number }> {
+    const params: Record<string, number | string> = { skip, limit };
+    if (search != null && search.trim() !== '') params['search'] = search.trim();
+    return this.http.get<PaginatedResponse<EventResponse>>(this.apiUrl, { params }).pipe(
       map(response => ({
         items: response.items.map(res => this.mapper.mapResponseToEntity(res)),
         total: response.total
@@ -118,4 +118,16 @@ export class EventApiRepository extends EventRepository {
     );
   }
 
+  getEventAttendees(
+    eventId: number,
+    skip: number,
+    limit: number,
+    search?: string
+  ): Observable<{ items: EventAttendee[]; total: number }> {
+    const params: Record<string, number | string> = { skip, limit };
+    if (search != null && search.trim() !== '') params['search'] = search.trim();
+    return this.http
+      .get<PaginatedResponse<EventAttendee>>(`${this.apiUrl}${eventId}/attendees`, { params })
+      .pipe(map(r => ({ items: r.items, total: r.total })));
+  }
 }

@@ -13,6 +13,7 @@ export interface Event {
   category?: string;
   isFeatured?: boolean;
   warning?: string;
+  registeredCount?: number;
 }
 
 export type CreateEventDTO = Omit<Event, 'id' | 'status' | 'organizerId'>;

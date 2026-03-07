@@ -1,0 +1,186 @@
+@if (isOpen()) {
+<!-- Backdrop -->
+<div
+  class="fixed inset-0 z-40 bg-black/50 transition-opacity"
+  (click)="onBackdropClick()"
+  role="button"
+  tabindex="-1"
+  [attr.aria-label]="'btn.close' | transloco"
+></div>
+
+<!-- Panel -->
+<aside
+  class="fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-slate-800 border-l border-white/10 shadow-xl flex flex-col animate-in slide-in-from-right duration-300"
+  role="dialog"
+  [attr.aria-label]="'admin.userDetailTitle' | transloco"
+>
+  <div class="flex items-center justify-between p-4 border-b border-white/10">
+    <h2 class="text-lg font-semibold text-white">{{ 'admin.userDetailTitle' | transloco }}</h2>
+    <button
+      type="button"
+      (click)="close()"
+      class="p-2 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+      [attr.aria-label]="'btn.close' | transloco"
+    >
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-4">
+    @if (loading()) {
+    <div class="flex flex-col items-center justify-center py-12 gap-4">
+      <span class="animate-spin material-symbols-outlined text-4xl text-teal-400">progress_activity</span>
+      <p class="text-slate-400 text-sm">{{ 'admin.loading' | transloco }}</p>
+    </div>
+    } @else if (error()) {
+    <div class="rounded-lg bg-red-500/10 border border-red-500/30 p-4 text-red-400 text-sm">
+      {{ error() | transloco }}
+    </div>
+    } @else if (user(); as u) {
+    <div class="space-y-6">
+      <div class="flex flex-col items-center text-center">
+        <div
+          class="w-20 h-20 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-400 font-bold text-2xl"
+        >
+          {{ getInitials(u) }}
+        </div>
+        <h3 class="mt-3 text-xl font-semibold text-white">{{ u.fullName }}</h3>
+        <p class="text-slate-400 text-sm">{{ u.email }}</p>
+      </div>
+
+      <dl class="space-y-3">
+        <div>
+          <dt class="text-xs font-medium uppercase tracking-wider text-slate-500">{{ 'admin.profilesRole' | transloco }}</dt>
+          <dd class="mt-1">
+            <app-role-badge [role]="u.role" />
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs font-medium uppercase tracking-wider text-slate-500">{{ 'admin.profilesRegistration' | transloco }}</dt>
+          <dd class="mt-1 text-white">{{ u.createdAt | date:'longDate' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-medium uppercase tracking-wider text-slate-500">{{ 'admin.userId' | transloco }}</dt>
+          <dd class="mt-1 text-slate-300">{{ u.id }}</dd>
+        </div>
+      </dl>
+
+      <div class="space-y-4 border-t border-white/10 pt-4">
+        <section>
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-base">event</span>
+            {{ 'admin.userEventsOrganized' | transloco }}
+          </h4>
+          <div class="mb-2 w-full">
+            <app-search-bar
+              [placeholder]="'admin.reportSearchEvents' | transloco"
+              inputClass="rounded-lg py-2 !pl-10 pr-3 text-sm bg-surface/40 hover:bg-surface/60 border border-white/10"
+              (searchChange)="onOrganizedSearch($event)">
+            </app-search-bar>
+          </div>
+          @if (organizedLoading()) {
+          <p class="text-slate-400 text-sm py-2">{{ 'admin.loading' | transloco }}</p>
+          } @else if (eventsOrganized().length === 0) {
+          <p class="text-slate-500 text-sm">{{ 'admin.noEventsOrganized' | transloco }}</p>
+          } @else {
+          <ul class="space-y-1.5">
+            @for (ev of eventsOrganized(); track ev.id) {
+            <li>
+              <a [routerLink]="['/admin/eventos/evento', ev.id]" (click)="close()"
+                class="block py-2 px-3 rounded-lg text-teal-400 hover:bg-white/10 hover:text-teal-300 text-sm font-medium transition-colors truncate">
+                {{ ev.title }}
+              </a>
+              <p class="text-slate-500 text-xs pl-3">{{ ev.startDate | date:'shortDate' }}</p>
+            </li>
+            }
+          </ul>
+          @if (organizedTotalPages() > 1) {
+          <nav class="w-full flex flex-wrap items-center justify-center gap-2 py-3 mt-2" aria-label="Paginación eventos organizados">
+            <button type="button" [disabled]="organizedCurrentPage() <= 1" (click)="organizedGoToPage(organizedCurrentPage() - 1)"
+              [attr.aria-label]="'btn.prevPage' | transloco"
+              class="p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:pointer-events-none transition-colors">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            @for (p of organizedPageNumbers(); track p) {
+              @if (p === -1) {
+            <span class="px-2 text-slate-500">…</span>
+              } @else {
+            <button type="button" (click)="organizedGoToPage(p)" [attr.aria-label]="'events.pageOf' | transloco: { current: p, total: organizedTotalPages() }"
+              class="min-w-[36px] py-1.5 px-2 rounded-lg text-sm font-medium transition-colors"
+              [class.bg-accent-cyan]="organizedCurrentPage() === p" [class.text-primary]="organizedCurrentPage() === p"
+              [class.text-slate-400]="organizedCurrentPage() !== p" [class.hover:bg-white/5]="organizedCurrentPage() !== p">
+              {{ p }}
+            </button>
+              }
+            }
+            <button type="button" [disabled]="organizedCurrentPage() >= organizedTotalPages()" (click)="organizedGoToPage(organizedCurrentPage() + 1)"
+              [attr.aria-label]="'btn.nextPage' | transloco"
+              class="p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:pointer-events-none transition-colors">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </nav>
+          }
+          }
+        </section>
+        <section>
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-base">confirmation_number</span>
+            {{ 'admin.userEventsRegistered' | transloco }}
+          </h4>
+          <div class="mb-2 w-full">
+            <app-search-bar
+              [placeholder]="'admin.reportSearchEvents' | transloco"
+              inputClass="rounded-lg py-2 !pl-10 pr-3 text-sm bg-surface/40 hover:bg-surface/60 border border-white/10"
+              (searchChange)="onRegisteredSearch($event)">
+            </app-search-bar>
+          </div>
+          @if (registeredLoading()) {
+          <p class="text-slate-400 text-sm py-2">{{ 'admin.loading' | transloco }}</p>
+          } @else if (eventsRegistered().length === 0) {
+          <p class="text-slate-500 text-sm">{{ 'admin.noEventsRegistered' | transloco }}</p>
+          } @else {
+          <ul class="space-y-1.5">
+            @for (ev of eventsRegistered(); track ev.id) {
+            <li>
+              <a [routerLink]="['/admin/eventos/evento', ev.id]" (click)="close()"
+                class="block py-2 px-3 rounded-lg text-teal-400 hover:bg-white/10 hover:text-teal-300 text-sm font-medium transition-colors truncate">
+                {{ ev.title }}
+              </a>
+              <p class="text-slate-500 text-xs pl-3">{{ ev.startDate | date:'shortDate' }}</p>
+            </li>
+            }
+          </ul>
+          @if (registeredTotalPages() > 1) {
+          <nav class="w-full flex flex-wrap items-center justify-center gap-2 py-3 mt-2" aria-label="Paginación eventos inscritos">
+            <button type="button" [disabled]="registeredCurrentPage() <= 1" (click)="registeredGoToPage(registeredCurrentPage() - 1)"
+              [attr.aria-label]="'btn.prevPage' | transloco"
+              class="p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:pointer-events-none transition-colors">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            @for (p of registeredPageNumbers(); track p) {
+              @if (p === -1) {
+            <span class="px-2 text-slate-500">…</span>
+              } @else {
+            <button type="button" (click)="registeredGoToPage(p)" [attr.aria-label]="'events.pageOf' | transloco: { current: p, total: registeredTotalPages() }"
+              class="min-w-[36px] py-1.5 px-2 rounded-lg text-sm font-medium transition-colors"
+              [class.bg-accent-cyan]="registeredCurrentPage() === p" [class.text-primary]="registeredCurrentPage() === p"
+              [class.text-slate-400]="registeredCurrentPage() !== p" [class.hover:bg-white/5]="registeredCurrentPage() !== p">
+              {{ p }}
+            </button>
+              }
+            }
+            <button type="button" [disabled]="registeredCurrentPage() >= registeredTotalPages()" (click)="registeredGoToPage(registeredCurrentPage() + 1)"
+              [attr.aria-label]="'btn.nextPage' | transloco"
+              class="p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:pointer-events-none transition-colors">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </nav>
+          }
+          }
+        </section>
+      </div>
+    </div>
+    }
+  </div>
+</aside>
+}

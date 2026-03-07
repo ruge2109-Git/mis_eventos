@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+
+.admin-dashboard__stats,
+.admin-dashboard__reports {
+  animation: adminFadeIn 0.4s ease-out;
+}
+
+.admin-dashboard__stat-card,
+.admin-dashboard__report {
+  animation: adminFadeIn 0.5s ease-out both;
+}
+
+.admin-dashboard__stat-card:nth-child(1) { animation-delay: 0.05s; }
+.admin-dashboard__stat-card:nth-child(2) { animation-delay: 0.1s; }
+.admin-dashboard__stat-card:nth-child(3) { animation-delay: 0.15s; }
+.admin-dashboard__stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+.admin-dashboard__report--attendees { animation-delay: 0.15s; }
+.admin-dashboard__report--upcoming { animation-delay: 0.25s; }
+
+@keyframes adminFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

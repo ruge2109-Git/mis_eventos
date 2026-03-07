@@ -14,6 +14,12 @@ import { AuthApiRepository } from './infrastructure/api/auth-api.repository';
 import { LocalStorageAuthStorage } from './infrastructure/storage/local-storage-auth.storage';
 import { SessionRepository } from './core/domain/ports/session.repository';
 import { SessionApiRepository } from './infrastructure/api/session-api.repository';
+import { AdminRepository } from './core/domain/ports/admin.repository';
+import { AdminApiRepository } from './infrastructure/api/admin-api.repository';
+import { RegistrationRepository } from './core/domain/ports/registration.repository';
+import { RegistrationApiRepository } from './infrastructure/api/registration-api.repository';
+import { SessionRegistrationRepository } from './core/domain/ports/session-registration.repository';
+import { SessionRegistrationApiRepository } from './infrastructure/api/session-registration-api.repository';
 import { provideTransloco } from '@jsverse/transloco';
 import { isDevMode } from '@angular/core';
 import { TranslocoHttpLoader } from './transloco-loader';
@@ -36,6 +42,9 @@ export const appConfig: ApplicationConfig = {
     { provide: AuthRepository, useClass: AuthApiRepository },
     { provide: AuthStorage, useClass: LocalStorageAuthStorage },
     { provide: SessionRepository, useClass: SessionApiRepository },
+    { provide: AdminRepository, useClass: AdminApiRepository },
+    { provide: RegistrationRepository, useClass: RegistrationApiRepository },
+    { provide: SessionRegistrationRepository, useClass: SessionRegistrationApiRepository },
     provideTransloco({
         config: { 
           availableLangs: ['es', 'en'],

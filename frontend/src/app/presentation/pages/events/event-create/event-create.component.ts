@@ -3,7 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { EventRepository } from '@core/domain/ports/event.repository';
+import { EventRepository, type EventAttendee } from '@core/domain/ports/event.repository';
 import type { Session } from '@core/domain/entities/session.entity';
 import { API_BASE_URL } from '@core/application/tokens/api-base-url.token';
 import { EventStore } from '@core/application/store/event.store';
@@ -14,6 +14,7 @@ import { SaveEventUseCase } from '@core/application/usecases/save-event.usecase'
 import { Subscription } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 import { ConfirmModalComponent } from '@shared/components/confirm-modal/confirm-modal.component';
+import { SearchBarComponent } from '@shared/components/search-bar/search-bar.component';
 import { EventSessionsSectionComponent, type SessionFormItem } from './event-sessions-section/event-sessions-section.component';
 import { EventCreateHeaderComponent } from './event-create-header/event-create-header.component';
 import { EventDetailsSectionComponent } from './event-details-section/event-details-section.component';
@@ -30,6 +31,7 @@ import { EventFormActionsComponent } from './event-form-actions/event-form-actio
     ReactiveFormsModule,
     TranslocoModule,
     ConfirmModalComponent,
+    SearchBarComponent,
     EventSessionsSectionComponent,
     EventCreateHeaderComponent,
     EventDetailsSectionComponent,
@@ -73,7 +75,20 @@ export class EventCreateComponent implements OnInit, OnDestroy {
   previewImageUrl: string | null = null;
   showDeleteConfirm = false;
 
+  /** Attendees (edit mode only): 5 per page, paginated and filterable */
+  readonly attendeesPageSize = 5;
+  attendees: EventAttendee[] = [];
+  attendeesTotal = 0;
+  attendeesSkip = 0;
+  attendeesSearch = '';
+  attendeesLoading = false;
+
   @ViewChild('formStart') formStartRef?: ElementRef<HTMLFormElement>;
+
+  /** Back link for header: admin list when editing from admin panel, else organizer dashboard. */
+  get backLink(): string[] {
+    return this.router.url.startsWith('/admin') ? ['/admin/eventos'] : ['/dashboard/organizer'];
+  }
 
   ngOnInit() {
     this.eventForm = this.fb.group({
@@ -125,6 +140,7 @@ export class EventCreateComponent implements OnInit, OnDestroy {
               description: s.description ?? ''
             }));
             this.initialSessionIds = list.map((s: Session) => s.id);
+            this.loadAttendees();
             this.cdr.markForCheck();
           },
           error: (err) => {
@@ -315,6 +331,75 @@ export class EventCreateComponent implements OnInit, OnDestroy {
 
   closeDeleteConfirm(): void {
     this.showDeleteConfirm = false;
+  }
+
+  loadAttendees(): void {
+    if (!this.isEditMode || this.eventId == null) return;
+    this.attendeesLoading = true;
+    this.eventRepository
+      .getEventAttendees(
+        this.eventId,
+        this.attendeesSkip,
+        this.attendeesPageSize,
+        this.attendeesSearch || undefined
+      )
+      .pipe(finalize(() => { this.attendeesLoading = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: (res) => {
+          this.attendees = res.items;
+          this.attendeesTotal = res.total;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.attendees = [];
+          this.attendeesTotal = 0;
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  onAttendeesSearchFromBar(value: string): void {
+    this.attendeesSearch = value?.trim() ?? '';
+    this.attendeesSkip = 0;
+    this.loadAttendees();
+  }
+
+  /** Números de página a mostrar (1, 2, … última), -1 = ellipsis */
+  attendeePageNumbers(): number[] {
+    const total = this.attendeesTotalPages;
+    const current = this.attendeesCurrentPage;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages: number[] = [1];
+    if (current > 3) pages.push(-1);
+    const from = Math.max(2, current - 1);
+    const to = Math.min(total - 1, current + 1);
+    for (let p = from; p <= to; p++) {
+      if (!pages.includes(p)) pages.push(p);
+    }
+    if (current < total - 2) pages.push(-1);
+    if (total > 1) pages.push(total);
+    return pages.filter((p, i, arr) => p !== -1 || arr[i - 1] !== -1);
+  }
+
+  attendeeGoToPage(page: number): void {
+    if (page < 1 || page > this.attendeesTotalPages) return;
+    this.attendeesSkip = (page - 1) * this.attendeesPageSize;
+    this.loadAttendees();
+  }
+
+  get attendeesCurrentPage(): number {
+    if (this.attendeesTotal === 0) return 0;
+    return Math.floor(this.attendeesSkip / this.attendeesPageSize) + 1;
+  }
+
+  get attendeesTotalPages(): number {
+    return Math.max(1, Math.ceil(this.attendeesTotal / this.attendeesPageSize));
+  }
+
+  formatAttendeeDate(iso: string): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { dateStyle: 'short' }) + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   }
 
   confirmDelete(): void {

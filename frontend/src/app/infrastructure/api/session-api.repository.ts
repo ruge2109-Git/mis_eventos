@@ -30,6 +30,12 @@ export class SessionApiRepository extends SessionRepository {
       .pipe(map(list => (list ?? []).map(res => this.mapToEntity(res))));
   }
 
+  getById(sessionId: number): Observable<Session> {
+    return this.http
+      .get<SessionResponse>(`${this.apiUrl}by-id/${sessionId}`)
+      .pipe(map(res => this.mapToEntity(res)));
+  }
+
   create(dto: CreateSessionDTO): Observable<Session> {
     const body = {
       title: dto.title,

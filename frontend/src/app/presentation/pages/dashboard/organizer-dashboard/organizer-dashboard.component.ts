@@ -5,6 +5,7 @@ import { DatePipe } from '@angular/common';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { ButtonComponent } from '@shared/components/button/button.component';
 import { ConfirmModalComponent } from '@shared/components/confirm-modal/confirm-modal.component';
+import { SearchBarComponent } from '@shared/components/search-bar/search-bar.component';
 import { EventStore } from '@core/application/store/event.store';
 import { GetOrganizerEventsUseCase } from '@core/application/usecases/get-organizer-events.usecase';
 import { LoadingContextService } from '@core/application/services/loading-context.service';
@@ -15,6 +16,7 @@ import { catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 
 const EVENTS_CONTEXT = 'events';
+const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-organizer-dashboard',
@@ -25,7 +27,8 @@ const EVENTS_CONTEXT = 'events';
     DatePipe,
     TranslocoModule,
     ButtonComponent,
-    ConfirmModalComponent
+    ConfirmModalComponent,
+    SearchBarComponent
   ],
   templateUrl: './organizer-dashboard.component.html',
   styleUrl: './organizer-dashboard.component.scss'
@@ -41,14 +44,30 @@ export class OrganizerDashboardComponent implements OnInit {
   actionLoadingId = signal<number | null>(null);
   eventIdToDelete = signal<number | null>(null);
   showDeleteConfirm = computed(() => this.eventIdToDelete() != null);
+  /** Confirmación para cambiar estado: publicar, cancelar, revertir a borrador */
+  stateChangeConfirm = signal<{ type: 'publish' | 'cancel' | 'revert'; event: Event } | null>(null);
+  showStateChangeConfirm = computed(() => this.stateChangeConfirm() != null);
   eventsLoading = computed(() => this.loadingContext.loadingFor(EVENTS_CONTEXT)());
   eventsError = computed(() => this.loadingContext.errorFor(EVENTS_CONTEXT)());
+
+  /** Búsqueda por texto */
+  searchQuery = signal('');
+  /** Página actual (1-based) */
+  currentPage = signal(1);
+
+  /** Filtro por estado: null = todos, 'PUBLISHED' | 'DRAFT' | 'CANCELLED' */
+  statusFilter = signal<'PUBLISHED' | 'DRAFT' | 'CANCELLED' | null>(null);
+  /** Orden: 'date' | 'title' */
+  sortBy = signal<'date' | 'title'>('date');
 
   private now = new Date();
   private startOfMonth = new Date(this.now.getFullYear(), this.now.getMonth(), 1);
   private endOfMonth = new Date(this.now.getFullYear(), this.now.getMonth() + 1, 0, 23, 59, 59);
 
   totalEvents = computed(() => this.store.events().length);
+  publishedCount = computed(() => this.store.events().filter(e => e.status === 'PUBLISHED').length);
+  draftCount = computed(() => this.store.events().filter(e => e.status === 'DRAFT').length);
+  cancelledCount = computed(() => this.store.events().filter(e => e.status === 'CANCELLED').length);
 
   upcomingThisMonth = computed(() =>
     this.store.events().filter(
@@ -56,40 +75,142 @@ export class OrganizerDashboardComponent implements OnInit {
     ).length
   );
 
-  attendanceRate = computed(() => {
-    const total = this.store.events().length;
-    if (total === 0) return 0;
-    return Math.min(92, 70 + Math.floor(total * 2));
+  filteredEvents = computed(() => {
+    const filter = this.statusFilter();
+    const list = this.store.events();
+    if (!filter) return list;
+    return list.filter(e => e.status === filter);
   });
 
+  /** Eventos de la página actual (filtrados por estado y ordenados) */
   upcomingEvents = computed(() => {
-    const events = [...this.store.events()].sort(
-      (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-    );
-    return events.slice(0, 6);
+    const list = [...this.filteredEvents()];
+    const by = this.sortBy();
+    if (by === 'title') {
+      list.sort((a, b) => a.title.localeCompare(b.title));
+    } else {
+      list.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    }
+    return list;
+  });
+
+  totalFromServer = computed(() => this.store.pagination().total);
+  totalPages = computed(() => {
+    const t = this.totalFromServer();
+    if (t <= 0) return 0;
+    return Math.ceil(t / PAGE_SIZE);
+  });
+
+  /** Números de página a mostrar (1, 2, … última) */
+  pageNumbers(): number[] {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages: number[] = [1];
+    if (current > 3) pages.push(-1);
+    const from = Math.max(2, current - 1);
+    const to = Math.min(total - 1, current + 1);
+    for (let p = from; p <= to; p++) {
+      if (!pages.includes(p)) pages.push(p);
+    }
+    if (current < total - 2) pages.push(-1);
+    if (total > 1) pages.push(total);
+    return pages.filter((p, i, arr) => p !== -1 || arr[i - 1] !== -1);
+  }
+
+  setStatusFilter(status: 'PUBLISHED' | 'DRAFT' | 'CANCELLED' | null): void {
+    this.statusFilter.set(status);
+  }
+
+  setSortBy(value: 'date' | 'title'): void {
+    this.sortBy.set(value);
+  }
+
+  stateChangeModalTitle = computed(() => {
+    const t = this.transloco;
+    const type = this.stateChangeConfirm()?.type;
+    if (type === 'publish') return t.translate('dashboard.publishConfirmTitle');
+    if (type === 'cancel') return t.translate('dashboard.cancelEventConfirmTitle');
+    if (type === 'revert') return t.translate('dashboard.revertConfirmTitle');
+    return '';
+  });
+
+  stateChangeModalMessage = computed(() => {
+    const t = this.transloco;
+    const type = this.stateChangeConfirm()?.type;
+    if (type === 'publish') return t.translate('dashboard.publishConfirmMessage');
+    if (type === 'cancel') return t.translate('dashboard.cancelEventConfirmMessage');
+    if (type === 'revert') return t.translate('dashboard.revertConfirmMessage');
+    return '';
   });
 
   ngOnInit() {
-    this.loadEvents();
+    this.loadPage(1);
   }
 
-  loadEvents(append = false) {
-    const { skip, limit } = this.store.pagination();
-    const nextSkip = append ? skip + limit : 0;
+  loadPage(page: number) {
+    if (page < 1) return;
+    const totalP = this.totalPages();
+    if (totalP > 0 && page > totalP) return;
+    this.currentPage.set(page);
+    const skip = (page - 1) * PAGE_SIZE;
     this.loadingContext.setError(EVENTS_CONTEXT, null);
+    this.loadingContext.setLoading(EVENTS_CONTEXT, true);
 
-    this.getOrganizerEventsUseCase.execute(nextSkip, limit).pipe(
-      catchError(() => EMPTY)
-    ).subscribe({
-      next: (response) => {
-        if (append) {
-          this.store.appendEvents(response.items, response.total);
-          this.store.setPagination(nextSkip, limit);
-        } else {
+    this.getOrganizerEventsUseCase
+      .execute(skip, PAGE_SIZE, this.searchQuery() || undefined)
+      .pipe(
+        catchError(() => {
+          this.loadingContext.setLoading(EVENTS_CONTEXT, false);
+          return EMPTY;
+        })
+      )
+      .subscribe({
+        next: (response) => {
           this.store.setEvents(response.items, response.total);
+          this.store.setPagination(skip, PAGE_SIZE);
+          this.loadingContext.setLoading(EVENTS_CONTEXT, false);
         }
-      }
-    });
+      });
+  }
+
+  onSearch(query: string) {
+    this.searchQuery.set(query);
+    this.loadPage(1);
+  }
+
+  goToPage(page: number) {
+    this.loadPage(page);
+  }
+
+  loadEvents() {
+    this.loadPage(1);
+  }
+
+  openPublishConfirm(event: Event): void {
+    this.stateChangeConfirm.set({ type: 'publish', event });
+  }
+
+  openCancelConfirm(event: Event): void {
+    this.stateChangeConfirm.set({ type: 'cancel', event });
+  }
+
+  openRevertConfirm(event: Event): void {
+    this.stateChangeConfirm.set({ type: 'revert', event });
+  }
+
+  closeStateChangeConfirm(): void {
+    this.stateChangeConfirm.set(null);
+  }
+
+  confirmStateChange(): void {
+    const payload = this.stateChangeConfirm();
+    if (!payload) return;
+    this.stateChangeConfirm.set(null);
+    const { type, event } = payload;
+    if (type === 'publish') this.publishEvent(event);
+    else if (type === 'cancel') this.cancelEvent(event);
+    else this.revertEventToDraft(event);
   }
 
   publishEvent(event: Event) {

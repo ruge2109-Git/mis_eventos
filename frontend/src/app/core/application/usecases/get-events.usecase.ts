@@ -9,7 +9,7 @@ import { Observable } from 'rxjs';
 export class GetEventsUseCase {
   private repository = inject(EventReader);
 
-  execute(skip = 0, limit = 12): Observable<{ items: Event[]; total: number }> {
-    return this.repository.getAll(skip, limit);
+  execute(skip = 0, limit = 12, search?: string): Observable<{ items: Event[]; total: number }> {
+    return this.repository.getAll(skip, limit, search);
   }
 }

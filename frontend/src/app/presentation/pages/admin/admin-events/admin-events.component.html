@@ -1,0 +1,153 @@
+<div class="space-y-6" *transloco="let t">
+  <div>
+    <h1 class="text-2xl font-bold text-white tracking-tight">{{ t('admin.eventsTitle') }}</h1>
+    <p class="text-slate-400 text-sm mt-1">{{ t('admin.eventsSubtitle') }}</p>
+  </div>
+
+  <div class="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+    <div class="flex-1 w-full max-w-2xl">
+      <app-search-bar
+        [placeholder]="t('admin.eventsSearch')"
+        inputClass="rounded-lg py-2.5 !pl-10 pr-3 text-sm bg-slate-800 hover:bg-slate-800/90 border border-white/10 focus:ring-2 focus:ring-teal-500/50"
+        (searchChange)="onSearchChange($event)">
+      </app-search-bar>
+    </div>
+    <select
+      [value]="statusFilter()"
+      (change)="onStatusChange(($any($event.target)).value)"
+      class="px-4 py-2.5 rounded-lg bg-slate-800 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50 min-w-[160px]"
+    >
+      <option value="">{{ t('admin.profilesFilterAll') }}</option>
+      <option value="DRAFT">{{ t('events.draft') }}</option>
+      <option value="PUBLISHED">{{ t('events.published') }}</option>
+      <option value="CANCELLED">{{ t('events.cancelled') }}</option>
+    </select>
+  </div>
+
+  @if (loading() && events().length === 0) {
+  <div class="flex flex-col items-center justify-center py-16 gap-4">
+    <span class="animate-spin material-symbols-outlined text-5xl text-teal-400">progress_activity</span>
+    <p class="text-slate-400">{{ t('admin.loading') }}</p>
+  </div>
+  }
+
+  @if (error()) {
+  <div class="bg-red-500/10 border border-red-500/50 p-6 rounded-xl text-center">
+    <p class="text-red-400 font-bold">{{ error() | transloco }}</p>
+  </div>
+  }
+
+  @if (!loading() && !error()) {
+  <div class="rounded-xl border border-white/10 bg-slate-800/50 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="bg-slate-800/80 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+          <tr>
+            <th class="px-4 py-3">{{ t('admin.eventsEventName') }}</th>
+            <th class="px-4 py-3">{{ t('admin.eventsOrganizer') }}</th>
+            <th class="px-4 py-3">{{ t('admin.eventsDate') }}</th>
+            <th class="px-4 py-3">{{ t('admin.eventsStatus') }}</th>
+            <th class="px-4 py-3">{{ t('admin.eventsAction') }}</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          @for (event of events(); track trackByEventId($index, event)) {
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="px-4 py-3">
+              <div class="font-medium text-white">{{ event.title }}</div>
+              @if (event.location) {
+              <div class="text-slate-500 text-sm truncate max-w-[200px]">{{ event.location }}</div>
+              }
+            </td>
+            <td class="px-4 py-3">
+              <button
+                type="button"
+                (click)="openOrganizerDetail(event.organizerId)"
+                class="text-teal-400 hover:text-teal-300 hover:underline text-left font-medium"
+              >
+                {{ event.organizerEmail }}
+              </button>
+            </td>
+            <td class="px-4 py-3 text-slate-300">{{ event.startDate | date:'shortDate' }}</td>
+            <td class="px-4 py-3">
+              <span
+                class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+                [class.bg-teal-500/20]="event.status === 'PUBLISHED'"
+                [class.text-teal-400]="event.status === 'PUBLISHED'"
+                [class.bg-amber-500/20]="event.status === 'DRAFT'"
+                [class.text-amber-400]="event.status === 'DRAFT'"
+                [class.bg-red-500/20]="event.status === 'CANCELLED'"
+                [class.text-red-400]="event.status === 'CANCELLED'">
+                {{ event.status === 'PUBLISHED' ? t('events.published') : event.status === 'DRAFT' ? t('events.draft') : t('events.cancelled') }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <a
+                [routerLink]="['/admin/eventos/evento', event.id]"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500/20 text-teal-400 hover:bg-teal-500/30 text-sm font-medium transition-colors">
+                <span class="material-symbols-outlined text-lg">settings</span>
+                {{ t('admin.manageEvent') }}
+              </a>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (events().length === 0) {
+    <div class="py-12 text-center text-slate-500">
+      <span class="material-symbols-outlined text-5xl block mb-2">event_busy</span>
+      {{ t('admin.noEvents') }}
+    </div>
+    }
+    @if (events().length > 0 && totalPages() > 1) {
+    <nav class="flex flex-wrap items-center justify-center gap-2 px-4 py-4 bg-slate-800/50 border-t border-white/5" aria-label="Paginación de eventos">
+      <button
+        type="button"
+        [attr.aria-label]="t('btn.prevPage')"
+        [disabled]="currentPage() <= 1"
+        (click)="goToPage(currentPage() - 1)"
+        class="p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:pointer-events-none transition-colors">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+      @for (p of pageNumbers(); track p) {
+        @if (p === -1) {
+      <span class="px-2 text-slate-500">…</span>
+        } @else {
+      <button
+        type="button"
+        [attr.aria-label]="t('events.pageOf', { current: p, total: totalPages() })"
+        (click)="goToPage(p)"
+        class="min-w-[40px] py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+        [class.bg-accent-cyan]="currentPage() === p"
+        [class.text-primary]="currentPage() === p"
+        [class.text-slate-400]="currentPage() !== p"
+        [class.hover:bg-white/5]="currentPage() !== p">
+        {{ p }}
+      </button>
+        }
+      }
+      <button
+        type="button"
+        [attr.aria-label]="t('btn.nextPage')"
+        [disabled]="currentPage() >= totalPages()"
+        (click)="goToPage(currentPage() + 1)"
+        class="p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:pointer-events-none transition-colors">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+    </nav>
+    }
+    @if (events().length > 0) {
+    <p class="text-slate-400 text-sm px-4 py-2 border-t border-white/5">
+      {{ 'admin.eventsShowing' | transloco: showingText() }}
+    </p>
+    }
+  </div>
+  }
+
+  <app-user-detail-sidebar
+    [userId]="selectedOrganizerId()"
+    [isOpen]="selectedOrganizerId() !== null"
+    (closeRequested)="closeOrganizerSidebar()"
+  />
+</div>

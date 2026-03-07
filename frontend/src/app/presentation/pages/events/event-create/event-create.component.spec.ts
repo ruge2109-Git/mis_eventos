@@ -53,7 +53,8 @@ describe('EventCreateComponent', () => {
     cancel: () => of({} as unknown as EventEntity),
     revertToDraft: () => of({} as unknown as EventEntity),
     uploadImage: mockUploadImage,
-    uploadAdditionalImage: () => of({ id: 1, title: 'New', imageUrl: null, additionalImages: [] } as unknown as EventEntity)
+    uploadAdditionalImage: () => of({ id: 1, title: 'New', imageUrl: null, additionalImages: [] } as unknown as EventEntity),
+    getEventAttendees: () => of({ items: [], total: 0 })
   };
 
   function setEventFormValues(values: Partial<{ title: string; capacity: number; start_date: string; end_date: string; location: string; description: string }>): void {

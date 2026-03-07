@@ -4,10 +4,10 @@
     {{ t('dashboard.formDiscard') }}
   </a>
   <app-button type="submit" [disabled]="isLoading()" [loading]="isLoading()" size="md"
+    [label]="isEditMode() ? t('btn.saveChanges') : t('dashboard.formSaveEvent')"
     customClass="btn-primary cursor-pointer">
     @if (!isLoading()) {
       <span class="material-symbols-outlined text-lg mr-2">check_circle</span>
     }
-    {{ isEditMode() ? t('btn.saveChanges') : t('dashboard.formSaveEvent') }}
   </app-button>
 </div>

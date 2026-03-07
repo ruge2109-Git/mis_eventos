@@ -46,6 +46,12 @@
     @apply bg-background-dark text-white antialiased font-sans;
   }
 
+  a,
+  button:not(:disabled),
+  [role="button"] {
+    cursor: pointer;
+  }
+
   .material-symbols-outlined {
     font-family: 'Material Symbols Outlined';
     font-weight: normal;
@@ -72,8 +78,39 @@
     to { transform: translateY(0); opacity: 1; }
   }
 
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slide-in-from-bottom-4 {
+    from { transform: translateY(1rem); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
   .animate-in {
     animation: slide-in-top 0.3s ease-out forwards;
+  }
+
+  .fade-in {
+    animation-name: fade-in;
+  }
+
+  .slide-in-from-bottom-4 {
+    animation-name: slide-in-from-bottom-4;
+  }
+
+  .duration-500 {
+    animation-duration: 500ms;
+  }
+
+  .fill-both {
+    animation-fill-mode: both;
+  }
+
+  /* Entrada suave para listas (fade + slide) */
+  .animate-fade-slide-in {
+    animation: slide-in-from-bottom-4 0.5s ease-out both;
   }
 
   ::view-transition-old(root) {

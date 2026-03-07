@@ -6,18 +6,14 @@
       <p class="text-slate-400 text-sm mt-1">{{ t('dashboard.welcomeSubtitle') }}</p>
     </div>
     <div class="flex items-center gap-4">
-      <button type="button" class="p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
-        aria-label="Notificaciones">
-        <span class="material-symbols-outlined text-2xl">notifications</span>
-      </button>
-      <app-button [routerLink]="['/dashboard/organizer/crear']"
+      <app-button [routerLink]="['/dashboard/organizer/crear']" [label]="t('dashboard.newEvent')"
         customClass="bg-accent-cyan hover:bg-accent-cyan/90 text-primary font-bold">
         <span class="material-symbols-outlined text-lg mr-2">add</span>
-        {{ t('dashboard.newEvent') }}
       </app-button>
     </div>
   </div>
 
+  <!-- Spinner solo en carga inicial (sin eventos aún) -->
   @if (eventsLoading() && store.events().length === 0) {
   <div class="flex flex-col items-center justify-center py-20 gap-4">
     <span class="animate-spin material-symbols-outlined text-5xl text-accent-cyan">progress_activity</span>
@@ -28,50 +24,93 @@
   @if (eventsError()) {
   <div class="bg-red-500/10 border border-red-500/50 p-6 rounded-2xl text-center">
     <p class="text-red-400 font-bold mb-4">{{ eventsError() | transloco }}</p>
-    <app-button (clicked)="loadEvents()" customClass="bg-red-500 hover:bg-red-600 text-white">
-      {{ t('btn.retry') }}
+    <app-button (clicked)="loadEvents()" [label]="t('btn.retry')" customClass="bg-red-500 hover:bg-red-600 text-white">
     </app-button>
   </div>
   }
 
-  @if (!eventsLoading() && !eventsError()) {
-  <!-- Stats cards -->
-  <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-    <div class="rounded-xl bg-surface border border-white/5 p-6 flex items-start gap-4">
+  <!-- Buscador, filtros y lista: visibles siempre que no sea carga inicial sin datos ni error (así el buscador no se borra al buscar) -->
+  @if (!eventsError() && (!eventsLoading() || store.events().length > 0)) {
+  <!-- Buscador -->
+  <section class="w-full max-w-2xl">
+    <app-search-bar
+      [placeholder]="t('dashboard.searchPlaceholder')"
+      (searchChange)="onSearch($event)">
+    </app-search-bar>
+  </section>
+
+  <!-- Stats cards (click to filter) -->
+  <section class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+    <button type="button" (click)="setStatusFilter(null)"
+      class="rounded-xl bg-surface border p-6 flex items-start gap-4 text-left transition-colors hover:border-accent-cyan/30"
+      [class.border-accent-cyan/50]="statusFilter() === null"
+      [class.border-white/5]="statusFilter() !== null">
       <div class="w-12 h-12 rounded-lg bg-accent-cyan/10 flex items-center justify-center shrink-0">
         <span class="material-symbols-outlined text-accent-cyan text-2xl">event</span>
       </div>
       <div>
         <p class="text-slate-400 text-sm">{{ t('dashboard.statsTotal') }}</p>
         <p class="text-2xl font-bold text-white mt-0.5">{{ totalEvents() }}</p>
-        @if (totalEvents() > 0) {
-        <p class="text-xs text-green-400 mt-1">+{{ totalEvents() * 2 }}%</p>
-        }
       </div>
-    </div>
-    <div class="rounded-xl bg-surface border border-white/5 p-6 flex items-start gap-4">
-      <div class="w-12 h-12 rounded-lg bg-accent-cyan/10 flex items-center justify-center shrink-0">
-        <span class="material-symbols-outlined text-accent-cyan text-2xl">calendar_month</span>
-      </div>
-      <div>
-        <p class="text-slate-400 text-sm">{{ t('dashboard.statsUpcoming') }}</p>
-        <p class="text-2xl font-bold text-white mt-0.5">{{ upcomingThisMonth() }}</p>
-        @if (upcomingThisMonth() > 0) {
-        <p class="text-xs text-green-400 mt-1">+2%</p>
-        }
-      </div>
-    </div>
-    <div class="rounded-xl bg-surface border border-white/5 p-6 flex items-start gap-4">
-      <div class="w-12 h-12 rounded-lg bg-accent-cyan/10 flex items-center justify-center shrink-0">
-        <span class="material-symbols-outlined text-accent-cyan text-2xl">groups</span>
+    </button>
+    <button type="button" (click)="setStatusFilter('PUBLISHED')"
+      class="rounded-xl bg-surface border p-6 flex items-start gap-4 text-left transition-colors hover:border-green-500/30"
+      [class.border-green-500/50]="statusFilter() === 'PUBLISHED'"
+      [class.border-white/5]="statusFilter() !== 'PUBLISHED'">
+      <div class="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
+        <span class="material-symbols-outlined text-green-400 text-2xl">check_circle</span>
       </div>
       <div>
-        <p class="text-slate-400 text-sm">{{ t('dashboard.statsAttendance') }}</p>
-        <p class="text-2xl font-bold text-white mt-0.5">{{ attendanceRate() }}%</p>
-        @if (attendanceRate() > 0) {
-        <p class="text-xs text-green-400 mt-1">+5%</p>
-        }
+        <p class="text-slate-400 text-sm">{{ t('dashboard.statsPublished') }}</p>
+        <p class="text-2xl font-bold text-white mt-0.5">{{ publishedCount() }}</p>
       </div>
+    </button>
+    <button type="button" (click)="setStatusFilter('DRAFT')"
+      class="rounded-xl bg-surface border p-6 flex items-start gap-4 text-left transition-colors hover:border-amber-500/30"
+      [class.border-amber-500/50]="statusFilter() === 'DRAFT'"
+      [class.border-white/5]="statusFilter() !== 'DRAFT'">
+      <div class="w-12 h-12 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+        <span class="material-symbols-outlined text-amber-400 text-2xl">edit_note</span>
+      </div>
+      <div>
+        <p class="text-slate-400 text-sm">{{ t('dashboard.statsDraft') }}</p>
+        <p class="text-2xl font-bold text-white mt-0.5">{{ draftCount() }}</p>
+      </div>
+    </button>
+    <button type="button" (click)="setStatusFilter('CANCELLED')"
+      class="rounded-xl bg-surface border p-6 flex items-start gap-4 text-left transition-colors hover:border-red-500/30"
+      [class.border-red-500/50]="statusFilter() === 'CANCELLED'"
+      [class.border-white/5]="statusFilter() !== 'CANCELLED'">
+      <div class="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
+        <span class="material-symbols-outlined text-red-400 text-2xl">cancel</span>
+      </div>
+      <div>
+        <p class="text-slate-400 text-sm">{{ t('dashboard.statsCancelled') }}</p>
+        <p class="text-2xl font-bold text-white mt-0.5">{{ cancelledCount() }}</p>
+      </div>
+    </button>
+  </section>
+
+  <!-- Filtros y ordenamiento -->
+  <section class="flex flex-wrap items-center gap-4">
+    <span class="text-slate-400 text-sm">{{ t('dashboard.sortBy') }}</span>
+    <div class="flex rounded-lg border border-white/10 overflow-hidden">
+      <button type="button" (click)="setSortBy('date')"
+        class="px-4 py-2 text-sm font-medium transition-colors"
+        [class.bg-accent-cyan/20]="sortBy() === 'date'"
+        [class.text-accent-cyan]="sortBy() === 'date'"
+        [class.text-slate-400]="sortBy() !== 'date'"
+        [class.hover:bg-white/5]="sortBy() !== 'date'">
+        {{ t('dashboard.sortByDate') }}
+      </button>
+      <button type="button" (click)="setSortBy('title')"
+        class="px-4 py-2 text-sm font-medium border-l border-white/10 transition-colors"
+        [class.bg-accent-cyan/20]="sortBy() === 'title'"
+        [class.text-accent-cyan]="sortBy() === 'title'"
+        [class.text-slate-400]="sortBy() !== 'title'"
+        [class.hover:bg-white/5]="sortBy() !== 'title'">
+        {{ t('dashboard.sortByTitle') }}
+      </button>
     </div>
   </section>
 
@@ -87,10 +126,15 @@
     </div>
 
     @if (upcomingEvents().length > 0) {
-    <div class="grid gap-5 sm:gap-6">
+    <div class="organizer-event-list grid gap-5 sm:gap-6 relative">
+      @if (eventsLoading()) {
+      <div class="absolute inset-0 bg-surface/60 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-2xl min-h-[200px]">
+        <span class="animate-spin material-symbols-outlined text-4xl text-accent-cyan">progress_activity</span>
+      </div>
+      }
       @for (event of upcomingEvents(); track event.id) {
       <article
-        class="event-card rounded-2xl border border-white/10 bg-surface overflow-hidden shadow-lg shadow-black/20 hover:border-white/20 transition-all duration-200">
+        class="organizer-event-card event-card rounded-2xl border border-white/10 bg-surface overflow-hidden shadow-lg shadow-black/20 hover:border-white/20 transition-all duration-200">
         <div class="flex flex-col sm:flex-row min-h-0">
           <div
             class="sm:w-56 lg:w-64 shrink-0 h-44 sm:h-auto bg-slate-800/80 flex items-center justify-center relative overflow-hidden">
@@ -139,26 +183,30 @@
               }
               <div class="flex items-center gap-1.5">
                 <span class="material-symbols-outlined text-lg text-accent-cyan/80">groups</span>
-                <span>{{ event.capacity }} {{ t('dashboard.capacityLabel') }}</span>
+                <span>
+                  @if (event.registeredCount !== undefined && event.registeredCount !== null) {
+                    <span class="font-medium text-white">{{ event.registeredCount }}</span>
+                    <span class="text-slate-400">/ {{ event.capacity }} {{ t('dashboard.capacityLabel') }}</span>
+                  } @else {
+                    {{ event.capacity }} {{ t('dashboard.capacityLabel') }}
+                  }
+                </span>
               </div>
             </div>
             <div class="mt-5 flex flex-wrap items-center gap-3">
               @if (event.status === 'DRAFT') {
-                <app-button (clicked)="publishEvent(event)" [disabled]="isActionLoading(event.id)"
+                <app-button (clicked)="openPublishConfirm(event)" [loading]="isActionLoading(event.id)" [label]="t('dashboard.publish')"
                   customClass="text-sm py-2 px-4 bg-green-600 hover:bg-green-500 text-white rounded-lg">
-                  {{ t('dashboard.publish') }}
                 </app-button>
               }
               @if (event.status === 'PUBLISHED') {
-                <app-button (clicked)="cancelEvent(event)" [disabled]="isActionLoading(event.id)"
+                <app-button (clicked)="openCancelConfirm(event)" [loading]="isActionLoading(event.id)" [label]="t('dashboard.cancelEvent')"
                   customClass="text-sm py-2 px-4 bg-amber-600 hover:bg-amber-500 text-white rounded-lg">
-                  {{ t('dashboard.cancelEvent') }}
                 </app-button>
               }
               @if (event.status === 'CANCELLED') {
-                <app-button (clicked)="revertEventToDraft(event)" [disabled]="isActionLoading(event.id)"
+                <app-button (clicked)="openRevertConfirm(event)" [loading]="isActionLoading(event.id)" [label]="t('dashboard.revertToDraft')"
                   customClass="text-sm py-2 px-4 bg-slate-600 hover:bg-slate-500 text-white rounded-lg">
-                  {{ t('dashboard.revertToDraft') }}
                 </app-button>
               }
               <a [routerLink]="['/dashboard/organizer/evento', event.id]"
@@ -167,6 +215,7 @@
                 {{ t('btn.manage') }}
               </a>
               <app-button type="button" variant="ghost" [disabled]="isActionLoading(event.id)"
+                [ariaLabel]="t('btn.delete')"
                 customClass="border border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
                 (clicked)="openDeleteConfirm(event.id)">
                 <span class="material-symbols-outlined text-lg">delete</span>
@@ -182,18 +231,60 @@
     <div class="rounded-2xl bg-surface/50 border border-white/5 py-16 text-center">
       <span class="material-symbols-outlined text-6xl text-slate-700 mb-4 block">event_available</span>
       <p class="text-slate-500 text-lg font-medium mb-4">{{ t('dashboard.noEvents') }}</p>
-      <app-button [routerLink]="['/dashboard/organizer/crear']"
+      <app-button [routerLink]="['/dashboard/organizer/crear']" [label]="t('btn.createEvent')"
         customClass="bg-accent-cyan hover:bg-accent-cyan/90 text-primary">
-        {{ t('btn.createEvent') }}
       </app-button>
     </div>
     }
   </section>
 
+  <!-- Paginación -->
+  @if (totalPages() > 1) {
+  <nav class="w-full flex flex-wrap items-center justify-center gap-2 py-6" aria-label="Paginación de eventos">
+    <button
+      type="button"
+      [disabled]="currentPage() <= 1"
+      (click)="goToPage(currentPage() - 1)"
+      [attr.aria-label]="t('btn.prevPage')"
+      class="p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:pointer-events-none transition-colors">
+      <span class="material-symbols-outlined">chevron_left</span>
+    </button>
+    @for (p of pageNumbers(); track p) {
+      @if (p === -1) {
+    <span class="px-2 text-slate-500">…</span>
+      } @else {
+    <button
+      type="button"
+      (click)="goToPage(p)"
+      [attr.aria-label]="t('events.pageOf', { current: p, total: totalPages() })"
+      class="min-w-[40px] py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+      [class.bg-accent-cyan]="currentPage() === p"
+      [class.text-primary]="currentPage() === p"
+      [class.text-slate-400]="currentPage() !== p"
+      [class.hover:bg-white/5]="currentPage() !== p">
+      {{ p }}
+    </button>
+      }
+    }
+    <button
+      type="button"
+      [disabled]="currentPage() >= totalPages()"
+      (click)="goToPage(currentPage() + 1)"
+      [attr.aria-label]="t('btn.nextPage')"
+      class="p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:pointer-events-none transition-colors">
+      <span class="material-symbols-outlined">chevron_right</span>
+    </button>
+  </nav>
+  }
   }
 
   <app-confirm-modal [isOpen]="showDeleteConfirm()" [title]="t('dashboard.deleteEventConfirmTitle')"
     [message]="t('dashboard.deleteEventConfirmMessage')" [confirmLabel]="t('dashboard.deleteConfirm')"
     [cancelLabel]="t('dashboard.cancel')" confirmVariant="danger" (confirm)="confirmDelete()"
     (cancelRequested)="closeDeleteConfirm()" />
+
+  <app-confirm-modal [isOpen]="showStateChangeConfirm()" [title]="stateChangeModalTitle()"
+    [message]="stateChangeModalMessage()" [confirmLabel]="t('dashboard.confirm')"
+    [cancelLabel]="t('dashboard.cancel')" confirmVariant="primary" (confirm)="confirmStateChange()"
+    (cancelRequested)="closeStateChangeConfirm()" />
 </div>
