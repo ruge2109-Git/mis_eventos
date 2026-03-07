@@ -4,7 +4,7 @@
     [isLoading]="isLoading"
     (deleteClick)="openDeleteConfirm()" />
 
-  <form #formStart [formGroup]="eventForm" (ngSubmit)="submit()" class="space-y-8">
+  <form #formStart [formGroup]="eventForm" (ngSubmit)="submit()" class="flex flex-col space-y-8 mt-12 ">
     @if (globalError) {
       <div class="p-3 rounded-lg text-sm text-red-400 bg-red-500/10 border border-red-500/30" role="alert">
         {{ globalError }}

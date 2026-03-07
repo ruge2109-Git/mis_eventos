@@ -16,3 +16,11 @@ export interface CreateSessionDTO {
   eventId: number;
   description?: string | null;
 }
+
+export interface UpdateSessionDTO {
+  title: string;
+  startTime: Date;
+  endTime: Date;
+  speaker: string;
+  description?: string | null;
+}

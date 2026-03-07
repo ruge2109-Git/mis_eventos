@@ -88,7 +88,7 @@ describe('EventCreateComponent', () => {
         ToastService,
         { provide: API_BASE_URL, useValue: environment.apiUrl },
         { provide: EventRepository, useValue: mockRepository },
-        { provide: SessionRepository, useValue: { create: mockSessionCreate, getByEventId: mockGetByEventId } }
+        { provide: SessionRepository, useValue: { create: mockSessionCreate, getByEventId: mockGetByEventId, update: vi.fn().mockReturnValue(of({ id: 1, title: '', description: null, startTime: new Date(), endTime: new Date(), speaker: '', eventId: 1 })), delete: vi.fn().mockReturnValue(of(undefined)) } }
       ]
     }).compileComponents();
 
@@ -663,7 +663,9 @@ describe('EventCreateComponent', () => {
             provide: SessionRepository,
             useValue: {
               create: mockSessionCreate,
-              getByEventId: vi.fn().mockReturnValue(of(sessionsFromApi))
+              getByEventId: vi.fn().mockReturnValue(of(sessionsFromApi)),
+              update: vi.fn().mockReturnValue(of({ id: 1, title: '', description: null, startTime: new Date(), endTime: new Date(), speaker: '', eventId: 5 })),
+              delete: vi.fn().mockReturnValue(of(undefined))
             }
           },
           {

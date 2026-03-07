@@ -65,6 +65,8 @@ export class EventCreateComponent implements OnInit, OnDestroy {
   /** URLs of additional images already saved on the server (from API when loading event). */
   savedAdditionalUrls: string[] = [];
   sessions: SessionFormItem[] = [];
+  /** Session ids when event was loaded (edit mode); used to compute which were removed. */
+  initialSessionIds: number[] = [];
   isEditMode = false;
   eventId: number | null = null;
   additionalImagesDragOver = false;
@@ -113,7 +115,8 @@ export class EventCreateComponent implements OnInit, OnDestroy {
           })
         ).subscribe({
           next: (sessionsList: Session[]) => {
-            this.sessions = (sessionsList || []).map((s: Session) => ({
+            const list = sessionsList || [];
+            this.sessions = list.map((s: Session) => ({
               id: s.id,
               title: s.title,
               start_time: this.toDatetimeLocal(s.startTime),
@@ -121,6 +124,7 @@ export class EventCreateComponent implements OnInit, OnDestroy {
               speaker: s.speaker ?? '',
               description: s.description ?? ''
             }));
+            this.initialSessionIds = list.map((s: Session) => s.id);
             this.cdr.markForCheck();
           },
           error: (err) => {
@@ -265,12 +269,16 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     }
     this.isLoading = true;
     const value = this.eventForm.value;
+    const sessionsToDelete = this.isEditMode
+      ? this.initialSessionIds.filter(id => !this.sessions.some(s => s.id === id))
+      : undefined;
     this.saveEventUseCase.execute({
       formValue: value,
       eventImage: this.eventImage,
       additionalImages: [...this.additionalImages],
       savedAdditionalUrls: [...this.savedAdditionalUrls],
       sessions: this.sessions,
+      sessionsToDelete,
       isEditMode: this.isEditMode,
       eventId: this.eventId,
       apiBaseUrl: this.apiBaseUrl

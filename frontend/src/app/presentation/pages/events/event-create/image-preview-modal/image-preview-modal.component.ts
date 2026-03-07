@@ -13,5 +13,5 @@ import { ButtonComponent } from '@shared/components/button/button.component';
 })
 export class ImagePreviewModalComponent {
   imageUrl = input<string | null>(null);
-  close = output<void>();
+  closeModal = output<void>();
 }

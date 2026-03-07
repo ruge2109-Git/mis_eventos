@@ -4,6 +4,7 @@ import { switchMap, concatMap, toArray, catchError } from 'rxjs/operators';
 import { Event } from '@core/domain/entities/event.entity';
 import { CreateEventDTO } from '@core/domain/entities/event.entity';
 import { EventRepository } from '@core/domain/ports/event.repository';
+import { SessionRepository } from '@core/domain/ports/session.repository';
 import { CreateSessionsUseCase } from '@core/application/usecases/create-sessions.usecase';
 import { SessionValidationService, SessionItemForValidation, SESSION_VALIDATION_KEYS } from '@core/application/services/session-validation.service';
 import { stripBaseUrl } from '@core/application/utils/url.util';
@@ -14,6 +15,7 @@ export interface SaveEventParams {
   additionalImages: File[];
   savedAdditionalUrls: string[];
   sessions: SessionItemForValidation[];
+  sessionsToDelete?: number[];
   isEditMode: boolean;
   eventId: number | null;
   apiBaseUrl: string;
@@ -24,11 +26,12 @@ export interface SaveEventParams {
 })
 export class SaveEventUseCase {
   private eventRepository = inject(EventRepository);
+  private sessionRepository = inject(SessionRepository);
   private createSessionsUseCase = inject(CreateSessionsUseCase);
   private sessionValidation = inject(SessionValidationService);
 
   execute(params: SaveEventParams): Observable<Event> {
-    const { formValue, eventImage, additionalImages, savedAdditionalUrls, sessions, isEditMode, eventId, apiBaseUrl } = params;
+    const { formValue, eventImage, additionalImages, savedAdditionalUrls, sessions, sessionsToDelete, isEditMode, eventId, apiBaseUrl } = params;
 
     const startDate = new Date(formValue['start_date'] as string);
     const endDate = new Date(formValue['end_date'] as string);
@@ -64,6 +67,9 @@ export class SaveEventUseCase {
     const sessionsToCreate = sessions.filter(
       s => ((s.title ?? '').trim().length >= 3) && s.id == null
     );
+    const sessionsToUpdate = isEditMode
+      ? sessions.filter(s => s.id != null && (s.title ?? '').trim().length >= 3 && s.start_time && s.end_time)
+      : [];
 
     const doCreateOrUpdate = (): Observable<Event> =>
       isEditMode && eventId != null
@@ -71,6 +77,27 @@ export class SaveEventUseCase {
         : this.eventRepository.create(dto);
 
     return doCreateOrUpdate().pipe(
+      switchMap(event => {
+        const toDelete = sessionsToDelete?.length ? from(sessionsToDelete).pipe(
+          concatMap(id => this.sessionRepository.delete(id)),
+          toArray()
+        ) : of([]);
+        return toDelete.pipe(switchMap(() => of(event)));
+      }),
+      switchMap(event => {
+        if (sessionsToUpdate.length === 0) return of(event);
+        return from(sessionsToUpdate).pipe(
+          concatMap(s => this.sessionRepository.update(s.id!, {
+            title: (s.title ?? '').trim(),
+            startTime: new Date(s.start_time!),
+            endTime: new Date(s.end_time!),
+            speaker: (s.speaker ?? '').trim(),
+            description: (s.description ?? '').trim() || undefined
+          })),
+          toArray(),
+          switchMap(() => of(event))
+        );
+      }),
       switchMap(event => {
         if (sessionsToCreate.length === 0) return of(event);
         const sessionDtos = sessionsToCreate.map(s => ({

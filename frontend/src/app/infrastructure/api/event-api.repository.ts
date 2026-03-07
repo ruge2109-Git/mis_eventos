@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { environment } from '@environments/environment';
 import { Event, CreateEventDTO, UpdateEventDTO } from '@core/domain/entities/event.entity';
 import { EventRepository } from '@core/domain/ports/event.repository';
+import { dateToLocalISOString } from '@core/application/utils/date.util';
 import { EventApiMapper } from './mappers/event-api.mapper';
 import type { EventResponse } from './mappers/event-api.mapper';
 
@@ -55,8 +56,8 @@ export class EventApiRepository extends EventRepository {
     const body = {
       title: event.title,
       capacity: event.capacity,
-      start_date: event.startDate.toISOString(),
-      end_date: event.endDate.toISOString(),
+      start_date: dateToLocalISOString(event.startDate),
+      end_date: dateToLocalISOString(event.endDate),
       location: event.location ?? undefined,
       description: event.description ?? undefined
     };
@@ -69,8 +70,8 @@ export class EventApiRepository extends EventRepository {
     const body: Record<string, unknown> = {};
     if (event.title !== undefined) body['title'] = event.title;
     if (event.capacity !== undefined) body['capacity'] = event.capacity;
-    if (event.startDate !== undefined) body['start_date'] = event.startDate.toISOString();
-    if (event.endDate !== undefined) body['end_date'] = event.endDate.toISOString();
+    if (event.startDate !== undefined) body['start_date'] = dateToLocalISOString(event.startDate);
+    if (event.endDate !== undefined) body['end_date'] = dateToLocalISOString(event.endDate);
     if (event.location !== undefined) body['location'] = event.location;
     if (event.description !== undefined) body['description'] = event.description;
     if (event.additionalImages !== undefined) body['additional_images'] = event.additionalImages;

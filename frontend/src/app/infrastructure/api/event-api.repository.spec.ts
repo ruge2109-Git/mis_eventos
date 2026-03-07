@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { EventApiRepository } from './event-api.repository';
 import { UpdateEventDTO } from '@core/domain/entities/event.entity';
+import { dateToLocalISOString } from '@core/application/utils/date.util';
 import { environment } from '@environments/environment';
 
 describe('EventApiRepository', () => {
@@ -116,8 +117,8 @@ describe('EventApiRepository', () => {
     const req = httpMock.expectOne(r => r.url.endsWith('/events/') && r.method === 'POST');
     expect(req.request.body.title).toBe('New');
     expect(req.request.body.capacity).toBe(50);
-    expect(req.request.body.start_date).toBe(start.toISOString());
-    expect(req.request.body.end_date).toBe(end.toISOString());
+    expect(req.request.body.start_date).toBe(dateToLocalISOString(start));
+    expect(req.request.body.end_date).toBe(dateToLocalISOString(end));
     req.flush(mockRes);
   });
 
