@@ -104,8 +104,8 @@ describe('EventListComponent', () => {
   it('should filter events by searchQuery', () => {
     store.setEvents(
       [
-        { id: 1, title: 'Angular Meetup', description: null, startDate: new Date(), endDate: new Date(), location: null, imageUrl: null, capacity: 10, status: 'PUBLISHED', organizerId: 1 },
-        { id: 2, title: 'React Conference', description: null, startDate: new Date(), endDate: new Date(), location: null, imageUrl: null, capacity: 20, status: 'PUBLISHED', organizerId: 1 }
+        { id: 1, title: 'Angular Meetup', description: null, startDate: new Date(), endDate: new Date(), location: null, imageUrl: null, additionalImages: [], capacity: 10, status: 'PUBLISHED', organizerId: 1 },
+        { id: 2, title: 'React Conference', description: null, startDate: new Date(), endDate: new Date(), location: null, imageUrl: null, additionalImages: [], capacity: 20, status: 'PUBLISHED', organizerId: 1 }
       ],
       2
     );

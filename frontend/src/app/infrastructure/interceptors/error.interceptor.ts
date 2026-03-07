@@ -69,7 +69,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             case 401: {
               errorMessage = apiDetail ? toAuthMessageEnEs(apiDetail) : 'Sesión expirada. Por favor, inicia sesión de nuevo';
               if (!isAuthRequest) {
+                eventStore.setError(null);
                 authStore.logout();
+                authStore.setError(errorMessage);
                 router.navigate(['/auth/login'], { queryParams: { expired: '1' } });
               }
               break;
@@ -89,7 +91,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
-      if (!isAuthRequest) {
+      if (!isAuthRequest && error.status !== 401) {
         eventStore.setError(errorMessage);
       }
       return throwError(() => ({ ...error, message: errorMessage }));

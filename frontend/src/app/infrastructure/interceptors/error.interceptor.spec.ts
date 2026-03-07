@@ -10,8 +10,10 @@ describe('ErrorInterceptor', () => {
   let httpMock: HttpTestingController;
   let httpClient: HttpClient;
   let eventStore: EventStore;
+  let authStore: { logout: ReturnType<typeof vi.fn>; setError: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
+    authStore = { logout: vi.fn(), setError: vi.fn() };
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([errorInterceptor])),
@@ -22,7 +24,7 @@ describe('ErrorInterceptor', () => {
         },
         {
           provide: AuthStore,
-          useValue: { logout: vi.fn() }
+          useValue: authStore
         },
         {
           provide: Router,
@@ -105,7 +107,7 @@ describe('ErrorInterceptor', () => {
     expect(eventStore.setError).toHaveBeenCalledWith('Campo requerido');
   });
 
-  it('should catch 401 error', () => {
+  it('should catch 401 error and set auth store error and redirect', () => {
     httpClient.get('/test').subscribe({
       error: (err) => expect(err.message).toBe('Sesión expirada. Por favor, inicia sesión de nuevo')
     });
@@ -113,7 +115,9 @@ describe('ErrorInterceptor', () => {
     const req = httpMock.expectOne('/test');
     req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
 
-    expect(eventStore.setError).toHaveBeenCalledWith('Sesión expirada. Por favor, inicia sesión de nuevo');
+    expect(authStore.setError).toHaveBeenCalledWith('Sesión expirada. Por favor, inicia sesión de nuevo');
+    expect(authStore.logout).toHaveBeenCalled();
+    expect(eventStore.setError).toHaveBeenCalledWith(null);
   });
 
   it('should catch 409 error', () => {
@@ -136,5 +140,59 @@ describe('ErrorInterceptor', () => {
     req.flush('Service Unavailable', { status: 503, statusText: 'Service Unavailable' });
 
     expect(eventStore.setError).toHaveBeenCalledWith('Error 503: Service Unavailable');
+  });
+
+  it('should call router.navigate on 401 for non-auth request', () => {
+    const router = TestBed.inject(Router);
+    httpClient.get('/api/events/1').subscribe({ error: () => {} });
+    const req = httpMock.expectOne('/api/events/1');
+    req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+    expect(router.navigate).toHaveBeenCalledWith(['/auth/login'], { queryParams: { expired: '1' } });
+  });
+
+  it('should not call eventStore.setError on 401 (auth store gets it)', () => {
+    httpClient.get('/test').subscribe({ error: () => {} });
+    const req = httpMock.expectOne('/test');
+    req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+    expect(eventStore.setError).toHaveBeenCalledWith(null);
+    expect(eventStore.setError).not.toHaveBeenCalledWith('Sesión expirada. Por favor, inicia sesión de nuevo');
+  });
+
+  it('should catch 422 and use api detail or message', () => {
+    httpClient.get('/test').subscribe({
+      error: (err) => expect(err.message).toBe('Validation failed')
+    });
+    const req = httpMock.expectOne('/test');
+    req.flush({ detail: 'Validation failed' }, { status: 422, statusText: 'Unprocessable Entity' });
+    expect(eventStore.setError).toHaveBeenCalledWith('Validation failed');
+  });
+
+  it('should use api detail array with msg for 400', () => {
+    httpClient.get('/test').subscribe({
+      error: (err) => expect(err.message).toBe('Field is required')
+    });
+    const req = httpMock.expectOne('/test');
+    req.flush({ detail: [{ msg: 'Field is required' }] }, { status: 400, statusText: 'Bad Request' });
+    expect(eventStore.setError).toHaveBeenCalledWith('Field is required');
+  });
+
+  it('should pass through custom ErrorEvent message when not Unknown Error', () => {
+    const errorEvent = new ErrorEvent('Error', { message: 'Custom client error' });
+    httpClient.get('/test').subscribe({
+      error: (err) => expect(err.message).toBe('Custom client error')
+    });
+    const req = httpMock.expectOne('/test');
+    req.error(errorEvent);
+    expect(eventStore.setError).toHaveBeenCalledWith('Custom client error');
+  });
+
+  it('should handle failed to fetch in ErrorEvent', () => {
+    const errorEvent = new ErrorEvent('Error', { message: 'Failed to fetch' });
+    httpClient.get('/test').subscribe({
+      error: (err) => expect(err.message).toContain('No se pudo conectar con el servidor')
+    });
+    const req = httpMock.expectOne('/test');
+    req.error(errorEvent);
+    expect(eventStore.setError).toHaveBeenCalledWith('No se pudo conectar con el servidor. Comprueba tu conexión a internet o que el servicio esté en marcha.');
   });
 });

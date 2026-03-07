@@ -14,7 +14,8 @@ interface EventResponse {
   status: 'PUBLISHED' | 'DRAFT' | 'CANCELLED';
   location: string | null;
   image_url: string | null;
-  start_date: string; 
+  additional_images?: string[];
+  start_date: string;
   end_date: string;
   organizer_id: number;
 }
@@ -76,7 +77,15 @@ export class EventApiRepository extends EventRepository {
   }
 
   update(id: number, event: UpdateEventDTO): Observable<Event> {
-    return this.http.patch<EventResponse>(`${this.apiUrl}${id}`, event).pipe(
+    const body: Record<string, unknown> = {};
+    if (event.title !== undefined) body['title'] = event.title;
+    if (event.capacity !== undefined) body['capacity'] = event.capacity;
+    if (event.startDate !== undefined) body['start_date'] = event.startDate.toISOString();
+    if (event.endDate !== undefined) body['end_date'] = event.endDate.toISOString();
+    if (event.location !== undefined) body['location'] = event.location;
+    if (event.description !== undefined) body['description'] = event.description;
+    if (event.additionalImages !== undefined) body['additional_images'] = event.additionalImages;
+    return this.http.patch<EventResponse>(`${this.apiUrl}${id}`, body).pipe(
       map(res => this.mapToEntity(res))
     );
   }
@@ -105,7 +114,18 @@ export class EventApiRepository extends EventRepository {
     );
   }
 
+  uploadAdditionalImage(eventId: number, file: File): Observable<Event> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<EventResponse>(`${this.apiUrl}${eventId}/additional-images`, formData).pipe(
+      map(res => this.mapToEntity(res))
+    );
+  }
+
   private mapToEntity(res: EventResponse): Event {
+    const additionalImages = (res.additional_images ?? []).map(
+      url => (url.startsWith('http') ? url : `${environment.apiUrl}${url}`)
+    );
     return {
       id: res.id,
       title: res.title,
@@ -114,11 +134,12 @@ export class EventApiRepository extends EventRepository {
       endDate: new Date(res.end_date),
       location: res.location,
       imageUrl: res.image_url ? `${environment.apiUrl}${res.image_url}` : null,
+      additionalImages,
       capacity: res.capacity,
-      status: res.status,
+      status: res.status as Event['status'],
       organizerId: res.organizer_id,
-      category: 'General', 
-      isFeatured: res.id % 5 === 0 
+      category: 'General',
+      isFeatured: res.id % 5 === 0
     };
   }
 }

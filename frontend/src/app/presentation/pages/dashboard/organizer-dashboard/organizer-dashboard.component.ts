@@ -97,25 +97,6 @@ export class OrganizerDashboardComponent implements OnInit {
     });
   }
 
-  onFileSelected(ev: Event, fileInput: HTMLInputElement) {
-    const file = fileInput.files?.[0];
-    if (!file) return;
-    this.actionLoadingId.set(ev.id);
-    this.eventRepository.uploadImage(ev.id, file).subscribe({
-      next: (updated) => {
-        this.store.updateEvent(updated);
-        this.toast.success('Imagen actualizada');
-        this.actionLoadingId.set(null);
-        fileInput.value = '';
-      },
-      error: (err) => {
-        this.toast.error(err?.error?.detail ?? err?.message ?? 'Error al subir imagen');
-        this.actionLoadingId.set(null);
-        fileInput.value = '';
-      }
-    });
-  }
-
   isActionLoading(id: number): boolean {
     return this.actionLoadingId() === id;
   }

@@ -53,6 +53,7 @@ export class EventStore {
     this.state.update(s => ({
       ...s,
       events,
+      error: null,
       pagination: { ...s.pagination, total },
       loading: false
     }));
@@ -62,6 +63,7 @@ export class EventStore {
     this.state.update(s => ({
       ...s,
       events: [...s.events, ...events],
+      error: null,
       pagination: { ...s.pagination, total },
       loading: false
     }));

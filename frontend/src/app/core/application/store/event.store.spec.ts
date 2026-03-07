@@ -13,6 +13,7 @@ describe('EventStore', () => {
     endDate: new Date(),
     location: 'Place',
     imageUrl: 'img.jpg',
+    additionalImages: [],
     capacity: 10,
     status: 'PUBLISHED',
     organizerId: 101,

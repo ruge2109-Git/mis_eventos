@@ -11,4 +11,5 @@ export abstract class EventRepository {
   abstract publish(id: number): Observable<Event>;
   abstract cancel(id: number): Observable<Event>;
   abstract uploadImage(eventId: number, file: File): Observable<Event>;
+  abstract uploadAdditionalImage(eventId: number, file: File): Observable<Event>;
 }

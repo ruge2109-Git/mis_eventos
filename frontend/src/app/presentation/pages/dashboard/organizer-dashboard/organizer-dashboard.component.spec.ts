@@ -19,6 +19,7 @@ const mockEvent: Event = {
   endDate: new Date(),
   location: null,
   imageUrl: null,
+  additionalImages: [],
   capacity: 10,
   status: 'DRAFT',
   organizerId: 1

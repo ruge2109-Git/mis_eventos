@@ -24,6 +24,10 @@ export const routes: Routes = [
       {
         path: 'crear',
         loadComponent: () => import('./presentation/pages/events/event-create/event-create.component').then(m => m.EventCreateComponent)
+      },
+      {
+        path: 'evento/:id',
+        loadComponent: () => import('./presentation/pages/events/event-create/event-create.component').then(m => m.EventCreateComponent)
       }
     ]
   },

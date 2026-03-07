@@ -6,6 +6,7 @@ export interface Event {
   endDate: Date;
   location: string | null;
   imageUrl: string | null;
+  additionalImages: string[];
   capacity: number;
   status: 'PUBLISHED' | 'DRAFT' | 'CANCELLED';
   organizerId: number;

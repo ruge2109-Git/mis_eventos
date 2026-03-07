@@ -34,6 +34,7 @@ describe('EventCardComponent', () => {
       endDate: new Date(),
       location: 'Test Location',
       imageUrl: '',
+      additionalImages: [],
       capacity: 100,
       status: 'PUBLISHED',
       organizerId: 1,

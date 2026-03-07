@@ -91,7 +91,8 @@ describe('EventApiRepository', () => {
       endDate: end,
       location: null,
       description: null,
-      imageUrl: null
+      imageUrl: null,
+      additionalImages: []
     };
     const mockRes = {
       id: 1,
@@ -186,5 +187,83 @@ describe('EventApiRepository', () => {
     expect(req.request.body instanceof FormData).toBe(true);
     expect((req.request.body as FormData).get('file')).toBe(file);
     req.flush(mockRes);
+  });
+
+  it('should upload additional event image', () => {
+    const file = new File([''], 'extra.jpg', { type: 'image/jpeg' });
+    const mockRes = {
+      id: 1,
+      title: 'E',
+      capacity: 10,
+      status: 'DRAFT',
+      location: null,
+      description: null,
+      image_url: null,
+      additional_images: ['/static/events/abc.webp'],
+      start_date: '2026-01-01',
+      end_date: '2026-01-01',
+      organizer_id: 1
+    };
+    repository.uploadAdditionalImage(1, file).subscribe(res => {
+      expect(res.additionalImages.length).toBe(1);
+      expect(res.additionalImages[0]).toContain('abc.webp');
+    });
+    const req = httpMock.expectOne(r => r.url.endsWith('/events/1/additional-images') && r.method === 'POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+    req.flush(mockRes);
+  });
+
+  it('should update event with additional_images in body', () => {
+    const updateDTO = { additionalImages: ['/static/events/a.webp', '/static/events/b.webp'] } as any;
+    const mockRes = {
+      id: 1,
+      title: 'E',
+      capacity: 10,
+      status: 'DRAFT',
+      location: null,
+      description: null,
+      image_url: null,
+      additional_images: ['/static/events/a.webp', '/static/events/b.webp'],
+      start_date: '2026-01-01',
+      end_date: '2026-01-01',
+      organizer_id: 1
+    };
+    repository.update(1, updateDTO).subscribe(res => {
+      expect(res.additionalImages.length).toBe(2);
+    });
+    const req = httpMock.expectOne(r => r.url.endsWith('/events/1') && r.method === 'PATCH');
+    expect(req.request.body.additional_images).toEqual(updateDTO.additionalImages);
+    req.flush(mockRes);
+  });
+
+  it('should map getById response with additional_images to entity', () => {
+    const mockEvent = {
+      id: 2,
+      title: 'Event 2',
+      description: null,
+      capacity: 20,
+      status: 'PUBLISHED',
+      location: null,
+      image_url: '/static/cover.webp',
+      additional_images: ['/static/events/x.webp'],
+      start_date: '2026-06-01T10:00:00Z',
+      end_date: '2026-06-01T12:00:00Z',
+      organizer_id: 1
+    };
+    repository.getById(2).subscribe(event => {
+      expect(event.additionalImages.length).toBe(1);
+      expect(event.additionalImages[0]).toBe(`${environment.apiUrl}/static/events/x.webp`);
+      expect(event.imageUrl).toBe(`${environment.apiUrl}/static/cover.webp`);
+    });
+    const req = httpMock.expectOne(r => r.url.includes('/events/2'));
+    req.flush(mockEvent);
+  });
+
+  it('should call getMine with search param when provided', () => {
+    repository.getMine(0, 12, 'conference').subscribe();
+    const req = httpMock.expectOne(r => r.url.includes('/events/mine') && r.params.get('search') === 'conference');
+    expect(req.request.params.get('skip')).toBe('0');
+    expect(req.request.params.get('limit')).toBe('12');
+    req.flush({ items: [], total: 0, page: 1, size: 12 });
   });
 });

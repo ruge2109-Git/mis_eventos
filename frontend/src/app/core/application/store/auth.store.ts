@@ -87,6 +87,10 @@ export class AuthStore {
     });
   }
 
+  setError(message: string | null): void {
+    this.state.update((s) => ({ ...s, error: message }));
+  }
+
   clearError(): void {
     this.state.update((s) => ({ ...s, error: null }));
   }

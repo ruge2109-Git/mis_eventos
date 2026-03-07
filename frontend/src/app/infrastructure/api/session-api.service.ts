@@ -5,10 +5,9 @@ import { environment } from '@environments/environment';
 
 export interface CreateSessionDTO {
   title: string;
-  start_time: string; // ISO
-  end_time: string;   // ISO
+  start_time: string;
+  end_time: string;
   speaker: string;
-  capacity: number;
   event_id: number;
   description?: string | null;
 }
@@ -20,7 +19,6 @@ export interface SessionResponse {
   start_time: string;
   end_time: string;
   speaker: string;
-  capacity: number;
   event_id: number;
 }
 
@@ -31,13 +29,16 @@ export class SessionApiService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/sessions/`;
 
+  getByEventId(eventId: number): Observable<SessionResponse[]> {
+    return this.http.get<SessionResponse[]>(`${this.apiUrl}event/${eventId}`);
+  }
+
   createSession(dto: CreateSessionDTO): Observable<SessionResponse> {
     return this.http.post<SessionResponse>(this.apiUrl, {
       title: dto.title,
       start_time: dto.start_time,
       end_time: dto.end_time,
       speaker: dto.speaker,
-      capacity: dto.capacity,
       event_id: dto.event_id,
       description: dto.description ?? undefined
     });

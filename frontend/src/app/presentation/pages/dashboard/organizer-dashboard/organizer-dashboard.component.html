@@ -84,59 +84,71 @@
       </div>
 
       @if (upcomingEvents().length > 0) {
-        <div class="space-y-4">
+        <div class="grid gap-5 sm:gap-6">
           @for (event of upcomingEvents(); track event.id) {
-            <article class="rounded-xl bg-surface border border-white/5 overflow-hidden flex flex-col sm:flex-row">
-              <div class="sm:w-48 h-40 sm:h-auto shrink-0 bg-slate-800 flex items-center justify-center">
-                @if (event.imageUrl) {
-                  <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" />
-                } @else {
-                  <span class="material-symbols-outlined text-5xl text-slate-600">image</span>
-                }
-              </div>
-              <div class="flex-1 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-                <div class="min-w-0 flex-1">
-                  <p class="text-[10px] font-bold uppercase tracking-wider text-accent-cyan/80">
-                    {{ event.status === 'PUBLISHED' ? t('events.published') : t('events.draft') }}
-                    @if (event.location) {
-                      <span class="text-slate-500"> · {{ event.location }}</span>
-                    }
-                  </p>
-                  <h3 class="font-semibold text-white text-lg mt-1 truncate">{{ event.title }}</h3>
-                  <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-slate-400 text-sm">
-                    <span class="flex items-center gap-1">
-                      <span class="material-symbols-outlined text-base">calendar_today</span>
-                      {{ event.startDate | date:'longDate' }}
+            <article class="event-card rounded-2xl border border-white/10 bg-surface overflow-hidden shadow-lg shadow-black/20 hover:border-white/20 transition-all duration-200">
+              <div class="flex flex-col sm:flex-row min-h-0">
+                <div class="sm:w-56 lg:w-64 shrink-0 h-44 sm:h-auto bg-slate-800/80 flex items-center justify-center relative overflow-hidden">
+                  @if (event.imageUrl) {
+                    <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" />
+                  } @else {
+                    <div class="flex flex-col items-center justify-center gap-2 text-slate-500">
+                      <span class="material-symbols-outlined text-6xl">event</span>
+                      <span class="text-xs font-medium">{{ event.title }}</span>
+                    </div>
+                  }
+                  <div class="absolute top-3 left-3">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                          [class.bg-accent-cyan/20]="event.status === 'PUBLISHED'"
+                          [class.text-accent-cyan]="event.status === 'PUBLISHED'"
+                          [class.bg-amber-500/20]="event.status === 'DRAFT'"
+                          [class.text-amber-400]="event.status === 'DRAFT'"
+                          [class.bg-red-500/20]="event.status === 'CANCELLED'"
+                          [class.text-red-400]="event.status === 'CANCELLED'">
+                      {{ event.status === 'PUBLISHED' ? t('events.published') : event.status === 'DRAFT' ? t('events.draft') : t('events.cancelled') }}
                     </span>
-                    <span class="flex items-center gap-1">
-                      <span class="material-symbols-outlined text-base">schedule</span>
-                      {{ event.startDate | date:'shortTime' }}
-                    </span>
-                    @if (event.location) {
-                      <span class="flex items-center gap-1">
-                        <span class="material-symbols-outlined text-base">location_on</span>
-                        {{ event.location }}
-                      </span>
-                    }
                   </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 shrink-0">
-                  @if (event.status === 'DRAFT') {
-                    <app-button (clicked)="publishEvent(event)" [disabled]="isActionLoading(event.id)"
-                      customClass="text-sm py-2 px-4 bg-green-600 hover:bg-green-500 text-white">
-                      {{ t('dashboard.publish') }}
-                    </app-button>
+                <div class="flex-1 flex flex-col p-5 sm:p-6 min-w-0">
+                  <h3 class="text-xl font-bold text-white tracking-tight line-clamp-2">{{ event.title }}</h3>
+                  @if (event.description) {
+                    <p class="text-slate-400 text-sm mt-2 line-clamp-2">{{ event.description }}</p>
                   }
-                  @if (event.status !== 'CANCELLED') {
-                    <label class="cursor-pointer">
-                      <input type="file" accept="image/*" class="hidden" #fileInput (change)="onFileSelected(event, fileInput)" />
-                      <span class="inline-flex items-center gap-1 text-sm py-2 px-4 rounded-lg border border-white/10 text-slate-400 hover:bg-white/5"> {{ t('dashboard.uploadImage') }}</span>
-                    </label>
-                  }
-                  <a [routerLink]="['/']" [queryParams]="{ event: event.id }" class="inline-flex items-center gap-1 text-sm font-medium text-accent-cyan hover:underline">
-                    {{ t('dashboard.viewDetails') }}
-                    <span class="material-symbols-outlined text-lg">arrow_forward</span>
-                  </a>
+                  <div class="mt-4 space-y-2 text-slate-400 text-sm">
+                    <div class="flex flex-wrap items-center gap-x-5 gap-y-1">
+                      <span class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-lg text-accent-cyan/80">calendar_today</span>
+                        {{ event.startDate | date:'longDate' }}
+                      </span>
+                      <span class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-lg text-accent-cyan/80">schedule</span>
+                        {{ event.startDate | date:'shortTime' }} – {{ event.endDate | date:'shortTime' }}
+                      </span>
+                    </div>
+                    @if (event.location) {
+                      <div class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-lg text-accent-cyan/80">location_on</span>
+                        <span class="truncate">{{ event.location }}</span>
+                      </div>
+                    }
+                    <div class="flex items-center gap-1.5">
+                      <span class="material-symbols-outlined text-lg text-accent-cyan/80">groups</span>
+                      <span>{{ event.capacity }} {{ t('dashboard.capacityLabel') }}</span>
+                    </div>
+                  </div>
+                  <div class="mt-5 flex flex-wrap items-center gap-3">
+                    @if (event.status === 'DRAFT') {
+                      <app-button (clicked)="publishEvent(event)" [disabled]="isActionLoading(event.id)"
+                        customClass="text-sm py-2 px-4 bg-green-600 hover:bg-green-500 text-white rounded-lg">
+                        {{ t('dashboard.publish') }}
+                      </app-button>
+                    }
+                    <a [routerLink]="['/dashboard/organizer/evento', event.id]"
+                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-accent-cyan/10 border border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/20 font-medium text-sm transition-colors">
+                      <span class="material-symbols-outlined text-lg">settings</span>
+                      {{ t('btn.manage') }}
+                    </a>
+                  </div>
                 </div>
               </div>
             </article>
