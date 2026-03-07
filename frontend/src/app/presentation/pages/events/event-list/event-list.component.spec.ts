@@ -5,6 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { GetEventsUseCase } from '@core/application/usecases/get-events.usecase';
 import { EventStore } from '@core/application/store/event.store';
+import { Event } from '@core/domain/entities/event.entity';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { vi } from 'vitest';
@@ -55,9 +56,9 @@ describe('EventListComponent', () => {
   it('should call execute with append when onLoadMore is called', () => {
     store.setEvents([], 24);
     store.setPagination(0, 12);
-    
+
     component.onLoadMore();
-    
+
     expect(getEventsUseCase.execute).toHaveBeenCalledWith(12, 12, true);
   });
 
@@ -67,7 +68,7 @@ describe('EventListComponent', () => {
     let loadMoreBtn = fixture.debugElement.query(By.css('app-button'));
     expect(loadMoreBtn).toBeTruthy();
 
-    const fullEvents = Array.from({ length: 24 }, (_, i) => ({ id: i + 1, title: `Event ${i+1}`, status: 'PUBLISHED' } as any));
+    const fullEvents = Array.from({ length: 24 }, (_, i) => ({ id: i + 1, title: `Event ${i + 1}`, status: 'PUBLISHED' } as unknown as Event));
     store.setEvents(fullEvents, 24);
     fixture.detectChanges();
     loadMoreBtn = fixture.debugElement.query(By.css('app-button[customClass*="min-w-[200px]"]'));
@@ -97,7 +98,7 @@ describe('EventListComponent', () => {
   it('should call onSearch when search bar emits', () => {
     const searchBar = fixture.debugElement.query(By.css('app-search-bar'));
     const spy = vi.spyOn(component, 'onSearch');
-    searchBar.triggerEventHandler('search', 'test');
+    searchBar.triggerEventHandler('searchChange', 'test');
     expect(spy).toHaveBeenCalledWith('test');
   });
 

@@ -156,10 +156,11 @@ export class AuthComponent implements OnInit {
     }
   }
 
-  onSubmit(formData: any) {
+  onSubmit(formData: Record<string, unknown>) {
+    const data = formData as { email: string; password: string; full_name?: string; role?: string };
     this.authStore.clearError();
     if (this.mode === 'login') {
-      this.authStore.login(formData.email, formData.password).subscribe({
+      this.authStore.login(data.email, data.password).subscribe({
         next: () => {
           this.toast.success('Sesión iniciada');
           const role = this.authStore.userRole();
@@ -171,7 +172,12 @@ export class AuthComponent implements OnInit {
         }
       });
     } else {
-      this.authStore.register(formData.email, formData.full_name, formData.password, formData.role).subscribe({
+      this.authStore.register(
+        data.email,
+        data.full_name ?? '',
+        data.password,
+        data.role ?? ''
+      ).subscribe({
         next: () => {
           this.toast.success('Cuenta creada. Ya puedes iniciar sesión.');
           this.router.navigate(['/auth/login']);

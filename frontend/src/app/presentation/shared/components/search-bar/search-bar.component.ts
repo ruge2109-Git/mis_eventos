@@ -1,6 +1,5 @@
-import { Component, input, output, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { Component, input, output, OnInit, OnDestroy } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { InputComponent } from '@shared/components/input/input.component';
 import { debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
 
@@ -13,7 +12,7 @@ import { debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
 })
 export class SearchBarComponent implements OnInit, OnDestroy {
   placeholder = input<string>('Buscar eventos...');
-  search = output<string>();
+  searchChange = output<string>();
 
   searchControl = new FormControl('');
   private subscription: Subscription = new Subscription();
@@ -25,7 +24,7 @@ export class SearchBarComponent implements OnInit, OnDestroy {
         distinctUntilChanged()
       )
       .subscribe(value => {
-        this.search.emit(value || '');
+        this.searchChange.emit(value || '');
       });
   }
 

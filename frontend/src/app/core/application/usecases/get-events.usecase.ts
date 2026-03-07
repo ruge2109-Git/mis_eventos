@@ -10,7 +10,7 @@ export class GetEventsUseCase {
   private repository = inject(EventRepository);
   private store = inject(EventStore);
 
-  execute(skip: number = 0, limit: number = 12, append: boolean = false) {
+  execute(skip = 0, limit = 12, append = false) {
     this.store.setLoading(true);
     
     return this.repository.getAll(skip, limit).pipe(

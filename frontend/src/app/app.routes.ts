@@ -28,6 +28,10 @@ export const routes: Routes = [
       {
         path: 'evento/:id',
         loadComponent: () => import('./presentation/pages/events/event-create/event-create.component').then(m => m.EventCreateComponent)
+      },
+      {
+        path: 'calendario',
+        loadComponent: () => import('./presentation/pages/dashboard/calendar/calendar-page.component').then(m => m.CalendarPageComponent)
       }
     ]
   },

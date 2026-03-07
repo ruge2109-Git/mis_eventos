@@ -34,7 +34,7 @@ export class EventApiRepository extends EventRepository {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/events/`;
 
-  getAll(skip: number = 0, limit: number = 12): Observable<{ items: Event[], total: number }> {
+  getAll(skip = 0, limit = 12): Observable<{ items: Event[], total: number }> {
     return this.http.get<PaginatedResponse<EventResponse>>(this.apiUrl, {
       params: { skip, limit }
     }).pipe(
@@ -45,7 +45,7 @@ export class EventApiRepository extends EventRepository {
     );
   }
 
-  getMine(skip: number = 0, limit: number = 12, search?: string): Observable<{ items: Event[], total: number }> {
+  getMine(skip = 0, limit = 12, search?: string): Observable<{ items: Event[], total: number }> {
     const params: Record<string, number | string> = { skip, limit };
     if (search != null && search !== '') params['search'] = search;
     return this.http.get<PaginatedResponse<EventResponse>>(`${this.apiUrl}mine`, { params }).pipe(

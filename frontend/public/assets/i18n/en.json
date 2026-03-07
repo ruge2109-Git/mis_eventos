@@ -140,6 +140,24 @@
     "toastRevertedToDraft": "Event reverted to draft. You can publish it again.",
     "toastRevertError": "Error reverting to draft"
   },
+  "calendar": {
+    "title": "Calendar",
+    "subtitle": "Manage your upcoming commitments",
+    "dom": "Sun",
+    "lun": "Mon",
+    "mar": "Tue",
+    "mie": "Wed",
+    "jue": "Thu",
+    "vie": "Fri",
+    "sab": "Sat",
+    "eventOfTheDay": "Event of the Day",
+    "viewDetails": "View Details",
+    "noEventThatDay": "No events on this day.",
+    "upcomingTags": "Upcoming Tags",
+    "share": "Share",
+    "prevEvent": "Previous event",
+    "nextEvent": "Next event"
+  },
   "auth": {
     "loginTitle": "Portal Access",
     "loginSubtitle": "Enter your credentials to continue.",

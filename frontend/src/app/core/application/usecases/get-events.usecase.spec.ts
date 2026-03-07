@@ -1,14 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { GetEventsUseCase } from './get-events.usecase';
 import { EventRepository } from '@core/domain/ports/event.repository';
 import { EventStore } from '@core/application/store/event.store';
 import { Event } from '@core/domain/entities/event.entity';
+import { vi } from 'vitest';
 
 describe('GetEventsUseCase', () => {
   let useCase: GetEventsUseCase;
-  let repositoryMock: any;
+  let repositoryMock: { getAll: ReturnType<typeof vi.fn> };
   let store: EventStore;
 
   const mockEvent: Event = {
@@ -64,15 +64,6 @@ describe('GetEventsUseCase', () => {
 
   it('should call setError in store when repository fails', () => {
     const errorMessage = 'API Error';
-    repositoryMock.getAll.mockReturnValue({
-      pipe: () => ({
-        subscribe: (callbacks: any) => {
-          if (callbacks.error) callbacks.error({ message: errorMessage });
-          return { unsubscribe: () => {} };
-        }
-      })
-    });
-    
     // Simpler way with RxJS throwError
     repositoryMock.getAll.mockReturnValue(throwError(() => ({ message: errorMessage })));
     vi.spyOn(store, 'setError');

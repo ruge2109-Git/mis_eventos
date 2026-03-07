@@ -1,0 +1,45 @@
+<div class="calendar rounded-2xl border border-white/10 bg-surface/80 p-5 sm:p-6 lg:p-8 flex flex-col h-full min-h-0" *transloco="let t">
+  <div class="flex items-center justify-between mb-4 sm:mb-6 flex-shrink-0">
+    <h3 class="text-xl sm:text-2xl font-bold text-white capitalize">{{ monthLabel() }}</h3>
+    <div class="flex items-center gap-1">
+      <button type="button" (click)="goPrevMonth()"
+        class="p-2.5 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+        aria-label="Mes anterior">
+        <span class="material-symbols-outlined text-2xl">chevron_left</span>
+      </button>
+      <button type="button" (click)="goNextMonth()"
+        class="p-2.5 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+        aria-label="Mes siguiente">
+        <span class="material-symbols-outlined text-2xl">chevron_right</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center flex-1 min-h-0 auto-rows-fr">
+    @for (key of weekDayKeys; track key) {
+    <div class="py-2 sm:py-3 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center justify-center">
+      {{ t('calendar.' + key) }}
+    </div>
+    }
+    @for (row of calendarGrid(); track row[0].date.getTime()) {
+    @for (day of row; track day.date.getTime()) {
+    <button type="button" (click)="selectDay(day)"
+      class="min-h-[52px] sm:min-h-[60px] lg:min-h-[72px] flex flex-col items-center justify-center gap-1 rounded-xl transition-colors"
+      [class.bg-accent-cyan/20]="isSelected(day)" [class.border-2]="isSelected(day)"
+      [class.border-accent-cyan]="isSelected(day)" [class.text-accent-cyan]="isSelected(day)"
+      [class.text-white]="isSelected(day)" [class.text-slate-400]="!day.isCurrentMonth && !isSelected(day)"
+      [class.text-slate-200]="day.isCurrentMonth && !isSelected(day)" [class.hover:bg-white/5]="!isSelected(day)">
+      <span class="text-base sm:text-lg font-semibold">{{ day.dayNumber }}</span>
+      @if (day.dotColors.length > 0) {
+      <div class="flex items-center justify-center gap-1 flex-wrap">
+        @for (color of day.dotColors; track color) {
+        <span class="w-2 h-2 rounded-full shrink-0" [class.bg-accent-cyan]="color === 'bg-accent-cyan'"
+          [class.bg-fuchsia-400]="color === 'bg-fuchsia-400'"></span>
+        }
+      </div>
+      }
+    </button>
+    }
+    }
+  </div>
+</div>

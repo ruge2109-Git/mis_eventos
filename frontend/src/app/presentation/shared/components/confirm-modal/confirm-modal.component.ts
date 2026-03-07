@@ -17,17 +17,17 @@ export class ConfirmModalComponent {
   cancelLabel = input<string>('');
   confirmVariant = input<'danger' | 'primary'>('primary');
   confirm = output<void>();
-  cancel = output<void>();
+  cancelRequested = output<void>();
 
   onConfirm(): void {
     this.confirm.emit();
   }
 
   onCancel(): void {
-    this.cancel.emit();
+    this.cancelRequested.emit();
   }
 
   onOverlayClick(): void {
-    this.cancel.emit();
+    this.cancelRequested.emit();
   }
 }

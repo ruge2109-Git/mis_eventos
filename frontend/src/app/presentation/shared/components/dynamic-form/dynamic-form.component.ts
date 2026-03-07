@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, ValidationErrors } from '@angular/forms';
 import { FieldConfig } from './field-config';
@@ -12,16 +12,17 @@ import { RouterModule } from '@angular/router';
 })
 export class DynamicFormComponent implements OnInit {
   @Input() fields: FieldConfig[] = [];
-  @Input() submitLabel: string = 'Submit';
-  @Input() isLoading: boolean = false;
+  @Input() submitLabel = 'Submit';
+  @Input() isLoading = false;
   @Input() globalError: string | null = null;
-  @Output() formSubmit = new EventEmitter<any>();
+  @Output() formSubmit = new EventEmitter<Record<string, unknown>>();
 
   form: FormGroup;
-  showPasswordMap: Map<string, boolean> = new Map();
-  private filePreviewUrls: Map<string, string> = new Map();
+  showPasswordMap = new Map<string, boolean>();
+  private filePreviewUrls = new Map<string, string>();
+  private fb = inject(FormBuilder);
 
-  constructor(private fb: FormBuilder) {
+  constructor() {
     this.form = this.fb.group({});
   }
 

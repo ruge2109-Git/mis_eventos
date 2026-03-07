@@ -36,7 +36,7 @@ export class EventListComponent implements OnInit {
     this.loadEvents();
   }
 
-  loadEvents(append: boolean = false) {
+  loadEvents(append = false) {
     const { skip, limit } = this.store.pagination();
     const nextSkip = append ? skip + limit : 0;
     

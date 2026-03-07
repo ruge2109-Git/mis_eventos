@@ -11,29 +11,36 @@ import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { vi } from 'vitest';
 import { environment } from '@environments/environment';
+import { Event as EventEntity } from '@core/domain/entities/event.entity';
+
+interface MockSession {
+  id: number;
+  title: string;
+  event_id: number;
+}
 
 describe('EventCreateComponent', () => {
   let component: EventCreateComponent;
   let fixture: ComponentFixture<EventCreateComponent>;
   let router: Router;
 
-  const mockCreate = vi.fn().mockReturnValue(of({ id: 1, title: 'New', imageUrl: null } as any));
-  const mockUploadImage = vi.fn().mockReturnValue(of({ id: 1, title: 'New', imageUrl: '/img.jpg' } as any));
-  const mockUpdate = vi.fn().mockReturnValue(of({ id: 5, title: 'Updated', imageUrl: null, additionalImages: [] } as any));
-  const mockSessionCreate = vi.fn().mockReturnValue(of({ id: 1, title: 'Keynote', event_id: 1 } as any));
+  const mockCreate = vi.fn().mockReturnValue(of({ id: 1, title: 'New', imageUrl: null } as unknown as EventEntity));
+  const mockUploadImage = vi.fn().mockReturnValue(of({ id: 1, title: 'New', imageUrl: '/img.jpg' } as unknown as EventEntity));
+  const mockUpdate = vi.fn().mockReturnValue(of({ id: 5, title: 'Updated', imageUrl: null, additionalImages: [] } as unknown as EventEntity));
+  const mockSessionCreate = vi.fn().mockReturnValue(of({ id: 1, title: 'Keynote', event_id: 1 } as unknown as MockSession));
   const mockGetByEventId = vi.fn().mockReturnValue(of([]));
   const mockRepository: EventRepository = {
     getAll: () => of({ items: [], total: 0 }),
     getMine: () => of({ items: [], total: 0 }),
-    getById: () => of({} as any),
+    getById: () => of({} as unknown as EventEntity),
     create: mockCreate,
     update: mockUpdate,
     delete: () => of(undefined),
-    publish: () => of({} as any),
-    cancel: () => of({} as any),
-    revertToDraft: () => of({} as any),
+    publish: () => of({} as unknown as EventEntity),
+    cancel: () => of({} as unknown as EventEntity),
+    revertToDraft: () => of({} as unknown as EventEntity),
     uploadImage: mockUploadImage,
-    uploadAdditionalImage: () => of({ id: 1, title: 'New', imageUrl: null, additionalImages: [] } as any)
+    uploadAdditionalImage: () => of({ id: 1, title: 'New', imageUrl: null, additionalImages: [] } as unknown as EventEntity)
   };
 
   function setEventFormValues(values: Partial<{ title: string; capacity: number; start_date: string; end_date: string; location: string; description: string }>): void {
@@ -56,9 +63,9 @@ describe('EventCreateComponent', () => {
     mockUpdate.mockClear();
     mockSessionCreate.mockClear();
     mockGetByEventId.mockClear();
-    mockCreate.mockReturnValue(of({ id: 1, title: 'New', imageUrl: null } as any));
-    mockUploadImage.mockReturnValue(of({ id: 1, title: 'New', imageUrl: '/img.jpg' } as any));
-    mockUpdate.mockReturnValue(of({ id: 5, title: 'Updated', imageUrl: null, additionalImages: [] } as any));
+    mockCreate.mockReturnValue(of({ id: 1, title: 'New', imageUrl: null } as unknown as EventEntity));
+    mockUploadImage.mockReturnValue(of({ id: 1, title: 'New', imageUrl: '/img.jpg' } as unknown as EventEntity));
+    mockUpdate.mockReturnValue(of({ id: 5, title: 'Updated', imageUrl: null, additionalImages: [] } as unknown as EventEntity));
     mockGetByEventId.mockReturnValue(of([]));
     await TestBed.configureTestingModule({
       imports: [EventCreateComponent, RouterTestingModule],
@@ -233,7 +240,7 @@ describe('EventCreateComponent', () => {
   });
 
   it('should call repository create and navigate on submit', () => {
-    mockCreate.mockReturnValue(of({ id: 1 } as any));
+    mockCreate.mockReturnValue(of({ id: 1 } as unknown as EventEntity));
     const navigateSpy = vi.spyOn(router, 'navigate');
     setEventFormValues({ title: 'New Event', capacity: 50 });
     component.eventImage = null;
@@ -272,8 +279,8 @@ describe('EventCreateComponent', () => {
   });
 
   it('should call createSession for each session when sessions are provided', () => {
-    mockCreate.mockReturnValue(of({ id: 99, title: 'E', imageUrl: null } as any));
-    mockSessionCreate.mockReturnValue(of({ id: 1, title: 'Keynote', event_id: 99 } as any));
+    mockCreate.mockReturnValue(of({ id: 99, title: 'E', imageUrl: null } as unknown as EventEntity));
+    mockSessionCreate.mockReturnValue(of({ id: 1, title: 'Keynote', event_id: 99 } as unknown as MockSession));
     const navigateSpy = vi.spyOn(router, 'navigate');
     setEventFormValues({ title: 'Event', capacity: 10 });
     component.eventImage = null;
@@ -293,8 +300,8 @@ describe('EventCreateComponent', () => {
 
   it('should call uploadImage after create when image file is provided', () => {
     const file = new File([''], 'cover.jpg', { type: 'image/jpeg' });
-    mockCreate.mockReturnValue(of({ id: 99, title: 'E', imageUrl: null } as any));
-    mockUploadImage.mockReturnValue(of({ id: 99, title: 'E', imageUrl: '/uploads/99.webp' } as any));
+    mockCreate.mockReturnValue(of({ id: 99, title: 'E', imageUrl: null } as unknown as EventEntity));
+    mockUploadImage.mockReturnValue(of({ id: 99, title: 'E', imageUrl: '/uploads/99.webp' } as unknown as EventEntity));
     const navigateSpy = vi.spyOn(router, 'navigate');
     setEventFormValues({ title: 'Event', capacity: 10 });
     component.eventImage = file;
@@ -317,7 +324,7 @@ describe('EventCreateComponent', () => {
   });
 
   it('should set globalError and stop loading when session create fails', () => {
-    mockCreate.mockReturnValue(of({ id: 99, title: 'E', imageUrl: null } as any));
+    mockCreate.mockReturnValue(of({ id: 99, title: 'E', imageUrl: null } as unknown as EventEntity));
     mockSessionCreate.mockReturnValue(throwError(() => ({ error: { detail: 'Session conflict' } })));
     setEventFormValues({ title: 'Event', capacity: 10 });
     component.sessions = [
@@ -330,7 +337,7 @@ describe('EventCreateComponent', () => {
   });
 
   it('should navigate to dashboard when uploadImage fails', () => {
-    mockCreate.mockReturnValue(of({ id: 99, title: 'E', imageUrl: null } as any));
+    mockCreate.mockReturnValue(of({ id: 99, title: 'E', imageUrl: null } as unknown as EventEntity));
     mockUploadImage.mockReturnValue(throwError(() => new Error('Upload failed')));
     const navigateSpy = vi.spyOn(router, 'navigate');
     setEventFormValues({ title: 'Event', capacity: 10 });
@@ -511,7 +518,7 @@ describe('EventCreateComponent', () => {
   });
 
   it('edit mode submit should call store.updateEvent with updated event (line 435)', () => {
-    const updatedEvent = { id: 5, title: 'Updated', imageUrl: null, additionalImages: [] } as any;
+    const updatedEvent = { id: 5, title: 'Updated', imageUrl: null, additionalImages: [] } as unknown as EventEntity;
     mockUpdate.mockReturnValue(of(updatedEvent));
     const store = TestBed.inject(EventStore);
     const updateEventSpy = vi.spyOn(store, 'updateEvent');
@@ -596,8 +603,8 @@ describe('EventCreateComponent', () => {
   });
 
   it('should call createSession for each valid session when multiple sessions provided', () => {
-    mockCreate.mockReturnValue(of({ id: 99, title: 'E', imageUrl: null } as any));
-    mockSessionCreate.mockReturnValue(of({ id: 1, title: 'Keynote', event_id: 99 } as any));
+    mockCreate.mockReturnValue(of({ id: 99, title: 'E', imageUrl: null } as unknown as EventEntity));
+    mockSessionCreate.mockReturnValue(of({ id: 1, title: 'Keynote', event_id: 99 } as unknown as MockSession));
     setEventFormValues({ title: 'Event', capacity: 10 });
     component.sessions = [
       { title: 'Keynote', start_time: '2026-06-01T10:00', end_time: '2026-06-01T11:00', speaker: 'Jane', description: '' },

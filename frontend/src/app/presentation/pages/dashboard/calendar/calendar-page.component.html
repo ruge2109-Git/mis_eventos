@@ -1,0 +1,112 @@
+<div class="space-y-4 sm:space-y-5 w-full max-w-[1600px] mx-auto pb-8 min-h-[calc(100vh-6rem)] flex flex-col"
+  *transloco="let t">
+  <header class="flex-shrink-0">
+    <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">{{ t('calendar.title') }}</h1>
+    <p class="text-slate-400 text-sm mt-0.5">{{ t('calendar.subtitle') }}</p>
+  </header>
+
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 flex-1 min-h-0 items-stretch">
+    <!-- Left: Calendario (más grande, ocupa todo el alto disponible) -->
+    <div class="lg:col-span-3 min-h-[420px] lg:min-h-0 flex flex-col">
+      <app-calendar [events]="events()" [selectedDate]="selectedDate()" (dateSelected)="onDateSelected($event)" />
+    </div>
+
+    <!-- Right: Evento del día (card más grande) -->
+    <div class="lg:col-span-2 flex flex-col gap-4 min-h-0">
+      <section class="flex flex-col min-h-0">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-accent-cyan flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-lg">event</span>
+          {{ t('calendar.eventOfTheDay') }}
+        </h2>
+        @if (currentEvent(); as event) {
+        <div class="flex flex-col flex-1 gap-3">
+          <!-- Card vertical tipo referencia: imagen arriba, badge, fecha, título, descripción, detalles, acciones -->
+          <article
+            class="calendar-day-card flex flex-col rounded-2xl border border-white/10 bg-surface overflow-hidden flex-1 min-h-0">
+            <!-- Header: imagen más grande -->
+            <div class="relative shrink-0 h-48 sm:h-56 lg:h-64 bg-slate-800 overflow-hidden">
+              @if (event.imageUrl) {
+              <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" />
+              } @else {
+              <div class="w-full h-full flex items-center justify-center">
+                <span class="material-symbols-outlined text-6xl text-slate-600">image_not_supported</span>
+              </div>
+              }
+              @if (event.isFeatured) {
+              <span
+                class="absolute top-3 left-3 bg-accent-purple/90 text-white text-[10px] font-bold px-3 py-1 rounded-md uppercase tracking-widest">
+                {{ t('events.featured') }}
+              </span>
+              }
+            </div>
+            <!-- Contenido (más padding y tipografía) -->
+            <div class="p-5 sm:p-6 lg:p-7 flex flex-col flex-1 min-h-0">
+              <p class="text-accent-cyan text-sm font-semibold uppercase tracking-wider">{{ event.startDate | date:'MMMM
+                dd, y' }}</p>
+              <h3 class="text-xl sm:text-2xl font-bold text-white mt-2 line-clamp-2">{{ event.title }}</h3>
+              @if (event.description) {
+              <p class="text-slate-400 text-base mt-3 line-clamp-4">{{ event.description }}</p>
+              }
+              <div class="border-t border-white/10 my-4"></div>
+              <ul class="space-y-3 text-slate-400 text-base">
+                <li class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-accent-cyan text-xl">schedule</span>
+                  {{ event.startDate | date:'shortTime' }} – {{ event.endDate | date:'shortTime' }}
+                </li>
+                @if (event.location) {
+                <li class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-accent-cyan text-xl">location_on</span>
+                  <span class="truncate">{{ event.location }}</span>
+                </li>
+                }
+                <li class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-accent-cyan text-xl">groups</span>
+                  {{ event.capacity }} {{ t('dashboard.capacityLabel') }}
+                </li>
+              </ul>
+              <div class="mt-6">
+                <app-button [routerLink]="['/dashboard/organizer/evento', event.id]"
+                  customClass="bg-accent-cyan hover:bg-accent-cyan/90 text-primary font-bold w-full py-3 text-base">
+                  <span class="material-symbols-outlined text-xl mr-2">visibility</span>
+                  {{ t('calendar.viewDetails') }}
+                </app-button>
+              </div>
+            </div>
+          </article>
+          <!-- Flechas para navegar entre varios eventos del mismo día -->
+          @if (hasMultipleEvents()) {
+          <div class="flex items-center justify-center gap-2 py-2">
+            <button type="button" (click)="goToPrevEvent()" [disabled]="!canGoPrev()"
+              class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              aria-label="{{ t('calendar.prevEvent') }}">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <span class="text-xs text-slate-500 min-w-[4rem] text-center">{{ selectedEventIndex() + 1 }} / {{
+              eventsOfTheDay().length }}</span>
+            <button type="button" (click)="goToNextEvent()" [disabled]="!canGoNext()"
+              class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              aria-label="{{ t('calendar.nextEvent') }}">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+          }
+        </div>
+        } @else {
+        <!-- Card vertical: icono arriba, texto abajo -->
+        <div
+          class="calendar-empty-card flex flex-col flex-1 rounded-2xl border border-white/10 bg-surface/80 overflow-hidden">
+          <div class="flex flex-1 flex-col items-center justify-center p-8 sm:p-10 text-center">
+            <span class="material-symbols-outlined text-6xl sm:text-7xl text-slate-600 mb-4 block">event_busy</span>
+            <p class="text-slate-400 text-sm font-medium">{{ t('calendar.noEventThatDay') }}</p>
+            <a [routerLink]="['/dashboard/organizer/crear']"
+              class="mt-6 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10 text-sm font-medium transition-colors">
+              <span class="material-symbols-outlined text-lg">add</span>
+              {{ t('btn.createEvent') }}
+            </a>
+          </div>
+        </div>
+        }
+      </section>
+    </div>
+  </div>
+</div>

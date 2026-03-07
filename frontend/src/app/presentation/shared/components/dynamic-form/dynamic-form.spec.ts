@@ -516,7 +516,6 @@ describe('DynamicFormComponent', () => {
   });
 
   it('onFileChange should do nothing when control is missing', () => {
-    const fieldsFile: FieldConfig[] = [{ name: 'doc', label: 'Doc', type: 'file' }];
     fixture = TestBed.createComponent(DynamicFormComponent);
     component = fixture.componentInstance;
     component.fields = [];

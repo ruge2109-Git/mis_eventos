@@ -25,7 +25,7 @@ describe('EventCardComponent', () => {
 
     fixture = TestBed.createComponent(EventCardComponent);
     component = fixture.componentInstance;
-    // @ts-ignore
+    // @ts-expect-error test double: event is a signal, we assign a getter
     component.event = () => ({ 
       id: 1,
       title: 'Test Event', 

@@ -10,7 +10,7 @@ export class GetOrganizerEventsUseCase {
   private repository = inject(EventRepository);
   private store = inject(EventStore);
 
-  execute(skip: number = 0, limit: number = 12, search?: string, append: boolean = false) {
+  execute(skip = 0, limit = 12, search?: string, append = false) {
     this.store.setLoading(true);
 
     return this.repository.getMine(skip, limit, search).pipe(

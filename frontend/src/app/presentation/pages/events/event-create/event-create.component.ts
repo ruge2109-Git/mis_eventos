@@ -9,7 +9,7 @@ import { environment } from '@environments/environment';
 import { EventStore } from '@core/application/store/event.store';
 import { ToastService } from '@core/application/services/toast.service';
 import { SessionApiService } from '@infrastructure/api/session-api.service';
-import { Subscription, from, of } from 'rxjs';
+import { Subscription, from } from 'rxjs';
 import { finalize, concatMap, toArray, switchMap } from 'rxjs/operators';
 import { ImgWithLoaderComponent } from '@shared/components/img-with-loader/img-with-loader.component';
 import { ButtonComponent } from '@shared/components/button/button.component';
@@ -70,7 +70,7 @@ export class EventCreateComponent implements OnInit, OnDestroy {
       location: [''],
       description: ['', Validators.maxLength(2000)],
     });
-    this.langSub = this.transloco.langChanges$?.subscribe(() => {});
+    this.langSub = this.transloco.langChanges$?.subscribe(() => this.cdr.markForCheck());
 
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
@@ -234,8 +234,7 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     const maxSize = 5 * 1024 * 1024;
     const list: File[] = [];
     const previews: string[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
+    for (const f of Array.from(files)) {
       if (f.size <= maxSize && f.type.startsWith('image/')) {
         list.push(f);
         previews.push(URL.createObjectURL(f));
@@ -254,8 +253,7 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     const maxSize = 5 * 1024 * 1024;
     const list: File[] = [];
     const previews: string[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
+    for (const f of Array.from(files)) {
       if (f.size <= maxSize && f.type.startsWith('image/')) {
         list.push(f);
         previews.push(URL.createObjectURL(f));
@@ -323,7 +321,10 @@ export class EventCreateComponent implements OnInit, OnDestroy {
   private scrollToFormAndRevealErrors(): void {
     this.markInvalidControlsTouched();
     setTimeout(() => {
-      this.formStartRef?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const el = this.formStartRef?.nativeElement;
+      if (typeof el?.scrollIntoView === 'function') {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }, 0);
   }
 

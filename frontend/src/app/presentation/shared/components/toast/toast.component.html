@@ -4,7 +4,8 @@
     role="alert"
     class="toast"
     [attr.data-type]="toast.type()"
-    (click)="toast.dismiss()">
+    (click)="toast.dismiss()" (keydown.enter)="toast.dismiss()" (keydown.space)="toast.dismiss()"
+    tabindex="0">
     @switch (toast.type()) {
       @case ('success') {
         <span class="material-symbols-outlined icon">check_circle</span>

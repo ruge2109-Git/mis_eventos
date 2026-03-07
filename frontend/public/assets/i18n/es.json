@@ -140,6 +140,24 @@
     "toastRevertedToDraft": "Evento pasado a borrador. Ya puedes publicarlo de nuevo.",
     "toastRevertError": "Error al volver a borrador"
   },
+  "calendar": {
+    "title": "Calendario",
+    "subtitle": "Gestiona tus próximos compromisos",
+    "dom": "Dom",
+    "lun": "Lun",
+    "mar": "Mar",
+    "mie": "Mié",
+    "jue": "Jue",
+    "vie": "Vie",
+    "sab": "Sáb",
+    "eventOfTheDay": "Evento del Día",
+    "viewDetails": "Ver Detalles",
+    "noEventThatDay": "No hay eventos este día.",
+    "upcomingTags": "Próximas Etiquetas",
+    "share": "Compartir",
+    "prevEvent": "Evento anterior",
+    "nextEvent": "Evento siguiente"
+  },
   "auth": {
     "loginTitle": "Acceso al portal",
     "loginSubtitle": "Ingresa tus credenciales para continuar.",

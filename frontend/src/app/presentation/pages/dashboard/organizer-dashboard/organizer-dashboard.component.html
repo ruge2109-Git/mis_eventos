@@ -82,7 +82,7 @@
         <span class="material-symbols-outlined text-accent-cyan text-xl">list</span>
         {{ t('dashboard.upcomingEvents') }}
       </h2>
-      <a routerLink="/dashboard/organizer" class="text-sm text-accent-cyan hover:underline">{{
+      <a routerLink="/dashboard/organizer/calendario" class="text-sm text-accent-cyan hover:underline">{{
         t('dashboard.seeFullCalendar') }}</a>
     </div>
 
@@ -195,5 +195,5 @@
   <app-confirm-modal [isOpen]="showDeleteConfirm()" [title]="t('dashboard.deleteEventConfirmTitle')"
     [message]="t('dashboard.deleteEventConfirmMessage')" [confirmLabel]="t('dashboard.deleteConfirm')"
     [cancelLabel]="t('dashboard.cancel')" confirmVariant="danger" (confirm)="confirmDelete()"
-    (cancel)="closeDeleteConfirm()" />
+    (cancelRequested)="closeDeleteConfirm()" />
 </div>

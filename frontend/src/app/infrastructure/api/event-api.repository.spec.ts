@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { EventApiRepository } from './event-api.repository';
+import { UpdateEventDTO } from '@core/domain/entities/event.entity';
 import { environment } from '@environments/environment';
 
 describe('EventApiRepository', () => {
@@ -121,7 +122,7 @@ describe('EventApiRepository', () => {
   });
 
   it('should update an event', () => {
-    const updateDTO = { title: 'Updated' } as any;
+    const updateDTO: UpdateEventDTO = { title: 'Updated' };
     const mockRes = { id: 1, ...updateDTO, start_date: '2026-01-01', end_date: '2026-01-01' };
 
     repository.update(1, updateDTO).subscribe(res => {
@@ -223,7 +224,7 @@ describe('EventApiRepository', () => {
   });
 
   it('should update event with additional_images in body', () => {
-    const updateDTO = { additionalImages: ['/static/events/a.webp', '/static/events/b.webp'] } as any;
+    const updateDTO: UpdateEventDTO = { additionalImages: ['/static/events/a.webp', '/static/events/b.webp'] };
     const mockRes = {
       id: 1,
       title: 'E',

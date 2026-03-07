@@ -83,7 +83,6 @@ describe('NavbarComponent', () => {
   });
 
   it('should not show logout when not authenticated', () => {
-    const logoutBtn = fixture.debugElement.query(By.css('button'));
     const buttons = fixture.debugElement.queryAll(By.css('button'));
     const salirButton = buttons.find(b => b.nativeElement.textContent?.includes('Salir'));
     expect(salirButton).toBeFalsy();
@@ -106,7 +105,6 @@ describe('NavbarComponent', () => {
   });
 
   it('should show mobile menu icon as menu when closed', () => {
-    const iconSpan = fixture.debugElement.query(By.css('span.material-symbols-outlined'));
     const menuButton = fixture.debugElement.query(By.css('app-button[customClass*="md:hidden"]'));
     expect(menuButton?.nativeElement?.textContent?.trim()).toContain('menu');
   });
@@ -136,7 +134,6 @@ describe('NavbarComponent', () => {
 });
 
 describe('NavbarComponent when authenticated', () => {
-  let component: NavbarComponent;
   let fixture: ComponentFixture<NavbarComponent>;
   let mockAuthStore: { isAuthenticated: ReturnType<typeof vi.fn>; userRole: ReturnType<typeof vi.fn>; logout: ReturnType<typeof vi.fn> };
 
@@ -156,7 +153,6 @@ describe('NavbarComponent when authenticated', () => {
       ]
     }).compileComponents();
     fixture = TestBed.createComponent(NavbarComponent);
-    component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
