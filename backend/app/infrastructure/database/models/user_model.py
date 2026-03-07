@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
 
-from app.domain.entities.user import User as DomainUser
+from app.domain.entities.user import User as DomainUser, UserRole
 
 if TYPE_CHECKING:
     from .event_model import EventModel
@@ -30,17 +30,18 @@ class UserModel(SQLModel, table=True):
             email=self.email,
             full_name=self.full_name,
             hashed_password=self.hashed_password,
-            role=self.role,
+            role=UserRole(self.role) if isinstance(self.role, str) else self.role,
             created_at=self.created_at,
         )
 
     @classmethod
     def from_domain(cls, user: DomainUser) -> "UserModel":
+        role_value = user.role.value if hasattr(user.role, "value") else str(user.role)
         return cls(
             id=user.id,
             email=user.email,
             full_name=user.full_name,
             hashed_password=user.hashed_password,
-            role=user.role,
+            role=role_value,
             created_at=user.created_at,
         )

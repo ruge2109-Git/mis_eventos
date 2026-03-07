@@ -5,6 +5,7 @@ See app.application.use_cases.event for the individual use cases.
 from datetime import datetime
 
 from app.application.dto import ImageInput
+from app.application.dto.event_with_organizer import EventWithOrganizer
 from app.application.ports.cache_service import CacheService
 from app.application.ports.event_cache_policy import EventCachePolicy
 from app.application.ports.event_repository import EventRepository
@@ -17,6 +18,7 @@ from app.application.use_cases.event import (
     DeleteEventUseCase,
     GetEventUseCase,
     ListEventsUseCase,
+    ListEventsWithOrganizerUseCase,
     PublishEventUseCase,
     RevertEventToDraftUseCase,
     UpdateEventImageUseCase,
@@ -38,9 +40,11 @@ class EventUseCases:
         cache: CacheService,
         cache_policy: EventCachePolicy,
     ):
+        self._event_repo = event_repo
         self._create = CreateEventUseCase(event_repo, cache, cache_policy)
         self._get = GetEventUseCase(event_repo, cache, cache_policy)
         self._list = ListEventsUseCase(event_repo, cache, cache_policy)
+        self._list_with_organizer = ListEventsWithOrganizerUseCase(event_repo)
         self._update = UpdateEventUseCase(event_repo, cache, cache_policy)
         self._publish = PublishEventUseCase(event_repo, cache, cache_policy)
         self._cancel = CancelEventUseCase(event_repo, cache, cache_policy)
@@ -96,6 +100,23 @@ class EventUseCases:
             organizer_id=organizer_id,
         )
 
+    def list_events_with_organizer(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        search: str | None = None,
+        status: str | None = None,
+        organizer_id: int | None = None,
+    ) -> tuple[list[EventWithOrganizer], int]:
+        """For admin: events with organizer email and full_name (single query)."""
+        return self._list_with_organizer.execute(
+            skip=skip,
+            limit=limit,
+            search=search,
+            status=status,
+            organizer_id=organizer_id,
+        )
+
     def update_event(
         self,
         event_id: int,
@@ -136,3 +157,9 @@ class EventUseCases:
 
     def delete_event(self, event_id: int) -> None:
         self._delete.execute(event_id)
+
+    def list_upcoming_events(
+        self, skip: int = 0, limit: int = 10, search: str | None = None
+    ) -> tuple[list[Event], int]:
+        """Published events with start_date >= now (for admin reports). Returns (items, total)."""
+        return self._event_repo.list_upcoming(skip=skip, limit=limit, search=search)

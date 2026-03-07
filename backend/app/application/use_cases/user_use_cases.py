@@ -30,6 +30,20 @@ class UserUseCases:
         """Returns the user by email, or None if not found. Used by auth/provider."""
         return self.user_repo.get_by_email(email.lower().strip())
 
+    def get_user_by_id(self, user_id: int) -> User | None:
+        """Returns the user by id, or None if not found."""
+        return self.user_repo.get_by_id(user_id)
+
+    def list_users(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        search: str | None = None,
+        role: str | None = None,
+    ) -> tuple[list[User], int]:
+        """List users with optional search and role filter. For admin use."""
+        return self.user_repo.list_all(skip=skip, limit=limit, search=search, role=role)
+
     def authenticate_user(self, email: str, password: str) -> User:
         email_normalized = email.lower().strip()
         user = self.user_repo.get_by_email(email_normalized)

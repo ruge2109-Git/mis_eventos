@@ -1,4 +1,4 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func, or_
 
 from app.application.ports.user_repository import UserRepository
 from app.domain.entities.user import User as DomainUser
@@ -27,3 +27,29 @@ class PostgresUserRepository(BaseRepository[UserModel], UserRepository):
 
     def delete(self, user_id: int) -> None:
         self._delete(user_id)
+
+    def list_all(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        search: str | None = None,
+        role: str | None = None,
+    ) -> tuple[list[DomainUser], int]:
+        statement = select(UserModel)
+        if search:
+            term = f"%{search}%"
+            statement = statement.where(
+                or_(
+                    UserModel.email.ilike(term),
+                    UserModel.full_name.ilike(term),
+                )
+            )
+        if role:
+            statement = statement.where(UserModel.role == role)
+
+        count_statement = select(func.count()).select_from(statement.subquery())
+        total = self.session.exec(count_statement).one()
+
+        statement = statement.offset(skip).limit(limit).order_by(UserModel.created_at.desc())
+        db_users = self.session.exec(statement).all()
+        return [u.to_domain() for u in db_users], total

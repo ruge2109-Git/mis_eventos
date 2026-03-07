@@ -5,7 +5,12 @@ Serialization is the responsibility of the adapter (SRP); controller returns dom
 from app.domain.entities.event import Event
 
 
-def event_to_response_dict(event: Event, *, warning: str | None = None) -> dict:
+def event_to_response_dict(
+    event: Event,
+    *,
+    warning: str | None = None,
+    registered_count: int | None = None,
+) -> dict:
     """Convert Event to a dict suitable for EventResponse API schema."""
     data = {
         "id": event.id,
@@ -22,4 +27,6 @@ def event_to_response_dict(event: Event, *, warning: str | None = None) -> dict:
     }
     if warning is not None:
         data["warning"] = warning
+    if registered_count is not None:
+        data["registered_count"] = registered_count
     return data

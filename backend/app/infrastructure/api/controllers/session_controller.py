@@ -51,3 +51,6 @@ class SessionController:
 
     def get_event_sessions(self, event_id: int):
         return self.session_use_cases.get_sessions_by_event(event_id)
+
+    def get_session(self, session_id: int):
+        return self.session_use_cases.get_session_by_id(session_id)

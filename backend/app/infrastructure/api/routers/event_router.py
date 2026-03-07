@@ -1,14 +1,18 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
 from app.domain.entities.event import EventStatus
-from app.domain.entities.user import User
+from app.domain.entities.user import User, UserRole
 from app.infrastructure.api.controllers.event_controller import EventController
 from app.infrastructure.api.dependencies.provider import (
     RequireOrganizer,
     get_event_controller,
+    get_registration_controller,
+)
+from app.infrastructure.api.controllers.registration_controller import (
+    RegistrationController,
 )
 from app.infrastructure.api.mappers.event_mapper import event_to_response_dict
 from app.infrastructure.api.schemas.error_response import ErrorResponse
@@ -96,10 +100,28 @@ class EventResponse(BaseModel):
     warning: str | None = Field(
         None, description="Warning messages, e.g., if there is a scheduling conflict"
     )
+    registered_count: int | None = Field(
+        None, description="Number of users registered for this event (for availability)"
+    )
 
 
 class PaginatedEventResponse(BaseModel):
     items: list[EventResponse]
+    total: int
+    skip: int
+    limit: int
+
+
+class AttendeeResponse(BaseModel):
+    id: int = Field(..., description="Registration ID")
+    user_id: int = Field(..., description="User ID")
+    full_name: str = Field(..., description="Attendee full name")
+    email: str = Field(..., description="Attendee email")
+    registration_date: datetime = Field(..., description="When they registered")
+
+
+class PaginatedAttendeesResponse(BaseModel):
+    items: list[AttendeeResponse]
     total: int
     skip: int
     limit: int
@@ -217,12 +239,18 @@ def list_events(
     search: str | None = None,
     status: str | None = EventStatus.PUBLISHED.value,
     controller: EventController = Depends(get_event_controller),
+    registration_controller: RegistrationController = Depends(get_registration_controller),
 ):
     events, total = controller.list_events(
         skip=skip, limit=limit, search=search, status=status, organizer_id=None
     )
+    event_ids = [e.id for e in events]
+    counts = registration_controller.get_registration_counts_for_events(event_ids) if event_ids else {}
     return {
-        "items": [event_to_response_dict(e) for e in events],
+        "items": [
+            event_to_response_dict(e, registered_count=counts.get(e.id))
+            for e in events
+        ],
         "total": total,
         "skip": skip,
         "limit": limit,
@@ -243,6 +271,7 @@ def list_my_events(
     limit: int = 12,
     search: str | None = None,
     controller: EventController = Depends(get_event_controller),
+    registration_controller: RegistrationController = Depends(get_registration_controller),
     current_user: User = Depends(RequireOrganizer),
 ):
     events, total = controller.list_events(
@@ -252,8 +281,13 @@ def list_my_events(
         status=None,
         organizer_id=current_user.id,
     )
+    event_ids = [e.id for e in events]
+    counts = registration_controller.get_registration_counts_for_events(event_ids) if event_ids else {}
     return {
-        "items": [event_to_response_dict(e) for e in events],
+        "items": [
+            event_to_response_dict(e, registered_count=counts.get(e.id))
+            for e in events
+        ],
         "total": total,
         "skip": skip,
         "limit": limit,
@@ -270,10 +304,13 @@ def list_my_events(
     },
 )
 def get_event(
-    event_id: int, controller: EventController = Depends(get_event_controller)
+    event_id: int,
+    controller: EventController = Depends(get_event_controller),
+    registration_controller: RegistrationController = Depends(get_registration_controller),
 ):
     event = controller.get_event(event_id)
-    return event_to_response_dict(event)
+    count = registration_controller.get_registration_count_for_event(event_id)
+    return event_to_response_dict(event, registered_count=count)
 
 
 @router.patch(
@@ -403,6 +440,58 @@ def revert_event_to_draft(
     """
     event = controller.revert_event_to_draft(event_id)
     return event_to_response_dict(event)
+
+
+@router.get(
+    "/{event_id}/attendees",
+    response_model=PaginatedAttendeesResponse,
+    summary="List event attendees",
+    description=(
+        "Paginated list of attendees (registrations) for an event. "
+        "Only the event organizer or an admin can access. Requires Organizer."
+    ),
+    responses={
+        403: {
+            "model": ErrorResponse,
+            "description": "Forbidden: Not the organizer of this event.",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found: Event does not exist.",
+        },
+    },
+)
+def list_event_attendees(
+    event_id: int,
+    skip: int = 0,
+    limit: int = 5,
+    search: str | None = None,
+    controller: EventController = Depends(get_event_controller),
+    registration_controller: RegistrationController = Depends(get_registration_controller),
+    current_user: User = Depends(RequireOrganizer),
+):
+    event = controller.get_event(event_id)
+    if current_user.role != UserRole.ADMIN and event.organizer_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the event organizer can list attendees",
+        )
+    data = registration_controller.get_attendees(event_id, skip=skip, limit=limit, search=search)
+    return PaginatedAttendeesResponse(
+        items=[
+            AttendeeResponse(
+                id=a.id,
+                user_id=a.user_id,
+                full_name=a.full_name,
+                email=a.email,
+                registration_date=a.registration_date,
+            )
+            for a in data["items"]
+        ],
+        total=data["total"],
+        skip=data["skip"],
+        limit=data["limit"],
+    )
 
 
 @router.delete(

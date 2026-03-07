@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
 from app.domain.entities.user import User
@@ -11,6 +11,8 @@ from app.infrastructure.api.dependencies.provider import (
     RequireAuthenticated,
     get_registration_controller,
 )
+from app.infrastructure.api.mappers.event_mapper import event_to_response_dict
+from app.infrastructure.api.routers.event_router import EventResponse
 from app.infrastructure.api.schemas.error_response import ErrorResponse
 
 router = APIRouter(
@@ -112,3 +114,31 @@ def get_user_registrations(
     controller: RegistrationController = Depends(get_registration_controller),
 ):
     return controller.get_user_registrations(user_id)
+
+
+@router.get(
+    "/user/{user_id}/events",
+    response_model=list[EventResponse],
+    summary="List events user is registered for",
+    description="Returns full event data for all events the user is registered to (single request).",
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found: User might not exist.",
+        }
+    },
+)
+def get_user_registered_events(
+    user_id: int,
+    controller: RegistrationController = Depends(get_registration_controller),
+    current_user: User = Depends(RequireAuthenticated),
+):
+    """Only the authenticated user can request their own registered events."""
+    if current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="Can only list your own registered events")
+    events = controller.get_user_registered_events(user_id)
+    if not events:
+        return []
+    event_ids = [e.id for e in events]
+    counts = controller.get_registration_counts_for_events(event_ids)
+    return [event_to_response_dict(e, registered_count=counts.get(e.id)) for e in events]

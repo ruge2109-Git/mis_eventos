@@ -11,6 +11,7 @@ from app.application.use_cases.session_use_cases import SessionUseCases
 from app.application.use_cases.user_use_cases import UserUseCases
 from app.domain.entities.user import User, UserRole
 from app.domain.exceptions import AuthorizationError
+from app.infrastructure.api.controllers.admin_controller import AdminController
 from app.infrastructure.api.controllers.auth_controller import AuthController
 from app.infrastructure.api.controllers.event_controller import EventController
 from app.infrastructure.api.controllers.registration_controller import RegistrationController
@@ -106,6 +107,14 @@ def get_event_controller(
     event_use_cases: EventUseCases = Depends(get_event_use_cases),
 ) -> EventController:
     return EventController(event_use_cases)
+
+
+def get_admin_controller(
+    user_use_cases: UserUseCases = Depends(get_user_use_cases),
+    event_use_cases: EventUseCases = Depends(get_event_use_cases),
+    registration_use_cases: RegistrationUseCases = Depends(get_registration_use_cases),
+) -> AdminController:
+    return AdminController(user_use_cases, event_use_cases, registration_use_cases)
 
 
 def get_session_controller(

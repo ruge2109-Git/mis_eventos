@@ -11,6 +11,7 @@ from app.infrastructure.api.middleware.error_handler import (
     global_exception_handler,
     image_processing_exception_handler,
 )
+from app.infrastructure.api.routers.admin_router import router as admin_router
 from app.infrastructure.api.routers.auth_router import router as auth_router
 from app.infrastructure.api.routers.event_router import router as event_router
 from app.infrastructure.api.routers.registration_router import router as registration_router
@@ -52,6 +53,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(admin_router)
 app.include_router(event_router)
 app.include_router(session_router)
 app.include_router(registration_router)

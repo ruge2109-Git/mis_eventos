@@ -12,6 +12,9 @@ from app.application.use_cases.event.create_event import (
 from app.application.use_cases.event.delete_event import DeleteEventUseCase  # noqa: F401
 from app.application.use_cases.event.get_event import GetEventUseCase
 from app.application.use_cases.event.list_events import ListEventsUseCase
+from app.application.use_cases.event.list_events_with_organizer import (
+    ListEventsWithOrganizerUseCase,
+)
 from app.application.use_cases.event.publish_event import PublishEventUseCase
 from app.application.use_cases.event.revert_to_draft import RevertEventToDraftUseCase
 from app.application.use_cases.event.update_event import UpdateEventUseCase
@@ -29,4 +32,5 @@ __all__ = [
     "DeleteEventUseCase",
     "UpdateEventImageUseCase",
     "AddEventAdditionalImageUseCase",
+    "ListEventsWithOrganizerUseCase",
 ]

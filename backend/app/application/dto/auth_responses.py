@@ -8,6 +8,7 @@ class LoginResponse:
     token_type: str
     user_id: int
     role: str
+    full_name: str = ""
 
 
 @dataclass

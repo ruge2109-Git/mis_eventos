@@ -116,3 +116,9 @@ class SessionUseCases:
 
     def get_sessions_by_event(self, event_id: int) -> list[Session]:
         return self.session_repo.list_by_event(event_id)
+
+    def get_session_by_id(self, session_id: int) -> Session:
+        session = self.session_repo.get_by_id(session_id)
+        if not session:
+            raise ResourceNotFoundError(f"Session with ID {session_id} not found")
+        return session

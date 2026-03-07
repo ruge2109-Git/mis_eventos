@@ -52,6 +52,18 @@ class EventController:
             skip=skip, limit=limit, search=search, status=status, organizer_id=organizer_id
         )
 
+    def list_events_with_organizer(
+        self,
+        skip: int,
+        limit: int,
+        search: str | None,
+        status: str | None = None,
+        organizer_id: int | None = None,
+    ):
+        return self.event_use_cases.list_events_with_organizer(
+            skip=skip, limit=limit, search=search, status=status, organizer_id=organizer_id
+        )
+
     def get_event(self, event_id: int) -> Event:
         return self.event_use_cases.get_event(event_id)
 

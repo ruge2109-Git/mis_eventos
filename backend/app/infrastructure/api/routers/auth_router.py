@@ -74,6 +74,11 @@ class AuthResponse(BaseModel):
         description="The role of the authenticated user",
         examples=["ATTENDEE", "ORGANIZER", "ADMIN"],
     )
+    full_name: str = Field(
+        "",
+        description="Display name of the authenticated user",
+        examples=["Alejandro García"],
+    )
 
 
 class MessageResponse(BaseModel):

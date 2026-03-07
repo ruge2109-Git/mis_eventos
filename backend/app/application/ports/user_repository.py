@@ -19,3 +19,14 @@ class UserRepository(ABC):
     @abstractmethod
     def delete(self, user_id: int) -> None:
         pass
+
+    @abstractmethod
+    def list_all(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        search: str | None = None,
+        role: str | None = None,
+    ) -> tuple[list[User], int]:
+        """List users with optional search (email, full_name) and role filter. Returns (items, total)."""
+        pass

@@ -189,3 +189,19 @@ def get_event_sessions(
     event_id: int, controller: SessionController = Depends(get_session_controller)
 ):
     return controller.get_event_sessions(event_id)
+
+
+@router.get(
+    "/by-id/{session_id}",
+    response_model=SessionResponse,
+    summary="Get session by ID",
+    description="Retrieves a session by its ID.",
+    responses={
+        404: {"model": ErrorResponse, "description": "Not Found: Session does not exist."},
+    },
+)
+def get_session(
+    session_id: int,
+    controller: SessionController = Depends(get_session_controller),
+):
+    return controller.get_session(session_id)
