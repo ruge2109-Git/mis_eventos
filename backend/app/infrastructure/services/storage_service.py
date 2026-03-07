@@ -5,6 +5,7 @@ from fastapi import UploadFile
 from PIL import Image
 
 from app.application.ports.storage_service import StorageService
+from app.infrastructure.exceptions import ImageProcessingError
 
 
 class LocalStorageService(StorageService):
@@ -52,7 +53,7 @@ class LocalStorageService(StorageService):
                 thumb_img.save(thumb_path, "WEBP", quality=70, optimize=True)
 
         except Exception as e:
-            raise Exception(f"Failed to process image: {str(e)}") from e
+            raise ImageProcessingError(f"Failed to process image: {str(e)}") from e
 
         # 4. Return relative URL of the main image
         return f"{self.base_url}/{folder}/{filename}"

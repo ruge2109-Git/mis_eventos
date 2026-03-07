@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, JSON
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.domain.entities.event import Event as DomainEvent
@@ -27,7 +27,10 @@ class EventModel(SQLModel, table=True):
     organizer_id: int = Field(foreign_key="users.id")
 
     organizer: "UserModel" = Relationship(back_populates="events")
-    sessions: list["SessionModel"] = Relationship(back_populates="event")
+    sessions: list["SessionModel"] = Relationship(
+        back_populates="event",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
     registrations: list["RegistrationModel"] = Relationship(back_populates="event")
 
     def to_domain(self) -> DomainEvent:

@@ -1,5 +1,6 @@
 from app.domain.entities.user import User, UserRole
 
+
 class TestUserEntity:
     def test_user_is_admin(self):
         user = User(

@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import UTC
 
 from app.application.ports.event_repository import EventRepository
 from app.application.ports.session_repository import SessionRepository
@@ -8,7 +8,7 @@ from app.domain.exceptions import InvalidEventStateError, ResourceNotFoundError,
 
 def _naive_utc(dt):
     if dt.tzinfo is not None:
-        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return dt.astimezone(UTC).replace(tzinfo=None)
     return dt
 
 

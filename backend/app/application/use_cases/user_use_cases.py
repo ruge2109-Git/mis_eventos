@@ -1,16 +1,14 @@
-from passlib.context import CryptContext
-
+from app.application.ports.password_hasher import PasswordHasher
 from app.application.ports.user_repository import UserRepository
 from app.domain.entities.user import User, UserRole
 from app.domain.exceptions import AuthenticationError, ResourceAlreadyExistsError
 from app.infrastructure.config.logging import logger
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 class UserUseCases:
-    def __init__(self, user_repo: UserRepository):
+    def __init__(self, user_repo: UserRepository, password_hasher: PasswordHasher):
         self.user_repo = user_repo
+        self.password_hasher = password_hasher
 
     def register_user(
         self, email: str, full_name: str, password: str, role: UserRole = UserRole.ATTENDEE
@@ -22,7 +20,7 @@ class UserUseCases:
             logger.warning(f"Registration attempt with existing email: {email_normalized}")
             raise ResourceAlreadyExistsError(f"The email {email_normalized} is already registered.")
 
-        hashed_password = pwd_context.hash(password)
+        hashed_password = self.password_hasher.hash(password)
         new_user = User(
             email=email_normalized, full_name=full_name, hashed_password=hashed_password, role=role
         )
@@ -34,6 +32,6 @@ class UserUseCases:
 
         if not user:
             raise AuthenticationError("Invalid credentials")
-        if not pwd_context.verify(password, user.hashed_password):
+        if not self.password_hasher.verify(password, user.hashed_password):
             raise AuthenticationError("Invalid credentials")
         return user

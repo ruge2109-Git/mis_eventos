@@ -1,6 +1,8 @@
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 from fastapi import status
+
 
 class TestSessionAPI:
     @pytest.fixture
@@ -39,9 +41,9 @@ class TestSessionAPI:
             "end_time": (now + timedelta(days=1, hours=2)).isoformat(),
             "speaker": "A", "capacity": 5, "event_id": event_id
         }, headers=organizer_auth_headers)
-        
+
         assert post_response.status_code == status.HTTP_201_CREATED, post_response.text
-        
+
         response = client.get(f"/sessions/event/{event_id}")
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()) >= 1

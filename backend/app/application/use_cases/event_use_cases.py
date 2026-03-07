@@ -1,4 +1,5 @@
 import dataclasses
+from dataclasses import dataclass
 from datetime import datetime
 
 from fastapi import UploadFile
@@ -7,14 +8,19 @@ from app.application.ports.cache_service import CacheService
 from app.application.ports.event_repository import EventRepository
 from app.application.ports.storage_service import StorageService
 from app.domain.entities.event import Event
-from app.domain.exceptions import EventOverlapError, InvalidEventStateError, ResourceNotFoundError
+from app.domain.exceptions import (
+    EventOverlapError,
+    InvalidEventStateError,
+    ResourceNotFoundError,
+    StorageNotAvailableError,
+)
 from app.infrastructure.config.logging import logger
 
 
+@dataclass
 class CreateEventResult:
-    def __init__(self, event: Event, warning: str | None = None):
-        self.event = event
-        self.warning = warning
+    event: Event
+    warning: str | None = None
 
 
 class EventUseCases:
@@ -54,7 +60,7 @@ class EventUseCases:
 
         # Invalidate cache
         if self.cache:
-            self.cache.delete("events_paginated_list")
+            self.cache.delete_by_prefix("events_paginated_list")
 
         if warning:
             logger.info(f"Event created with warning: {warning}")
@@ -67,7 +73,7 @@ class EventUseCases:
             raise ResourceNotFoundError(f"Event with ID {event_id} not found")
 
         if not self.storage:
-            raise Exception("Storage service not configured")
+            raise StorageNotAvailableError("Storage service not configured")
 
         if event.image_url:
             self.storage.delete_image(event.image_url)
@@ -78,7 +84,7 @@ class EventUseCases:
         updated_event = self.event_repo.save(event)
 
         if self.cache:
-            self.cache.delete("events_list")
+            self.cache.delete_by_prefix("events_paginated_list")
             self.cache.delete(f"event_{event_id}")
 
         return updated_event
@@ -92,7 +98,7 @@ class EventUseCases:
         updated_event = self.event_repo.save(event)
 
         if self.cache:
-            self.cache.delete("events_list")
+            self.cache.delete_by_prefix("events_paginated_list")
             self.cache.delete(f"event_{event_id}")
 
         return updated_event
@@ -106,12 +112,26 @@ class EventUseCases:
         updated_event = self.event_repo.save(event)
 
         if self.cache:
-            self.cache.delete("events_list")
+            self.cache.delete_by_prefix("events_paginated_list")
             self.cache.delete(f"event_{event_id}")
 
         return updated_event
 
-    def get_event(self, event_id: int) -> Event | None:
+    def revert_event_to_draft(self, event_id: int) -> Event:
+        event = self.event_repo.get_by_id(event_id)
+        if not event:
+            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
+
+        event.revert_to_draft()
+        updated_event = self.event_repo.save(event)
+
+        if self.cache:
+            self.cache.delete_by_prefix("events_paginated_list")
+            self.cache.delete(f"event_{event_id}")
+
+        return updated_event
+
+    def get_event(self, event_id: int) -> Event:
         cache_key = f"event_{event_id}"
         if self.cache:
             cached = self.cache.get(cache_key)
@@ -119,8 +139,10 @@ class EventUseCases:
                 return Event(**cached)
 
         event = self.event_repo.get_by_id(event_id)
+        if not event:
+            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
 
-        if event and self.cache:
+        if self.cache:
             self.cache.set(cache_key, dataclasses.asdict(event), expire_seconds=600)
 
         return event
@@ -190,7 +212,7 @@ class EventUseCases:
 
         updated = self.event_repo.save(event)
         if self.cache:
-            self.cache.delete("events_paginated_list")
+            self.cache.delete_by_prefix("events_paginated_list")
             self.cache.delete(f"event_{event_id}")
         return updated
 
@@ -199,14 +221,37 @@ class EventUseCases:
         if not event:
             raise ResourceNotFoundError(f"Event with ID {event_id} not found")
         if not self.storage:
-            raise Exception("Storage service not configured")
+            raise StorageNotAvailableError("Storage service not configured")
         image_url = self.storage.save_image(file, folder="events")
         event.additional_images = list(event.additional_images) + [image_url]
         updated = self.event_repo.save(event)
         if self.cache:
-            self.cache.delete("events_paginated_list")
+            self.cache.delete_by_prefix("events_paginated_list")
             self.cache.delete(f"event_{event_id}")
         return updated
+
+    def delete_event(self, event_id: int) -> None:
+        event = self.event_repo.get_by_id(event_id)
+        if not event:
+            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
+
+        if self.storage:
+            if event.image_url:
+                try:
+                    self.storage.delete_image(event.image_url)
+                except Exception as e:
+                    logger.warning("Failed to delete event cover image %s: %s", event.image_url, e)
+            for url in event.additional_images or []:
+                try:
+                    self.storage.delete_image(url)
+                except Exception as e:
+                    logger.warning("Failed to delete event additional image %s: %s", url, e)
+
+        self.event_repo.delete(event_id)
+
+        if self.cache:
+            self.cache.delete_by_prefix("events_paginated_list")
+            self.cache.delete(f"event_{event_id}")
 
     def _validate_event_dates(self, start_date: datetime, end_date: datetime):
         if end_date <= start_date:

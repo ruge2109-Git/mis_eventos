@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
+
 from app.domain.entities.session import Session
+
 
 class TestSessionEntity:
     def test_session_overlaps_with_true(self):

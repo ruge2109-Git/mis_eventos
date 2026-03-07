@@ -2,6 +2,7 @@ from fastapi import Depends, HTTPException, status
 from sqlmodel import Session
 
 from app.application.ports.cache_service import CacheService
+from app.application.ports.password_hasher import PasswordHasher
 from app.application.ports.storage_service import StorageService
 from app.application.use_cases.event_use_cases import EventUseCases
 from app.application.use_cases.registration_use_cases import RegistrationUseCases
@@ -28,9 +29,14 @@ from app.infrastructure.database.repositories import (
     PostgresUserRepository,
 )
 from app.infrastructure.services.cache_service import RedisCacheService
+from app.infrastructure.services.password_hasher import PasslibPasswordHasher
 from app.infrastructure.services.storage_service import LocalStorageService
 
 # --- Application Layer Providers ---
+
+
+def get_password_hasher() -> PasswordHasher:
+    return PasslibPasswordHasher()
 
 
 def get_storage_service() -> StorageService:
@@ -41,9 +47,12 @@ def get_cache_service() -> CacheService:
     return RedisCacheService(url=settings.REDIS_URL)
 
 
-def get_user_use_cases(session: Session = Depends(get_session)) -> UserUseCases:
+def get_user_use_cases(
+    session: Session = Depends(get_session),
+    password_hasher: PasswordHasher = Depends(get_password_hasher),
+) -> UserUseCases:
     repo = PostgresUserRepository(session)
-    return UserUseCases(repo)
+    return UserUseCases(repo, password_hasher)
 
 
 def get_event_use_cases(

@@ -1,18 +1,17 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 import sqlalchemy
-from passlib.context import CryptContext
 from sqlmodel import Session, select
 
 from app.domain.entities.user import UserRole
 from app.infrastructure.config.logging import logger
 from app.infrastructure.config.settings import settings
 from app.infrastructure.database.models.user_model import UserModel
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from app.infrastructure.services.password_hasher import PasslibPasswordHasher
 
 
 def seed_admin_user(session: Session):
+    hasher = PasslibPasswordHasher()
     try:
         admin_email = settings.DEFAULT_ADMIN_EMAIL
         admin_password = settings.DEFAULT_ADMIN_PASSWORD
@@ -29,9 +28,9 @@ def seed_admin_user(session: Session):
             admin_user = UserModel(
                 email=admin_email,
                 full_name="System Admin",
-                hashed_password=pwd_context.hash(admin_password),
+                hashed_password=hasher.hash(admin_password),
                 role=UserRole.ADMIN,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
             )
             session.add(admin_user)
             session.commit()

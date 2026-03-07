@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
+
 from app.domain.entities.event import Event, EventStatus
+
 
 class TestEventEntity:
     def test_event_publish(self):

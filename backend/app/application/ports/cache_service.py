@@ -14,3 +14,7 @@ class CacheService(ABC):
     @abstractmethod
     def delete(self, key: str) -> None:
         pass
+
+    @abstractmethod
+    def delete_by_prefix(self, prefix: str) -> None:
+        pass

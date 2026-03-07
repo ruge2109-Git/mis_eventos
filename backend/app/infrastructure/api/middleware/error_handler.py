@@ -11,8 +11,10 @@ from app.domain.exceptions import (
     ResourceAlreadyExistsError,
     ResourceNotFoundError,
     SessionOverlapError,
+    StorageNotAvailableError,
 )
 from app.infrastructure.config.logging import logger
+from app.infrastructure.exceptions import ImageProcessingError
 
 
 async def domain_exception_handler(request: Request, exc: DomainException):
@@ -26,6 +28,8 @@ async def domain_exception_handler(request: Request, exc: DomainException):
         status_code = 401
     elif isinstance(exc, AuthorizationError):
         status_code = 403
+    elif isinstance(exc, StorageNotAvailableError):
+        status_code = 503
     elif isinstance(exc, EventCapacityExceededError | SessionOverlapError | InvalidEventStateError):
         status_code = 400
 
@@ -34,6 +38,14 @@ async def domain_exception_handler(request: Request, exc: DomainException):
     return JSONResponse(
         status_code=status_code,
         content={"detail": exc.message, "error_type": exc.__class__.__name__},
+    )
+
+
+async def image_processing_exception_handler(request: Request, exc: ImageProcessingError):
+    logger.error("Image processing error at %s: %s", request.url, exc.message)
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.message, "error_type": "ImageProcessingError"},
     )
 
 

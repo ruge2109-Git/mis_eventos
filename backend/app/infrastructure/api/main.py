@@ -4,38 +4,26 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from sqlmodel import Session
 
 from app.domain.exceptions import DomainException
 from app.infrastructure.api.middleware.error_handler import (
     domain_exception_handler,
     global_exception_handler,
+    image_processing_exception_handler,
 )
 from app.infrastructure.api.routers.auth_router import router as auth_router
 from app.infrastructure.api.routers.event_router import router as event_router
 from app.infrastructure.api.routers.registration_router import router as registration_router
 from app.infrastructure.api.routers.session_registration_router import router as session_reg_router
 from app.infrastructure.api.routers.session_router import router as session_router
-from app.infrastructure.config.database import engine
-from app.infrastructure.config.logging import logger
 from app.infrastructure.config.settings import settings
-from app.infrastructure.database.seeding import seed_admin_user
+from app.infrastructure.exceptions import ImageProcessingError
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create required directories
     if not os.path.exists(settings.UPLOAD_DIR):
         os.makedirs(settings.UPLOAD_DIR)
-
-    try:
-        with Session(engine) as session:
-            seed_admin_user(session)
-    except Exception as e:
-        logger.warning(
-            f"Initial seeding skipped or failed: {str(e)}. "
-            "This is expected if migrations haven't run."
-        )
 
     yield
 
@@ -48,11 +36,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Mount static files to serve images
 app.mount(settings.STATIC_URL, StaticFiles(directory=settings.UPLOAD_DIR), name="static")
 
-# Register global exception handlers
 app.add_exception_handler(DomainException, domain_exception_handler)
+app.add_exception_handler(ImageProcessingError, image_processing_exception_handler)
 app.add_exception_handler(Exception, global_exception_handler)
 
 app.add_middleware(

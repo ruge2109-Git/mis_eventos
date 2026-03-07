@@ -3,14 +3,13 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, File, UploadFile, status
 from pydantic import BaseModel, Field
 
+from app.domain.entities.event import EventStatus
 from app.domain.entities.user import User
-from app.domain.exceptions import ResourceNotFoundError
 from app.infrastructure.api.controllers.event_controller import EventController
 from app.infrastructure.api.dependencies.provider import (
     RequireOrganizer,
     get_event_controller,
 )
-
 from app.infrastructure.api.schemas.error_response import ErrorResponse
 
 router = APIRouter(
@@ -176,10 +175,19 @@ def upload_event_image(
     "/{event_id}/additional-images",
     response_model=EventResponse,
     summary="Upload additional event image",
-    description="Uploads an image and appends its URL to the event's additional_images. Requires Organizer.",
+    description=(
+        "Uploads an image and appends its URL to the event's additional_images. "
+        "Requires Organizer."
+    ),
     responses={
-        403: {"model": ErrorResponse, "description": "Forbidden: User is not an Organizer."},
-        404: {"model": ErrorResponse, "description": "Not Found: Event does not exist."},
+        403: {
+            "model": ErrorResponse,
+            "description": "Forbidden: User is not an Organizer.",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found: Event does not exist.",
+        },
     },
 )
 def upload_event_additional_image(
@@ -195,13 +203,15 @@ def upload_event_additional_image(
     "/",
     response_model=PaginatedEventResponse,
     summary="List events",
-    description="Retrieves a paginated list of all registered events (published by default).",
+    description=(
+        "Retrieves a paginated list of all registered events (published by default)."
+    ),
 )
 def list_events(
     skip: int = 0,
     limit: int = 12,
     search: str | None = None,
-    status: str | None = "Published",
+    status: str | None = EventStatus.PUBLISHED.value,
     controller: EventController = Depends(get_event_controller),
 ):
     result = controller.list_events(
@@ -219,7 +229,10 @@ def list_events(
     "/mine",
     response_model=PaginatedEventResponse,
     summary="List my events (organizer)",
-    description="Retrieves a paginated list of the current user's events (all statuses). Requires Organizer.",
+    description=(
+        "Retrieves a paginated list of the current user's events (all statuses). "
+        "Requires Organizer."
+    ),
 )
 def list_my_events(
     skip: int = 0,
@@ -247,7 +260,9 @@ def list_my_events(
     "/{event_id}",
     response_model=EventResponse,
     summary="Get event details",
-    description="Retrieves all information of a specific event by its ID.",
+    description=(
+        "Retrieves all information of a specific event by its ID."
+    ),
     responses={
         404: {"model": ErrorResponse, "description": "Not Found: Event does not exist."}
     },
@@ -255,19 +270,21 @@ def list_my_events(
 def get_event(
     event_id: int, controller: EventController = Depends(get_event_controller)
 ):
-    event = controller.get_event(event_id)
-    if not event:
-        raise ResourceNotFoundError(f"Event with ID {event_id} not found")
-    return event
+    return controller.get_event(event_id)
 
 
 @router.patch(
     "/{event_id}",
     response_model=EventResponse,
     summary="Update event",
-    description="Updates event details. Requires Organizer/Admin.",
+    description=(
+        "Updates event details. Requires Organizer/Admin."
+    ),
     responses={
-        404: {"model": ErrorResponse, "description": "Not Found: Event does not exist."},
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found: Event does not exist.",
+        },
     },
 )
 def update_event(
@@ -292,7 +309,10 @@ def update_event(
     "/{event_id}/publish",
     response_model=EventResponse,
     summary="Publish event",
-    description="Publishes an event, making it available for registration. Requires Organizer/Admin.",
+    description=(
+        "Publishes an event, making it available for registration. "
+        "Requires Organizer/Admin."
+    ),
     responses={
         400: {
             "model": ErrorResponse,
@@ -323,7 +343,9 @@ def publish_event(
     "/{event_id}/cancel",
     response_model=EventResponse,
     summary="Cancel event",
-    description="Cancels an event. Requires Organizer/Admin.",
+    description=(
+        "Cancels an event. Requires Organizer/Admin."
+    ),
     responses={
         400: {
             "model": ErrorResponse,
@@ -348,3 +370,61 @@ def cancel_event(
     Cancel an event.
     """
     return controller.cancel_event(event_id)
+
+
+@router.post(
+    "/{event_id}/revert-to-draft",
+    response_model=EventResponse,
+    summary="Revert event to draft",
+    description=(
+        "Reverts a cancelled event back to draft. After that you can publish it again. Requires Organizer."
+    ),
+    responses={
+        403: {
+            "model": ErrorResponse,
+            "description": "Forbidden: User is not an Organizer.",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found: Event does not exist.",
+        },
+    },
+)
+def revert_event_to_draft(
+    event_id: int,
+    controller: EventController = Depends(get_event_controller),
+    current_user: User = Depends(RequireOrganizer),
+):
+    """
+    Revert a cancelled event to draft status.
+    """
+    return controller.revert_event_to_draft(event_id)
+
+
+@router.delete(
+    "/{event_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete event",
+    description=(
+        "Permanently deletes an event and its images. Requires Organizer."
+    ),
+    responses={
+        403: {
+            "model": ErrorResponse,
+            "description": "Forbidden: User is not an Organizer.",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found: Event does not exist.",
+        },
+    },
+)
+def delete_event(
+    event_id: int,
+    controller: EventController = Depends(get_event_controller),
+    current_user: User = Depends(RequireOrganizer),
+):
+    """
+    Delete an event permanently.
+    """
+    controller.delete_event(event_id)

@@ -50,7 +50,7 @@ class EventController:
         events, total = self.event_use_cases.list_events(
             skip=skip, limit=limit, search=search, status=status, organizer_id=organizer_id
         )
-        
+
         return {
             "items": [dataclasses.asdict(e) for e in events],
             "total": total
@@ -92,3 +92,9 @@ class EventController:
 
     def cancel_event(self, event_id: int):
         return self.event_use_cases.cancel_event(event_id)
+
+    def revert_event_to_draft(self, event_id: int):
+        return dataclasses.asdict(self.event_use_cases.revert_event_to_draft(event_id))
+
+    def delete_event(self, event_id: int) -> None:
+        self.event_use_cases.delete_event(event_id)

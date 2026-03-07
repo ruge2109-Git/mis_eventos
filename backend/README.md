@@ -157,7 +157,17 @@ Es necesario ejecutar las migraciones una vez que el contenedor de la base de da
 docker compose exec backend alembic upgrade head
 ```
 
-### 4. Gestión de Cambios (Opcional)
+### 4. Usuario administrador (seed)
+El arranque de la API **no** crea automáticamente el usuario administrador. Para crear el usuario admin por defecto (según `DEFAULT_ADMIN_EMAIL` y `DEFAULT_ADMIN_PASSWORD` del `.env`), ejecute desde el contenedor del backend:
+```bash
+docker compose exec backend python -m app.scripts.seed_admin
+```
+O, si ejecuta el backend en local (con la base de datos accesible):
+```bash
+cd backend && python -m app.scripts.seed_admin
+```
+
+### 5. Gestión de Cambios (Opcional)
 Para generar nuevas migraciones tras modificar modelos:
 ```bash
 docker compose exec backend alembic revision --autogenerate -m "Descripción"

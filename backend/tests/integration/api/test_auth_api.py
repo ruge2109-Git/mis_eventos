@@ -1,6 +1,7 @@
-import pytest
 from fastapi import status
+
 from app.domain.entities.user import UserRole
+
 
 class TestAuthAPI:
     def test_register_attendee(self, client):
@@ -43,7 +44,7 @@ class TestAuthAPI:
                 "role": UserRole.ATTENDEE
             }
         )
-        
+
         # Then login
         response = client.post(
             "/auth/login",

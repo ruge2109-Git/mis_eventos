@@ -52,3 +52,9 @@ class InvalidEventStateError(DomainException):
     """Raised when an operation is performed on an event in an invalid state."""
 
     pass
+
+
+class StorageNotAvailableError(DomainException):
+    """Raised when the storage service is not configured or unavailable."""
+
+    pass

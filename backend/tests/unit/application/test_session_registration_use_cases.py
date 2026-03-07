@@ -1,13 +1,19 @@
-import pytest
 from datetime import datetime
-from app.application.use_cases.session_registration_use_cases import SessionRegistrationUseCases
-from app.domain.entities.user import User, UserRole
-from app.domain.entities.session import Session
-from app.domain.entities.registration import Registration
-from app.domain.entities.session_registration import SessionRegistration
-from app.domain.exceptions import (
-    ResourceNotFoundError, AuthorizationError, ResourceAlreadyExistsError,
+
+import pytest
+
+from app.application.use_cases.session_registration_use_cases import (
+    SessionRegistrationUseCases,
 )
+from app.domain.entities.session import Session
+from app.domain.entities.session_registration import SessionRegistration
+from app.domain.entities.user import User, UserRole
+from app.domain.exceptions import (
+    AuthorizationError,
+    ResourceAlreadyExistsError,
+    ResourceNotFoundError,
+)
+
 
 class TestSessionRegistrationUseCases:
     @pytest.fixture
@@ -16,7 +22,7 @@ class TestSessionRegistrationUseCases:
             "session_reg_repo": mocker.Mock(),
             "session_repo": mocker.Mock(),
             "registration_repo": mocker.Mock(),
-            "user_repo": mocker.Mock()
+            "user_repo": mocker.Mock(),
         }
 
     @pytest.fixture
@@ -25,7 +31,7 @@ class TestSessionRegistrationUseCases:
             session_reg_repo=mock_repos["session_reg_repo"],
             session_repo=mock_repos["session_repo"],
             registration_repo=mock_repos["registration_repo"],
-            user_repo=mock_repos["user_repo"]
+            user_repo=mock_repos["user_repo"],
         )
 
     def test_session_reg_user_not_found(self, use_cases, mock_repos):
@@ -35,14 +41,25 @@ class TestSessionRegistrationUseCases:
 
     def test_session_reg_admin_not_allowed(self, use_cases, mock_repos):
         mock_repos["user_repo"].get_by_id.return_value = User(
-            email="a@a.com", full_name="A", hashed_password="X", role=UserRole.ADMIN, id=1
+            email="a@a.com",
+            full_name="A",
+            hashed_password="X",
+            role=UserRole.ADMIN,
+            id=1,
         )
-        with pytest.raises(AuthorizationError, match="Administrators are not allowed to register for sessions"):
+        with pytest.raises(
+            AuthorizationError,
+            match="Administrators are not allowed to register for sessions",
+        ):
             use_cases.register_to_session(user_id=1, session_id=10)
 
     def test_session_reg_session_not_found(self, use_cases, mock_repos):
         mock_repos["user_repo"].get_by_id.return_value = User(
-            email="a@a.com", full_name="A", hashed_password="X", role=UserRole.ATTENDEE, id=1
+            email="a@a.com",
+            full_name="A",
+            hashed_password="X",
+            role=UserRole.ATTENDEE,
+            id=1,
         )
         mock_repos["session_repo"].get_by_id.return_value = None
         with pytest.raises(ResourceNotFoundError, match="Session with ID 10 not found"):
@@ -50,38 +67,68 @@ class TestSessionRegistrationUseCases:
 
     def test_session_reg_must_be_in_event(self, use_cases, mock_repos):
         mock_repos["user_repo"].get_by_id.return_value = User(
-            email="a@a.com", full_name="A", hashed_password="X", role=UserRole.ATTENDEE, id=1
+            email="a@a.com",
+            full_name="A",
+            hashed_password="X",
+            role=UserRole.ATTENDEE,
+            id=1,
         )
         mock_repos["session_repo"].get_by_id.return_value = Session(
-            title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(),
-            speaker="Sp", event_id=100, id=10
+            title="S",
+            start_time=datetime.utcnow(),
+            end_time=datetime.utcnow(),
+            speaker="Sp",
+            event_id=100,
+            id=10,
         )
         mock_repos["registration_repo"].get_by_user_and_event.return_value = None
-        
-        with pytest.raises(AuthorizationError, match="You must be registered for the event before joining this session"):
+
+        with pytest.raises(
+            AuthorizationError,
+            match="You must be registered for the event before joining this session",
+        ):
             use_cases.register_to_session(user_id=1, session_id=10)
 
     def test_session_reg_already_registered(self, use_cases, mock_repos):
         mock_repos["user_repo"].get_by_id.return_value = User(
-            email="a@a.com", full_name="A", hashed_password="X", role=UserRole.ATTENDEE, id=1
+            email="a@a.com",
+            full_name="A",
+            hashed_password="X",
+            role=UserRole.ATTENDEE,
+            id=1,
         )
         mock_repos["session_repo"].get_by_id.return_value = Session(
-            title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(),
-            speaker="Sp", event_id=100, id=10
+            title="S",
+            start_time=datetime.utcnow(),
+            end_time=datetime.utcnow(),
+            speaker="Sp",
+            event_id=100,
+            id=10,
         )
         mock_repos["registration_repo"].get_by_user_and_event.return_value = True
         mock_repos["session_reg_repo"].get_by_user_and_session.return_value = True
-        
-        with pytest.raises(ResourceAlreadyExistsError, match="You are already registered for this session"):
+
+        with pytest.raises(
+            ResourceAlreadyExistsError,
+            match="You are already registered for this session",
+        ):
             use_cases.register_to_session(user_id=1, session_id=10)
 
     def test_session_reg_capacity_exceeded(self, use_cases, mock_repos):
         mock_repos["user_repo"].get_by_id.return_value = User(
-            email="a@a.com", full_name="A", hashed_password="X", role=UserRole.ATTENDEE, id=1
+            email="a@a.com",
+            full_name="A",
+            hashed_password="X",
+            role=UserRole.ATTENDEE,
+            id=1,
         )
         mock_repos["session_repo"].get_by_id.return_value = Session(
-            title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(),
-            speaker="Sp", event_id=100, id=10
+            title="S",
+            start_time=datetime.utcnow(),
+            end_time=datetime.utcnow(),
+            speaker="Sp",
+            event_id=100,
+            id=10,
         )
         mock_repos["registration_repo"].get_by_user_and_event.return_value = True
         mock_repos["session_reg_repo"].get_by_user_and_session.return_value = None
@@ -93,11 +140,19 @@ class TestSessionRegistrationUseCases:
 
     def test_session_reg_success(self, use_cases, mock_repos):
         mock_repos["user_repo"].get_by_id.return_value = User(
-            email="a@a.com", full_name="A", hashed_password="X", role=UserRole.ATTENDEE, id=1
+            email="a@a.com",
+            full_name="A",
+            hashed_password="X",
+            role=UserRole.ATTENDEE,
+            id=1,
         )
         mock_repos["session_repo"].get_by_id.return_value = Session(
-            title="S", start_time=datetime.utcnow(), end_time=datetime.utcnow(),
-            speaker="Sp", event_id=100, id=10
+            title="S",
+            start_time=datetime.utcnow(),
+            end_time=datetime.utcnow(),
+            speaker="Sp",
+            event_id=100,
+            id=10,
         )
         mock_repos["registration_repo"].get_by_user_and_event.return_value = True
         mock_repos["session_reg_repo"].get_by_user_and_session.return_value = None
@@ -110,13 +165,15 @@ class TestSessionRegistrationUseCases:
     def test_session_unregister_success(self, use_cases, mock_repos):
         s_reg = SessionRegistration(user_id=1, session_id=10, id=8)
         mock_repos["session_reg_repo"].get_by_user_and_session.return_value = s_reg
-        
+
         use_cases.unregister_from_session(1, 10)
         mock_repos["session_reg_repo"].delete.assert_called_with(8)
 
     def test_session_unregister_not_found(self, use_cases, mock_repos):
         mock_repos["session_reg_repo"].get_by_user_and_session.return_value = None
-        with pytest.raises(ResourceNotFoundError, match="You are not registered for this session"):
+        with pytest.raises(
+            ResourceNotFoundError, match="You are not registered for this session"
+        ):
             use_cases.unregister_from_session(user_id=1, session_id=10)
 
     def test_list_by_user(self, use_cases, mock_repos):

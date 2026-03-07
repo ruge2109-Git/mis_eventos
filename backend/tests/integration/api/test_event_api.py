@@ -1,6 +1,7 @@
-import pytest
 from datetime import datetime, timedelta
+
 from fastapi import status
+
 
 class TestEventAPI:
     def test_create_event_success(self, client, organizer_auth_headers):

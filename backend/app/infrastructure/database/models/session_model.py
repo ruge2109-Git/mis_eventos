@@ -21,7 +21,10 @@ class SessionModel(SQLModel, table=True):
     event_id: int = Field(foreign_key="events.id")
 
     event: "EventModel" = Relationship(back_populates="sessions")
-    registrations: list["SessionRegistrationModel"] = Relationship(back_populates="session")
+    registrations: list["SessionRegistrationModel"] = Relationship(
+        back_populates="session",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
 
     def to_domain(self) -> DomainSession:
         return DomainSession(

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
 
@@ -31,8 +31,13 @@ class Event:
     def cancel(self):
         self.status = EventStatus.CANCELLED.value
 
-    def is_active(self) -> bool:
-        return self.status == EventStatus.PUBLISHED.value and self.end_date > datetime.utcnow()
+    def revert_to_draft(self):
+        self.status = EventStatus.DRAFT.value
+
+    def is_active(self, now: datetime | None = None) -> bool:
+        if now is None:
+            now = datetime.now(UTC).replace(tzinfo=None)
+        return self.status == EventStatus.PUBLISHED.value and self.end_date > now
 
     def overlaps_with(self, other_event: "Event") -> bool:
         return max(self.start_date, other_event.start_date) < min(
