@@ -10,6 +10,7 @@ from app.infrastructure.api.dependencies.provider import (
     RequireOrganizer,
     get_event_controller,
 )
+from app.infrastructure.api.mappers.event_mapper import event_to_response_dict
 from app.infrastructure.api.schemas.error_response import ErrorResponse
 
 router = APIRouter(
@@ -132,7 +133,7 @@ def create_event(
     """
     Organizer identity is automatically taken from JWT session.
     """
-    return controller.create_event(
+    result = controller.create_event(
         title=event_data.title,
         capacity=event_data.capacity,
         start_date=event_data.start_date,
@@ -141,6 +142,7 @@ def create_event(
         organizer_id=current_user.id,
         description=event_data.description,
     )
+    return event_to_response_dict(result.event, warning=result.warning)
 
 
 @router.post(
@@ -168,7 +170,8 @@ def upload_event_image(
     controller: EventController = Depends(get_event_controller),
     current_user: User = Depends(RequireOrganizer),
 ):
-    return controller.upload_image(event_id, file)
+    event = controller.upload_image(event_id, file)
+    return event_to_response_dict(event)
 
 
 @router.post(
@@ -196,7 +199,8 @@ def upload_event_additional_image(
     controller: EventController = Depends(get_event_controller),
     current_user: User = Depends(RequireOrganizer),
 ):
-    return controller.upload_additional_image(event_id, file)
+    event = controller.upload_additional_image(event_id, file)
+    return event_to_response_dict(event)
 
 
 @router.get(
@@ -214,12 +218,12 @@ def list_events(
     status: str | None = EventStatus.PUBLISHED.value,
     controller: EventController = Depends(get_event_controller),
 ):
-    result = controller.list_events(
+    events, total = controller.list_events(
         skip=skip, limit=limit, search=search, status=status, organizer_id=None
     )
     return {
-        "items": result["items"],
-        "total": result["total"],
+        "items": [event_to_response_dict(e) for e in events],
+        "total": total,
         "skip": skip,
         "limit": limit,
     }
@@ -241,7 +245,7 @@ def list_my_events(
     controller: EventController = Depends(get_event_controller),
     current_user: User = Depends(RequireOrganizer),
 ):
-    result = controller.list_events(
+    events, total = controller.list_events(
         skip=skip,
         limit=limit,
         search=search,
@@ -249,8 +253,8 @@ def list_my_events(
         organizer_id=current_user.id,
     )
     return {
-        "items": result["items"],
-        "total": result["total"],
+        "items": [event_to_response_dict(e) for e in events],
+        "total": total,
         "skip": skip,
         "limit": limit,
     }
@@ -260,9 +264,7 @@ def list_my_events(
     "/{event_id}",
     response_model=EventResponse,
     summary="Get event details",
-    description=(
-        "Retrieves all information of a specific event by its ID."
-    ),
+    description=("Retrieves all information of a specific event by its ID."),
     responses={
         404: {"model": ErrorResponse, "description": "Not Found: Event does not exist."}
     },
@@ -270,16 +272,15 @@ def list_my_events(
 def get_event(
     event_id: int, controller: EventController = Depends(get_event_controller)
 ):
-    return controller.get_event(event_id)
+    event = controller.get_event(event_id)
+    return event_to_response_dict(event)
 
 
 @router.patch(
     "/{event_id}",
     response_model=EventResponse,
     summary="Update event",
-    description=(
-        "Updates event details. Requires Organizer/Admin."
-    ),
+    description=("Updates event details. Requires Organizer/Admin."),
     responses={
         404: {
             "model": ErrorResponse,
@@ -293,7 +294,7 @@ def update_event(
     controller: EventController = Depends(get_event_controller),
     current_user: User = Depends(RequireOrganizer),
 ):
-    return controller.update_event(
+    event = controller.update_event(
         event_id,
         title=body.title,
         capacity=body.capacity,
@@ -303,6 +304,7 @@ def update_event(
         description=body.description,
         additional_images=body.additional_images,
     )
+    return event_to_response_dict(event)
 
 
 @router.post(
@@ -336,16 +338,15 @@ def publish_event(
     """
     Publish an event.
     """
-    return controller.publish_event(event_id)
+    event = controller.publish_event(event_id)
+    return event_to_response_dict(event)
 
 
 @router.post(
     "/{event_id}/cancel",
     response_model=EventResponse,
     summary="Cancel event",
-    description=(
-        "Cancels an event. Requires Organizer/Admin."
-    ),
+    description=("Cancels an event. Requires Organizer/Admin."),
     responses={
         400: {
             "model": ErrorResponse,
@@ -369,7 +370,8 @@ def cancel_event(
     """
     Cancel an event.
     """
-    return controller.cancel_event(event_id)
+    event = controller.cancel_event(event_id)
+    return event_to_response_dict(event)
 
 
 @router.post(
@@ -377,7 +379,8 @@ def cancel_event(
     response_model=EventResponse,
     summary="Revert event to draft",
     description=(
-        "Reverts a cancelled event back to draft. After that you can publish it again. Requires Organizer."
+        "Reverts a cancelled event back to draft. "
+        "After that you can publish it again. Requires Organizer."
     ),
     responses={
         403: {
@@ -398,16 +401,15 @@ def revert_event_to_draft(
     """
     Revert a cancelled event to draft status.
     """
-    return controller.revert_event_to_draft(event_id)
+    event = controller.revert_event_to_draft(event_id)
+    return event_to_response_dict(event)
 
 
 @router.delete(
     "/{event_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete event",
-    description=(
-        "Permanently deletes an event and its images. Requires Organizer."
-    ),
+    description=("Permanently deletes an event and its images. Requires Organizer."),
     responses={
         403: {
             "model": ErrorResponse,

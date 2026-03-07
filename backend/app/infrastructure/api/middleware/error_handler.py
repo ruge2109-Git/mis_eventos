@@ -16,24 +16,28 @@ from app.domain.exceptions import (
 from app.infrastructure.config.logging import logger
 from app.infrastructure.exceptions import ImageProcessingError
 
+DOMAIN_EXCEPTION_STATUS: list[tuple[type[DomainException], int]] = [
+    (ResourceNotFoundError, 404),
+    (ResourceAlreadyExistsError, 409),
+    (EventOverlapError, 409),
+    (AuthenticationError, 401),
+    (AuthorizationError, 403),
+    (StorageNotAvailableError, 503),
+    (EventCapacityExceededError, 400),
+    (SessionOverlapError, 400),
+    (InvalidEventStateError, 400),
+]
+DEFAULT_DOMAIN_STATUS = 400
+
 
 async def domain_exception_handler(request: Request, exc: DomainException):
-    status_code = 400
+    status_code = DEFAULT_DOMAIN_STATUS
+    for exc_type, code in DOMAIN_EXCEPTION_STATUS:
+        if isinstance(exc, exc_type):
+            status_code = code
+            break
 
-    if isinstance(exc, ResourceNotFoundError):
-        status_code = 404
-    elif isinstance(exc, ResourceAlreadyExistsError | EventOverlapError):
-        status_code = 409
-    elif isinstance(exc, AuthenticationError):
-        status_code = 401
-    elif isinstance(exc, AuthorizationError):
-        status_code = 403
-    elif isinstance(exc, StorageNotAvailableError):
-        status_code = 503
-    elif isinstance(exc, EventCapacityExceededError | SessionOverlapError | InvalidEventStateError):
-        status_code = 400
-
-    logger.error(f"Domain error at {request.url}: {exc.message}")
+    logger.error("Domain error at %s: %s", request.url, exc.message)
 
     return JSONResponse(
         status_code=status_code,

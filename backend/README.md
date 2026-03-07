@@ -136,6 +136,9 @@ DEFAULT_ADMIN_PASSWORD=Password123!
 # Security
 SECRET_KEY=tu_llave_secreta_para_jwt
 ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+# CORS (comma-separated origins)
+CORS_ORIGINS=http://localhost:4200
 ```
 
 ## Guía de Despliegue con Docker

@@ -1,19 +1,11 @@
-"""EventRepository = EventReader + EventWriter (ISP)."""
+"""ISP: read-only interface for event persistence."""
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-from app.application.ports.event_reader import EventReader
-from app.application.ports.event_writer import EventWriter
 from app.domain.entities.event import Event
 
 
-class EventRepository(EventReader, EventWriter, ABC):
-    """Full event persistence: read + write. Implementations satisfy both interfaces."""
-
-    @abstractmethod
-    def save(self, event: Event) -> Event:
-        pass
-
+class EventReader(ABC):
     @abstractmethod
     def get_by_id(self, event_id: int) -> Event | None:
         pass
@@ -33,8 +25,4 @@ class EventRepository(EventReader, EventWriter, ABC):
     def find_overlapping(
         self, start_date: datetime, end_date: datetime, exclude_id: int | None = None
     ) -> list[Event]:
-        pass
-
-    @abstractmethod
-    def delete(self, event_id: int) -> None:
         pass

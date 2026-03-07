@@ -42,9 +42,10 @@ app.add_exception_handler(DomainException, domain_exception_handler)
 app.add_exception_handler(ImageProcessingError, image_processing_exception_handler)
 app.add_exception_handler(Exception, global_exception_handler)
 
+_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

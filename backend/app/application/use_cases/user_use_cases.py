@@ -26,6 +26,10 @@ class UserUseCases:
         )
         return self.user_repo.save(new_user)
 
+    def get_user_by_email(self, email: str) -> User | None:
+        """Returns the user by email, or None if not found. Used by auth/provider."""
+        return self.user_repo.get_by_email(email.lower().strip())
+
     def authenticate_user(self, email: str, password: str) -> User:
         email_normalized = email.lower().strip()
         user = self.user_repo.get_by_email(email_normalized)

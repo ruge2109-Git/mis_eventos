@@ -1,9 +1,10 @@
+import io
 import os
 import uuid
 
-from fastapi import UploadFile
 from PIL import Image
 
+from app.application.dto import ImageInput
 from app.application.ports.storage_service import StorageService
 from app.infrastructure.exceptions import ImageProcessingError
 
@@ -15,13 +16,10 @@ class LocalStorageService(StorageService):
         if not os.path.exists(self.upload_dir):
             os.makedirs(self.upload_dir)
 
-    def save_image(self, file: UploadFile, folder: str) -> str:
+    def save_image(self, image: ImageInput, folder: str) -> str:
         """
-        Saves an image, optimizes it (WebP), and generates a thumbnail.
+        Saves an image (from bytes), optimizes it (WebP), and generates a thumbnail.
         Returns the main image relative URL.
-        Note: For a production app, we would return a dictionary or object with all sizes.
-        For simplicity, the main image URL is returned and follows a naming
-        convention for thumbnails.
         """
         # 1. Prepare directory
         target_dir = os.path.join(self.upload_dir, folder)
@@ -38,7 +36,7 @@ class LocalStorageService(StorageService):
 
         # 3. Process and Optimize Image with Pillow
         try:
-            with Image.open(file.file) as img:
+            with Image.open(io.BytesIO(image.content)) as img:
                 if img.mode in ("RGBA", "P"):
                     img = img.convert("RGB")
 

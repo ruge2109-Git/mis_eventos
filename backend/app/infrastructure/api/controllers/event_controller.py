@@ -1,9 +1,14 @@
-import dataclasses
+"""
+Event controller returns domain objects (Event, CreateEventResult).
+Serialization to API shape is done in the router via EventMapper (SRP).
+"""
 from datetime import datetime
 
 from fastapi import UploadFile
 
-from app.application.use_cases.event_use_cases import EventUseCases
+from app.application.dto import ImageInput
+from app.application.use_cases.event_use_cases import CreateEventResult, EventUseCases
+from app.domain.entities.event import Event
 
 
 class EventController:
@@ -19,8 +24,8 @@ class EventController:
         organizer_id: int,
         location: str | None,
         description: str | None,
-    ):
-        result = self.event_use_cases.create_event(
+    ) -> CreateEventResult:
+        return self.event_use_cases.create_event(
             title=title,
             capacity=capacity,
             start_date=start_date,
@@ -30,14 +35,10 @@ class EventController:
             description=description,
         )
 
-        response_data = dataclasses.asdict(result.event)
-        if result.warning:
-            response_data["warning"] = result.warning
-
-        return response_data
-
-    def upload_image(self, event_id: int, file: UploadFile):
-        return self.event_use_cases.update_event_image(event_id, file)
+    def upload_image(self, event_id: int, file: UploadFile) -> Event:
+        content = file.file.read()
+        image = ImageInput(content=content, filename=file.filename or "image")
+        return self.event_use_cases.update_event_image(event_id, image)
 
     def list_events(
         self,
@@ -46,17 +47,12 @@ class EventController:
         search: str | None,
         status: str | None = None,
         organizer_id: int | None = None,
-    ):
-        events, total = self.event_use_cases.list_events(
+    ) -> tuple[list[Event], int]:
+        return self.event_use_cases.list_events(
             skip=skip, limit=limit, search=search, status=status, organizer_id=organizer_id
         )
 
-        return {
-            "items": [dataclasses.asdict(e) for e in events],
-            "total": total
-        }
-
-    def get_event(self, event_id: int):
+    def get_event(self, event_id: int) -> Event:
         return self.event_use_cases.get_event(event_id)
 
     def update_event(
@@ -70,8 +66,8 @@ class EventController:
         location: str | None = None,
         description: str | None = None,
         additional_images: list[str] | None = None,
-    ):
-        updated = self.event_use_cases.update_event(
+    ) -> Event:
+        return self.event_use_cases.update_event(
             event_id,
             title=title,
             capacity=capacity,
@@ -81,20 +77,20 @@ class EventController:
             description=description,
             additional_images=additional_images,
         )
-        return dataclasses.asdict(updated)
 
-    def upload_additional_image(self, event_id: int, file: UploadFile):
-        updated = self.event_use_cases.add_event_additional_image(event_id, file)
-        return dataclasses.asdict(updated)
+    def upload_additional_image(self, event_id: int, file: UploadFile) -> Event:
+        content = file.file.read()
+        image = ImageInput(content=content, filename=file.filename or "image")
+        return self.event_use_cases.add_event_additional_image(event_id, image)
 
-    def publish_event(self, event_id: int):
+    def publish_event(self, event_id: int) -> Event:
         return self.event_use_cases.publish_event(event_id)
 
-    def cancel_event(self, event_id: int):
+    def cancel_event(self, event_id: int) -> Event:
         return self.event_use_cases.cancel_event(event_id)
 
-    def revert_event_to_draft(self, event_id: int):
-        return dataclasses.asdict(self.event_use_cases.revert_event_to_draft(event_id))
+    def revert_event_to_draft(self, event_id: int) -> Event:
+        return self.event_use_cases.revert_event_to_draft(event_id)
 
     def delete_event(self, event_id: int) -> None:
         self.event_use_cases.delete_event(event_id)

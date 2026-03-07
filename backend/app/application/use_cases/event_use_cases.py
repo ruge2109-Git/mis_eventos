@@ -1,38 +1,61 @@
-import dataclasses
-from dataclasses import dataclass
+"""
+Event use cases facade: delegates to single-responsibility use case classes.
+See app.application.use_cases.event for the individual use cases.
+"""
 from datetime import datetime
 
-from fastapi import UploadFile
-
+from app.application.dto import ImageInput
 from app.application.ports.cache_service import CacheService
+from app.application.ports.event_cache_policy import EventCachePolicy
 from app.application.ports.event_repository import EventRepository
 from app.application.ports.storage_service import StorageService
-from app.domain.entities.event import Event
-from app.domain.exceptions import (
-    EventOverlapError,
-    InvalidEventStateError,
-    ResourceNotFoundError,
-    StorageNotAvailableError,
+from app.application.use_cases.event import (
+    AddEventAdditionalImageUseCase,
+    CancelEventUseCase,
+    CreateEventResult,
+    CreateEventUseCase,
+    DeleteEventUseCase,
+    GetEventUseCase,
+    ListEventsUseCase,
+    PublishEventUseCase,
+    RevertEventToDraftUseCase,
+    UpdateEventImageUseCase,
+    UpdateEventUseCase,
 )
-from app.infrastructure.config.logging import logger
+from app.domain.entities.event import Event
 
-
-@dataclass
-class CreateEventResult:
-    event: Event
-    warning: str | None = None
+# Re-export for callers that import CreateEventResult from event_use_cases
+__all__ = ["EventUseCases", "CreateEventResult"]
 
 
 class EventUseCases:
+    """Facade that delegates to dedicated use case classes (SRP)."""
+
     def __init__(
         self,
         event_repo: EventRepository,
-        storage: StorageService | None = None,
-        cache: CacheService | None = None,
+        storage: StorageService,
+        cache: CacheService,
+        cache_policy: EventCachePolicy,
     ):
-        self.event_repo = event_repo
-        self.storage = storage
-        self.cache = cache
+        self._create = CreateEventUseCase(event_repo, cache, cache_policy)
+        self._get = GetEventUseCase(event_repo, cache, cache_policy)
+        self._list = ListEventsUseCase(event_repo, cache, cache_policy)
+        self._update = UpdateEventUseCase(event_repo, cache, cache_policy)
+        self._publish = PublishEventUseCase(event_repo, cache, cache_policy)
+        self._cancel = CancelEventUseCase(event_repo, cache, cache_policy)
+        self._revert_to_draft = RevertEventToDraftUseCase(
+            event_repo, cache, cache_policy
+        )
+        self._update_image = UpdateEventImageUseCase(
+            event_repo, storage, cache, cache_policy
+        )
+        self._add_additional_image = AddEventAdditionalImageUseCase(
+            event_repo, storage, cache, cache_policy
+        )
+        self._delete = DeleteEventUseCase(
+            event_repo, storage, cache, cache_policy
+        )
 
     def create_event(
         self,
@@ -44,10 +67,7 @@ class EventUseCases:
         location: str | None = None,
         description: str | None = None,
     ) -> CreateEventResult:
-        self._validate_event_dates(start_date, end_date)
-        warning = self._check_overlaps(start_date, end_date, location)
-
-        new_event = Event(
+        return self._create.execute(
             title=title,
             capacity=capacity,
             start_date=start_date,
@@ -56,96 +76,9 @@ class EventUseCases:
             location=location,
             description=description,
         )
-        saved_event = self.event_repo.save(new_event)
-
-        # Invalidate cache
-        if self.cache:
-            self.cache.delete_by_prefix("events_paginated_list")
-
-        if warning:
-            logger.info(f"Event created with warning: {warning}")
-
-        return CreateEventResult(event=saved_event, warning=warning)
-
-    def update_event_image(self, event_id: int, file: UploadFile) -> Event:
-        event = self.event_repo.get_by_id(event_id)
-        if not event:
-            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
-
-        if not self.storage:
-            raise StorageNotAvailableError("Storage service not configured")
-
-        if event.image_url:
-            self.storage.delete_image(event.image_url)
-
-        image_url = self.storage.save_image(file, folder="events")
-
-        event.image_url = image_url
-        updated_event = self.event_repo.save(event)
-
-        if self.cache:
-            self.cache.delete_by_prefix("events_paginated_list")
-            self.cache.delete(f"event_{event_id}")
-
-        return updated_event
-
-    def publish_event(self, event_id: int) -> Event:
-        event = self.event_repo.get_by_id(event_id)
-        if not event:
-            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
-
-        event.publish()
-        updated_event = self.event_repo.save(event)
-
-        if self.cache:
-            self.cache.delete_by_prefix("events_paginated_list")
-            self.cache.delete(f"event_{event_id}")
-
-        return updated_event
-
-    def cancel_event(self, event_id: int) -> Event:
-        event = self.event_repo.get_by_id(event_id)
-        if not event:
-            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
-
-        event.cancel()
-        updated_event = self.event_repo.save(event)
-
-        if self.cache:
-            self.cache.delete_by_prefix("events_paginated_list")
-            self.cache.delete(f"event_{event_id}")
-
-        return updated_event
-
-    def revert_event_to_draft(self, event_id: int) -> Event:
-        event = self.event_repo.get_by_id(event_id)
-        if not event:
-            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
-
-        event.revert_to_draft()
-        updated_event = self.event_repo.save(event)
-
-        if self.cache:
-            self.cache.delete_by_prefix("events_paginated_list")
-            self.cache.delete(f"event_{event_id}")
-
-        return updated_event
 
     def get_event(self, event_id: int) -> Event:
-        cache_key = f"event_{event_id}"
-        if self.cache:
-            cached = self.cache.get(cache_key)
-            if cached:
-                return Event(**cached)
-
-        event = self.event_repo.get_by_id(event_id)
-        if not event:
-            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
-
-        if self.cache:
-            self.cache.set(cache_key, dataclasses.asdict(event), expire_seconds=600)
-
-        return event
+        return self._get.execute(event_id)
 
     def list_events(
         self,
@@ -155,24 +88,13 @@ class EventUseCases:
         status: str | None = None,
         organizer_id: int | None = None,
     ) -> tuple[list[Event], int]:
-        cache_key = f"events_paginated_list_{skip}_{limit}_{search}_{status}_{organizer_id}"
-        if self.cache and organizer_id is None:
-            cached = self.cache.get(cache_key)
-            if cached:
-                return [Event(**e) for e in cached["items"]], cached["total"]
-
-        events, total = self.event_repo.list_all(
-            skip=skip, limit=limit, search=search, status=status, organizer_id=organizer_id
+        return self._list.execute(
+            skip=skip,
+            limit=limit,
+            search=search,
+            status=status,
+            organizer_id=organizer_id,
         )
-
-        if self.cache:
-            cache_data = {
-                "items": [dataclasses.asdict(e) for e in events],
-                "total": total
-            }
-            self.cache.set(cache_key, cache_data, expire_seconds=300)
-
-        return events, total
 
     def update_event(
         self,
@@ -186,102 +108,31 @@ class EventUseCases:
         description: str | None = None,
         additional_images: list[str] | None = None,
     ) -> Event:
-        event = self.event_repo.get_by_id(event_id)
-        if not event:
-            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
-
-        if title is not None:
-            event.title = title
-        if capacity is not None:
-            event.capacity = capacity
-        if start_date is not None:
-            event.start_date = start_date
-        if end_date is not None:
-            event.end_date = end_date
-        if location is not None:
-            event.location = location
-        if description is not None:
-            event.description = description
-        if additional_images is not None:
-            event.additional_images = list(additional_images)
-
-        self._validate_event_dates(event.start_date, event.end_date)
-        self._check_overlaps(
-            event.start_date, event.end_date, event.location, exclude_id=event_id
+        return self._update.execute(
+            event_id,
+            title=title,
+            capacity=capacity,
+            start_date=start_date,
+            end_date=end_date,
+            location=location,
+            description=description,
+            additional_images=additional_images,
         )
 
-        updated = self.event_repo.save(event)
-        if self.cache:
-            self.cache.delete_by_prefix("events_paginated_list")
-            self.cache.delete(f"event_{event_id}")
-        return updated
+    def publish_event(self, event_id: int) -> Event:
+        return self._publish.execute(event_id)
 
-    def add_event_additional_image(self, event_id: int, file: UploadFile) -> Event:
-        event = self.event_repo.get_by_id(event_id)
-        if not event:
-            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
-        if not self.storage:
-            raise StorageNotAvailableError("Storage service not configured")
-        image_url = self.storage.save_image(file, folder="events")
-        event.additional_images = list(event.additional_images) + [image_url]
-        updated = self.event_repo.save(event)
-        if self.cache:
-            self.cache.delete_by_prefix("events_paginated_list")
-            self.cache.delete(f"event_{event_id}")
-        return updated
+    def cancel_event(self, event_id: int) -> Event:
+        return self._cancel.execute(event_id)
+
+    def revert_event_to_draft(self, event_id: int) -> Event:
+        return self._revert_to_draft.execute(event_id)
+
+    def update_event_image(self, event_id: int, image: ImageInput) -> Event:
+        return self._update_image.execute(event_id, image)
+
+    def add_event_additional_image(self, event_id: int, image: ImageInput) -> Event:
+        return self._add_additional_image.execute(event_id, image)
 
     def delete_event(self, event_id: int) -> None:
-        event = self.event_repo.get_by_id(event_id)
-        if not event:
-            raise ResourceNotFoundError(f"Event with ID {event_id} not found")
-
-        if self.storage:
-            if event.image_url:
-                try:
-                    self.storage.delete_image(event.image_url)
-                except Exception as e:
-                    logger.warning("Failed to delete event cover image %s: %s", event.image_url, e)
-            for url in event.additional_images or []:
-                try:
-                    self.storage.delete_image(url)
-                except Exception as e:
-                    logger.warning("Failed to delete event additional image %s: %s", url, e)
-
-        self.event_repo.delete(event_id)
-
-        if self.cache:
-            self.cache.delete_by_prefix("events_paginated_list")
-            self.cache.delete(f"event_{event_id}")
-
-    def _validate_event_dates(self, start_date: datetime, end_date: datetime):
-        if end_date <= start_date:
-            raise InvalidEventStateError("The end date must be after the start date")
-
-    def _check_overlaps(
-        self,
-        start_date: datetime,
-        end_date: datetime,
-        location: str | None = None,
-        exclude_id: int | None = None,
-    ) -> str | None:
-        overlapping_events = self.event_repo.find_overlapping(
-            start_date, end_date, exclude_id=exclude_id
-        )
-        warning = None
-        for other in overlapping_events:
-            if (
-                location
-                and other.location
-                and location.lower().strip() == other.location.lower().strip()
-            ):
-                raise EventOverlapError(
-                    f"Location conflict: '{location}' is already occupied by event '{other.title}'"
-                )
-
-            if not warning:
-                warning = (
-                    f"Note: There is at least one other event ('{other.title}') "
-                    "scheduled during this time frame."
-                )
-
-        return warning
+        self._delete.execute(event_id)

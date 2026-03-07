@@ -3,14 +3,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from app.application.dto import ImageInput
 from app.application.use_cases.event_use_cases import EventUseCases
 from app.domain.entities.event import Event, EventStatus
 from app.domain.exceptions import (
     EventOverlapError,
     InvalidEventStateError,
     ResourceNotFoundError,
-    StorageNotAvailableError,
 )
+from app.infrastructure.services.event_cache_policy import DefaultEventCachePolicy
 
 
 class TestEventUseCases:
@@ -28,6 +29,7 @@ class TestEventUseCases:
             event_repo=mock_repos["event_repo"],
             storage=mock_repos["storage"],
             cache=mock_repos["cache"],
+            cache_policy=DefaultEventCachePolicy(),
         )
 
     def test_create_event_invalid_dates(self, use_cases):
@@ -105,8 +107,8 @@ class TestEventUseCases:
         mock_repos["storage"].save_image.return_value = "new.webp"
         mock_repos["event_repo"].save.side_effect = lambda x: x
 
-        mock_file = MagicMock()
-        result = use_cases.update_event_image(1, mock_file)
+        image = ImageInput(content=b"fake", filename="test.jpg")
+        result = use_cases.update_event_image(1, image)
 
         assert result.image_url == "new.webp"
         mock_repos["storage"].delete_image.assert_called_with("old.jpg")
@@ -116,16 +118,33 @@ class TestEventUseCases:
     def test_update_event_image_not_found(self, use_cases, mock_repos):
         mock_repos["event_repo"].get_by_id.return_value = None
         with pytest.raises(ResourceNotFoundError):
-            use_cases.update_event_image(1, MagicMock())
+            use_cases.update_event_image(1, ImageInput(content=b"x", filename="x"))
 
     def test_update_event_image_no_storage(self, mock_repos):
-        # Case where storage service is None
-        uc = EventUseCases(event_repo=mock_repos["event_repo"], storage=None)
-        mock_repos["event_repo"].get_by_id.return_value = MagicMock()
-        with pytest.raises(
-            StorageNotAvailableError, match="Storage service not configured"
-        ):
-            uc.update_event_image(1, MagicMock())
+        # With NoOp storage, upload succeeds and image_url is empty string
+        from app.infrastructure.services.noop_storage_service import NoOpStorageService
+
+        uc = EventUseCases(
+            event_repo=mock_repos["event_repo"],
+            storage=NoOpStorageService(),
+            cache=mock_repos["cache"],
+            cache_policy=DefaultEventCachePolicy(),
+        )
+        event = Event(
+            title="T",
+            capacity=10,
+            start_date=datetime.utcnow(),
+            end_date=datetime.utcnow() + timedelta(hours=1),
+            organizer_id=1,
+            id=1,
+            image_url="old.jpg",
+        )
+        mock_repos["event_repo"].get_by_id.return_value = event
+        mock_repos["event_repo"].save.side_effect = lambda x: x
+
+        result = uc.update_event_image(1, ImageInput(content=b"x", filename="x"))
+
+        assert result.image_url == ""
 
     def test_publish_event_success(self, use_cases, mock_repos):
         event = Event(

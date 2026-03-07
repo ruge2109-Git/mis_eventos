@@ -29,6 +29,8 @@ from app.infrastructure.database.repositories import (
     PostgresUserRepository,
 )
 from app.infrastructure.services.cache_service import RedisCacheService
+from app.infrastructure.services.event_cache_policy import DefaultEventCachePolicy
+from app.infrastructure.services.noop_cache_service import NoOpCacheService
 from app.infrastructure.services.password_hasher import PasslibPasswordHasher
 from app.infrastructure.services.storage_service import LocalStorageService
 
@@ -44,7 +46,10 @@ def get_storage_service() -> StorageService:
 
 
 def get_cache_service() -> CacheService:
-    return RedisCacheService(url=settings.REDIS_URL)
+    redis_svc = RedisCacheService(url=settings.REDIS_URL)
+    if redis_svc.client is None:
+        return NoOpCacheService()
+    return redis_svc
 
 
 def get_user_use_cases(
@@ -61,7 +66,8 @@ def get_event_use_cases(
     cache: CacheService = Depends(get_cache_service),
 ) -> EventUseCases:
     repo = PostgresEventRepository(session)
-    return EventUseCases(repo, storage, cache)
+    cache_policy = DefaultEventCachePolicy()
+    return EventUseCases(repo, storage, cache, cache_policy)
 
 
 def get_session_use_cases(session: Session = Depends(get_session)) -> SessionUseCases:
@@ -127,7 +133,7 @@ def get_current_user(
     email: str = Depends(get_current_user_email),
     use_cases: UserUseCases = Depends(get_user_use_cases),
 ) -> User:
-    user = use_cases.user_repo.get_by_email(email.lower())
+    user = use_cases.get_user_by_email(email)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
