@@ -44,8 +44,13 @@ La forma más rápida de levantar toda la infraestructura del proyecto es utiliz
 Al levantar el proyecto con Docker, se ejecutan automáticamente:
 - **Migraciones:** La base de datos se actualiza a la última versión y se siembra el usuario admin (`admin@gmail.com` / `Password123!`).
 - **Coverage:** Se generan reportes de pruebas en la carpeta raíz `./reports/`.
-  - Backend: `./reports/coverage-backend/index.html`
-  - Frontend: `./reports/coverage-frontend/index.html`
+
+#### Cómo ver los reportes en tu navegador:
+1. Navega en tu explorador de archivos a la carpeta raíz del proyecto.
+2. Abre la carpeta `reports/`.
+3. Para el **Backend**, abre el archivo `coverage-backend/index.html`.
+4. Para el **Frontend**, abre el archivo `coverage-frontend/index.html`.
+
 
 ### Tiempos de Construcción y Arranque
 

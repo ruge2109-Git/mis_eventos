@@ -57,6 +57,3 @@ npm test
 # Correr pruebas localmente y generar reporte de coverage
 npm run test:coverage
 ```
-
-> **Automatización:** Cada vez que el contenedor `frontend` se inicia, ejecuta automáticamente las pruebas de cobertura y el reporte se guarda en `./reports/coverage-frontend/`.  
-> Al arrancar, el servidor puede tomar 1~2 minutos en estar disponible mientras Vitest y Angular CLI se inicializan simultáneamente.

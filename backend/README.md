@@ -76,6 +76,3 @@ poetry run pytest --cov=app
 # Ejecución de pruebas mediante Docker
 docker compose exec backend pytest --cov=app --cov-report=term-missing
 ```
-
-> **Automatización:** Cada vez que el contenedor `backend` se inicia, ejecuta automáticamente las migraciones y genera el reporte de cobertura en `./reports/coverage-backend/`.  
-> Esto puede añadir un retraso de aproximadamente 20-30 segundos al arranque antes de que la API y Swagger estén disponibles.
