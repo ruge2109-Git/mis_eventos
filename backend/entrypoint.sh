@@ -15,7 +15,7 @@ python -m app.scripts.seed_admin || echo "Admin user may already exist"
 
 echo "Generating test coverage reports..."
 mkdir -p /app/reports/coverage-backend
-pytest --cov=app --cov-report=html:/app/reports/coverage-backend --cov-report=term-missing
+python -m pytest --cov=app --cov-report=html:/app/reports/coverage-backend --cov-report=term-missing
 
 echo "Starting application..."
 exec uvicorn app.infrastructure.api.main:app --host 0.0.0.0 --port 8000 --reload

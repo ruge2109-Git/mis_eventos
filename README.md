@@ -47,6 +47,16 @@ Al levantar el proyecto con Docker, se ejecutan automáticamente:
   - Backend: `./reports/coverage-backend/index.html`
   - Frontend: `./reports/coverage-frontend/index.html`
 
+### Tiempos de Construcción y Arranque
+
+Tiempos estimados en despliegue con Docker:
+
+| Fase | Tiempo Estimado | Detalle |
+|------|-----------------|---------|
+| **Build inicial** | 8 ~ 12 minutos | Descarga de imágenes base e instalación de dependencias (Poetry/NPM). |
+| **Re-build (Caché)** | < 1 minuto | Copia de código fuente tras cambios simples sin nuevas librerías. |
+| **Startup (Arranque)** | 1 ~ 2 minutos | Tiempo tras `docker-compose up` donde se ejecutan tests y migraciones antes de activar los servidores. |
+
 ---
 Para detalles específicos de desarrollo local, revisa la documentación de cada servicio:
 - [Documentación del Backend](backend/README.md)

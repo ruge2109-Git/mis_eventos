@@ -24,7 +24,7 @@ ENV PATH="${POETRY_HOME}/bin:$PATH"
 WORKDIR /app
 
 COPY pyproject.toml poetry.lock* ./
-RUN poetry install --no-root --only main
+RUN poetry install --no-root --with dev
 
 COPY . .
 RUN chmod +x /app/entrypoint.sh
