@@ -1,59 +1,149 @@
 # Mis Eventos - Frontend
 
-Cliente web de la plataforma, construido como una Single Page Application (SPA) haciendo uso de las características más modernas de **Angular 21** junto a **Tailwind CSS**.
+Cliente web SPA de Mis Eventos, desarrollado con Angular y una separacion explicita entre dominio, casos de uso, adaptadores de infraestructura y capa de presentacion.
 
-## Arquitectura y Patrones
+## Objetivo del servicio
 
-El frontend adopta **Clean Architecture**, aislando estrictamente la lógica de dominio de las implementaciones externas (UI y peticiones HTTP), lo cual facilita el testing y su escalabilidad.
+Este frontend implementa la experiencia de:
 
-### Patrones y Estrategias:
-- **Signals-Based State:** Uso de Angular Signals para una detección de cambios granular, eficiente y reactiva.
-- **Container / Presentational Components:** Separación de componentes inteligentes (lógica) y componentes tontos (UI pura).
-- **Strategy Pattern:** Implementación de interfaces para servicios y repositorios de datos.
-- **Standalone Components:** Arquitectura modular sin NgModules para reducir el boilerplate y mejorar el lazy loading.
+- autenticacion y registro de usuarios,
+- exploracion de eventos publicos,
+- flujos de organizador (crear/editar/publicar/cancelar eventos),
+- flujos de asistente (inscripciones y calendario),
+- vistas administrativas.
+
+## Arquitectura
+
+### Enfoque
+
+La aplicacion usa un enfoque de clean architecture adaptado a Angular:
+
+- `core/domain`: entidades y contratos abstractos (ports),
+- `core/application`: casos de uso, guards, store y servicios de aplicacion,
+- `infrastructure`: implementaciones HTTP/storage/interceptores,
+- `presentation`: layouts, paginas y componentes UI.
+
+### Estructura principal
 
 ```plaintext
 frontend/src/app/
-├── core/               # Lógica de dominio, Casos de Uso y gestión de Estado (Signals)
-├── infrastructure/     # Adaptadores de datos (HTTP Repositories, Storage, Interceptors)
-└── presentation/       # Componentes de UI, Layouts, Visuales y Páginas
+├── core/
+│   ├── domain/
+│   │   ├── entities/               # Tipos de negocio del cliente
+│   │   ├── ports/                  # Contratos abstractos para acceso a datos
+│   │   └── constants/
+│   └── application/
+│       ├── usecases/               # Orquestacion de operaciones de negocio
+│       ├── store/                  # Estado global de autenticacion (Signals)
+│       ├── guards/                 # Restricciones de navegacion por rol
+│       ├── services/
+│       └── tokens/
+├── infrastructure/
+│   ├── api/                        # Repositorios HTTP y mappers API <-> dominio
+│   ├── interceptors/               # Auth, cache, loading y manejo de errores
+│   └── storage/                    # Persistencia local (token/perfil)
+└── presentation/
+    ├── layouts/                    # Estructura por rol/contexto (admin/main/organizer)
+    ├── pages/                      # Pantallas de negocio
+    └── shared/                     # Componentes reutilizables
 ```
 
-## Stack Técnico e Infraestructura
-- **Angular 21 + TypeScript:** Programación estructurada y tipado fuerte.
-- **Tailwind CSS v4:** Framework de estilos utility-first con soporte nativo para Glassmorphism.
-- **Transloco:** Sistema de internacionalización (i18n) para soporte multi-idioma (ES/EN).
-- **Vitest:** Test runner moderno de alta velocidad con soporte nativo para coverage.
+### Composicion en tiempo de arranque
 
-## Ejecución Local
+El archivo `app.config.ts` centraliza el wiring de la app:
 
-Para correr el proyecto fuera de los contenedores para fines de desarrollo, utiliza NPM.
+- registro de rutas (`provideRouter` + `withViewTransitions`),
+- `HttpClient` con interceptores encadenados,
+- inyeccion de puertos a implementaciones concretas (repositorios API y storage local),
+- configuracion i18n con Transloco (idiomas `es`/`en`),
+- inyeccion de `API_BASE_URL` desde `environment`.
 
-### Prerrequisitos
-- Node.js (versión LTS).
+## Navegacion y control de acceso
 
-### Instalación y Ejecución
+Las rutas se organizan por contexto funcional:
 
-1. **Instalar dependencias:**
-   ```bash
-   cd frontend
-   npm install
-   ```
+- area administrativa (`/admin`) protegida por `adminGuard`,
+- area organizador (`/dashboard/organizer`) protegida por `organizerGuard`,
+- area publica/asistente sobre layout principal,
+- autenticacion bajo `/auth`.
 
-2. **Levantar servidor de desarrollo:**
-   ```bash
-   npm start
-   ```
-   > La aplicación estará disponible en `http://localhost:4200` y recargará automáticamente ante cualquier cambio.
+La seguridad de navegacion se resuelve en guards basados en el estado de `AuthStore`.
 
-### Testing y Calidad
+## Estado y comunicacion con backend
 
-El proyecto usa `Vitest` como test runner con cobertura de código.
+### Estado
+
+- `AuthStore` usa Angular Signals para modelar estado de sesion (token, rol, usuario, errores, loading).
+- El estado inicial se hidrata desde `AuthStorage` (local storage).
+
+### Capa de datos
+
+- Los `ports` del dominio definen el contrato de cada repositorio (`EventRepository`, `AuthRepository`, etc.).
+- Los adaptadores de `infrastructure/api` implementan esos contratos con `HttpClient`.
+- Los mappers API traducen payloads HTTP a entidades de dominio del frontend.
+
+### Interceptores
+
+Se aplican en este orden:
+
+1. `authInterceptor` agrega JWT si existe,
+2. `cacheInterceptor` gestiona cache de peticiones segun reglas del cliente,
+3. `loadingInterceptor` sincroniza estado visual de carga,
+4. `errorInterceptor` normaliza errores para la capa de presentacion.
+
+## Estandares de codigo
+
+- TypeScript estricto habilitado (`strict`, `noImplicitOverride`, `strictTemplates`, etc.).
+- Alias de imports en `tsconfig.json` (`@core`, `@infrastructure`, `@presentation`, etc.) para mantener modularidad.
+- Componentes standalone para composicion y lazy loading sin `NgModule`.
+
+## Ejecucion local
+
+### Requisitos
+
+- Node.js LTS
+- npm 10+
+
+### Instalacion y arranque
 
 ```bash
-# Ejecutar suite de pruebas localmente
-npm test
+cd frontend
+npm install
+npm start
+```
 
-# Correr pruebas localmente y generar reporte de coverage
+La app queda disponible en [http://localhost:4200](http://localhost:4200).
+
+Por defecto en desarrollo, el frontend apunta a `http://localhost:8000` (`src/environments/environment.development.ts`).
+
+## Pruebas y calidad
+
+Comandos principales:
+
+```bash
+cd frontend
+npm test
+```
+
+```bash
+cd frontend
 npm run test:coverage
 ```
+
+```bash
+cd frontend
+npm run lint
+```
+
+## Guia de extension
+
+Para añadir una nueva capacidad funcional:
+
+1. Modela entidad/contrato en `core/domain`.
+2. Implementa caso(s) de uso en `core/application/usecases`.
+3. Implementa repositorio/adaptador en `infrastructure`.
+4. Registra el binding del puerto en `app.config.ts`.
+5. Consume el caso de uso desde componentes/paginas de `presentation`.
+6. Agrega pruebas unitarias del flujo.
+
+Este flujo conserva separacion de responsabilidades y reduce acoplamiento entre UI y API.

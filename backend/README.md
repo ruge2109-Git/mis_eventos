@@ -1,78 +1,156 @@
 # Mis Eventos - Backend
 
-API RESTful de alto rendimiento para la gestión de eventos, desarrollada con **Python 3.12** y **FastAPI**. 
+API REST para la plataforma Mis Eventos, construida con FastAPI y organizada con arquitectura hexagonal para aislar reglas de negocio de infraestructura.
 
-## Arquitectura y Patrones
+## Objetivo del servicio
 
-El backend implementa **Arquitectura Hexagonal (Puertos y Adaptadores)**, lo que permite un desacoplamiento total entre la lógica de negocio y las dependencias externas.
+Este backend expone las capacidades de:
 
-### Patrones Implementados:
-- **SOLID:** Aplicados en todas las capas para facilitar la extensión y el mantenimiento.
-- **Repository Pattern:** Abstracción del acceso a datos a través de puertos.
-- **Dependency Injection:** Gestión de dependencias nativa de FastAPI.
-- **DTOs & Mappers:** Uso de Pydantic y SQLModel para la validación y transformación de datos.
+- autenticacion y autorizacion por rol,
+- gestion de eventos y sus estados,
+- gestion de sesiones por evento,
+- inscripciones a eventos y sesiones,
+- operaciones administrativas.
+
+## Arquitectura
+
+### Enfoque
+
+El codigo sigue un modelo de puertos y adaptadores:
+
+- `domain`: entidades y reglas de negocio puras (sin dependencias de framework),
+- `application`: casos de uso y contratos (`ports`) que definen lo que el dominio necesita,
+- `infrastructure`: implementaciones concretas (HTTP, base de datos, cache, storage, seguridad).
+
+### Estructura principal
 
 ```plaintext
-backend/app/
-├── domain/            # Entidades puras y excepciones de negocio
-├── application/       # Puertos (interfaces), DTOs y lógica de Casos de Uso
-└── infrastructure/    # Adaptadores (API, Repositorios SQL, Hashing, Auth)
+backend/
+├── app/
+│   ├── domain/
+│   │   ├── entities/                # Modelos de negocio (Event, User, Session, etc.)
+│   │   └── exceptions/              # Errores de dominio
+│   ├── application/
+│   │   ├── use_cases/               # Orquestacion de reglas de negocio
+│   │   ├── ports/                   # Contratos de repositorios/servicios externos
+│   │   ├── dto/                     # Objetos para intercambio entre capas
+│   │   └── serializers/
+│   └── infrastructure/
+│       ├── api/                     # Routers, schemas, controllers, dependencias
+│       ├── database/                # Modelos SQLModel y repositorios Postgres
+│       ├── services/                # Redis, hashing, storage local, politicas de cache
+│       └── config/                  # Settings y conexion a BD
+├── alembic/                         # Migraciones
+└── tests/                           # Unitarias e integracion
 ```
 
-## Documentación de la API
+### Flujo de una peticion
 
-El sistema utiliza **Swagger/OpenAPI** para documentar todos los endpoints de forma interactiva.
+1. Un `router` de FastAPI recibe la solicitud y valida payload/query.
+2. El `provider` inyecta el controlador y sus dependencias concretas.
+3. El controlador delega al caso de uso correspondiente.
+4. El caso de uso opera contra `ports` (repositorio/cache/storage), no contra implementaciones concretas.
+5. Los adaptadores de `infrastructure` materializan acceso a Postgres, Redis, filesystem o JWT.
+6. La respuesta se mapea a schema HTTP y se retorna al cliente.
 
-- **Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
-- **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
+## Capas tecnicas relevantes
 
-## Infraestructura Técnica
-- **Motor:** FastAPI + Python 3.12.
-- **Persistencia:** PostgreSQL con **SQLModel** (basado en SQLAlchemy).
-- **Caché:** Redis para optimización de consultas recurrentes.
-- **Migraciones:** Gestión de versiones de BD con **Alembic**.
+### API y seguridad
 
-## Scripts y Ejecución Local
+- Framework: FastAPI.
+- Auth: JWT (`Authorization: Bearer ...`) con expiracion configurable.
+- Control por rol: dependencias reutilizables (`RequireAdmin`, `RequireOrganizer`, `RequireAuthenticated`).
+- Manejo de errores: middlewares/handlers para errores de dominio y errores globales.
 
-Para el desarrollo local se utiliza **Poetry** como gestor de dependencias.
+### Persistencia y cache
 
-### Prerrequisitos
-- Python 3.12
-- Instancias de PostgreSQL y Redis en ejecución (pueden ser las de Docker).
+- Base de datos: PostgreSQL, acceso con SQLModel/SQLAlchemy.
+- Migraciones: Alembic.
+- Cache: Redis para lecturas de eventos; fallback a servicio `NoOp` cuando Redis no esta disponible.
+- Storage: servicio local para imagenes de eventos (`uploads`) servido por FastAPI como archivos estaticos.
 
-### Instalación y Ejecución
+## Configuracion
 
-1. **Instalar dependencias:**
-   ```bash
-   cd backend
-   poetry install
-   ```
+### Variables de entorno
 
-2. **Configurar el entorno:**
-   Copia las variables de entorno para desarrollo.
-   ```bash
-   cp .env.example .env
-   ```
+Se cargan desde `backend/.env` mediante `pydantic-settings`.
 
-3. **Migraciones:**
-   ```bash
-   poetry run alembic upgrade head
-   ```
-
-4. **Levantar el servidor:**
-   ```bash
-   poetry run uvicorn app.infrastructure.api.main:app --reload
-   ```
-   > La API estará expuesta y documentada en `http://localhost:8000/docs`
-
-### Testing y Calidad
-
-El backend cuenta con una completa suite de pruebas automatizadas:
+Pasos recomendados:
 
 ```bash
-# Ejecución local con Poetry
-poetry run pytest --cov=app
-
-# Ejecución de pruebas mediante Docker
-docker compose exec backend pytest --cov=app --cov-report=term-missing
+cd backend
+cp .env.example .env
 ```
+
+Variables clave:
+
+- `DATABASE_URL`
+- `SECRET_KEY`
+- `REDIS_URL`
+- `CORS_ORIGINS`
+- `DEFAULT_ADMIN_EMAIL` / `DEFAULT_ADMIN_PASSWORD`
+
+## Ejecucion local
+
+### Requisitos
+
+- Python 3.12
+- Poetry
+- PostgreSQL y Redis activos (local o por Docker)
+
+### Instalacion y arranque
+
+```bash
+cd backend
+poetry install
+cp .env.example .env
+poetry run alembic upgrade head
+poetry run uvicorn app.infrastructure.api.main:app --reload
+```
+
+Documentacion interactiva:
+
+- Swagger: [http://localhost:8000/docs](http://localhost:8000/docs)
+- ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+## Calidad y pruebas
+
+### Suite de pruebas
+
+- Unitarias y de integracion bajo `tests/`.
+- Configuracion de `pytest` y cobertura definida en `pyproject.toml`.
+
+Comandos:
+
+```bash
+cd backend
+poetry run pytest
+```
+
+```bash
+cd backend
+poetry run pytest --cov=app --cov-report=term-missing
+```
+
+### Lint y formato
+
+Ruff esta configurado como linter/formateador en `pyproject.toml`.
+
+```bash
+cd backend
+poetry run ruff check .
+poetry run ruff format .
+```
+
+## Criterios de extensibilidad
+
+Para agregar nueva funcionalidad:
+
+1. Define o ajusta entidades/reglas en `domain`.
+2. Crea el caso de uso en `application/use_cases`.
+3. Agrega/actualiza contratos en `application/ports` si hay nuevas dependencias.
+4. Implementa adaptadores concretos en `infrastructure`.
+5. Expone endpoints en `infrastructure/api/routers`.
+6. Agrega pruebas unitarias e integracion.
+
+Este orden evita acoplar negocio a detalles de framework o almacenamiento.
