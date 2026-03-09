@@ -28,12 +28,18 @@ La forma más rápida de levantar toda la infraestructura del proyecto es utiliz
 ### Pasos para ejecutar
 
 1. Clona el repositorio y ubícate en la raíz del proyecto.
-2. Construye y levanta los servicios:
+2. Crea el archivo de variables de entorno del backend:
+   ```bash
+   cd backend
+   cp .env.example .env
+   cd ..
+   ```
+3. Construye y levanta los servicios:
    ```bash
    docker-compose up --build
    ```
    > **Nota:** Al iniciar, los contenedores ejecutarán automáticamente las pruebas de cobertura y las migraciones de base de datos antes de activar los servicios.
-3. Los servicios estarán disponibles en:
+4. Los servicios estarán disponibles en:
    - **Frontend:** [http://localhost:4200](http://localhost:4200)
    - **Backend API (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
    - **Base de Datos (PostgreSQL):** `localhost:5432`
