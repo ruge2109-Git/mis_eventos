@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EventListComponent } from './event-list.component';
+import { provideRouter } from '@angular/router';
 import { provideTransloco } from '@jsverse/transloco';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -7,7 +8,7 @@ import { GetEventsUseCase } from '@core/application/usecases/get-events.usecase'
 import { EventStore } from '@core/application/store/event.store';
 import { LoadingContextService } from '@core/application/services/loading-context.service';
 import { Event } from '@core/domain/entities/event.entity';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { vi } from 'vitest';
 
@@ -22,6 +23,7 @@ describe('EventListComponent', () => {
     await TestBed.configureTestingModule({
       imports: [EventListComponent],
       providers: [
+        provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideTransloco({
@@ -105,5 +107,51 @@ describe('EventListComponent', () => {
     expect(component.searchQuery()).toBe('conferencia');
     expect(component.currentPage()).toBe(1);
     expect(getEventsUseCase.execute).toHaveBeenCalledWith(0, 5, 'conferencia');
+  });
+
+  it('should handle errors in loadPage without crashing', () => {
+    (getEventsUseCase.execute as ReturnType<typeof vi.fn>).mockReturnValue(throwError(() => new Error('Network err')));
+    expect(() => component.loadPage(1)).not.toThrow();
+  });
+
+  it('should call loadPage(1) when loadEvents is called', () => {
+    const spy = vi.spyOn(component, 'loadPage');
+    component.loadEvents();
+    expect(spy).toHaveBeenCalledWith(1);
+  });
+
+  it('should limit loadPage attempts when page is out of bounds', () => {
+    const spy = vi.spyOn(getEventsUseCase, 'execute');
+    spy.mockClear();
+    component.loadPage(-1);
+    expect(spy).not.toHaveBeenCalled();
+    store.setEvents([], 50);
+    component.loadPage(20);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  describe('pageNumbers()', () => {
+    it('should return 1..total if total <= 7', () => {
+      store.setEvents([], 25);
+      expect(component.pageNumbers()).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('should return ellipsis early on if current is far from start', () => {
+      store.setEvents([], 50);
+      component.currentPage.set(8);
+      expect(component.pageNumbers()).toEqual([1, -1, 7, 8, 9, 10]);
+    });
+
+    it('should return ellipsis at the end when current is small', () => {
+      store.setEvents([], 50);
+      component.currentPage.set(2);
+      expect(component.pageNumbers()).toEqual([1, 2, 3, -1, 10]);
+    });
+
+    it('should return both ellipsis when current is in middle', () => {
+      store.setEvents([], 50);
+      component.currentPage.set(5);
+      expect(component.pageNumbers()).toEqual([1, -1, 4, 5, 6, -1, 10]);
+    });
   });
 });

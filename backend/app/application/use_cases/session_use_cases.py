@@ -26,7 +26,6 @@ class SessionUseCases:
         event_id: int,
         description: str | None = None,
     ) -> Session:
-        """Create a session; entity is built inside the use case (SRP)."""
         event = self.event_repo.get_by_id(event_id)
         if not event:
             raise ResourceNotFoundError(f"Event with ID {event_id} not found")

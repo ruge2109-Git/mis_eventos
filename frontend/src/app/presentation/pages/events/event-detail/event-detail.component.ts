@@ -45,12 +45,9 @@ export class EventDetailComponent implements OnInit {
   actionLoading = signal<string | null>(null);
   descriptionExpanded = signal(false);
   readonly descriptionTruncateLimit = 400;
-  /** Lightbox: index of additional image being viewed, or null if closed */
   lightboxIndex = signal<number | null>(null);
-  /** Modal de confirmación: 'register' | 'unregister' | null */
   confirmModal = signal<'register' | 'unregister' | null>(null);
 
-  /** Sesiones ordenadas por hora + recesos (tiempos muertos) entre sesiones */
   timelineItems = computed((): TimelineItem[] => {
     const list = this.sessions();
     const sorted = [...list].sort(

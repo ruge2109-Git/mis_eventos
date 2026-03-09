@@ -1,7 +1,4 @@
-"""
-Event use cases facade: delegates to single-responsibility use case classes.
-See app.application.use_cases.event for the individual use cases.
-"""
+"""Event use cases facade."""
 from datetime import datetime
 
 from app.application.dto import ImageInput
@@ -31,7 +28,6 @@ __all__ = ["EventUseCases", "CreateEventResult"]
 
 
 class EventUseCases:
-    """Facade that delegates to dedicated use case classes (SRP)."""
 
     def __init__(
         self,
@@ -161,5 +157,4 @@ class EventUseCases:
     def list_upcoming_events(
         self, skip: int = 0, limit: int = 10, search: str | None = None
     ) -> tuple[list[Event], int]:
-        """Published events with start_date >= now (for admin reports). Returns (items, total)."""
         return self._event_repo.list_upcoming(skip=skip, limit=limit, search=search)

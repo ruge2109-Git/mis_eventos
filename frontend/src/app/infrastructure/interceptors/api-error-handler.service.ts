@@ -14,7 +14,6 @@ function isEventsRequestUrl(url: string): boolean {
   return url.includes('event');
 }
 
-/** Maps API auth error detail (backend message) to i18n key (errors.auth.*) */
 const AUTH_DETAIL_TO_I18N_KEY: Record<string, string> = {
   'Invalid credentials': 'errors.auth.invalidCredentials',
   'Could not validate credentials': 'errors.auth.couldNotValidate',

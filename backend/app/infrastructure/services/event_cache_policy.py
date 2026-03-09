@@ -1,4 +1,4 @@
-"""Default event cache key/TTL policy (OCP: strategy is injectable)."""
+"""Default event cache key/TTL policy."""
 
 from app.application.ports.event_cache_policy import EventCachePolicy
 

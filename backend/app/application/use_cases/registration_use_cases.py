@@ -26,7 +26,6 @@ class RegistrationUseCases:
         self.user_repo = user_repo
 
     def register_to_event(self, user_id: int, event_id: int) -> Registration:
-        # 1. Check if user is an admin (Admins cannot register to events)
         user = self.user_repo.get_by_id(user_id)
         if not user:
             raise ResourceNotFoundError(f"User with ID {user_id} not found")
@@ -34,27 +33,22 @@ class RegistrationUseCases:
         if user.role == UserRole.ADMIN:
             raise AuthorizationError("Administrators are not allowed to register for events")
 
-        # 2. Check if event exists
         event = self.event_repo.get_by_id(event_id)
         if not event:
             raise ResourceNotFoundError(f"Event with ID {event_id} not found")
 
-        # 3. Check event status
         if event.status != EventStatus.PUBLISHED.value:
             raise InvalidEventStateError(
                 f"Cannot register for an event in '{event.status}' state. It must be Published."
             )
 
-        # 4. Check if already registered
         if self.registration_repo.get_by_user_and_event(user_id, event_id):
             raise ResourceAlreadyExistsError("User is already registered for this event")
 
-        # 5. Check capacity
         current_registrations = self.registration_repo.list_by_event(event_id)
         if len(current_registrations) >= event.capacity:
             raise EventCapacityExceededError("The event has reached its maximum capacity")
 
-        # 6. Save registration
         registration = Registration(user_id=user_id, event_id=event_id)
         return self.registration_repo.save(registration)
 
@@ -70,7 +64,6 @@ class RegistrationUseCases:
         return self.registration_repo.list_by_user(user_id)
 
     def get_user_registered_events(self, user_id: int) -> list[Event]:
-        """Return full event entities for all events the user is registered to (one query)."""
         regs = self.registration_repo.list_by_user(user_id)
         if not regs:
             return []
@@ -80,7 +73,6 @@ class RegistrationUseCases:
     def get_user_registered_events_paginated(
         self, user_id: int, skip: int = 0, limit: int = 10, search: str | None = None
     ) -> tuple[list[Event], int]:
-        """Events the user is registered for; (items, total) for admin sidebar."""
         return self.registration_repo.list_registered_events_paginated(
             user_id, skip=skip, limit=limit, search=search
         )
@@ -94,7 +86,6 @@ class RegistrationUseCases:
     def list_attendees_for_event(
         self, event_id: int, skip: int = 0, limit: int = 10, search: str | None = None
     ) -> tuple[list[EventAttendee], int]:
-        """Return paginated attendees (with user info) for an event. No auth here; router checks organizer."""
         return self.registration_repo.list_attendees_by_event(
             event_id, skip=skip, limit=limit, search=search
         )
@@ -102,7 +93,6 @@ class RegistrationUseCases:
     def get_top_attendees(
         self, skip: int = 0, limit: int = 10, search: str | None = None
     ) -> tuple[list[tuple[int, str, str, int]], int]:
-        """Return (list, total) for admin report. No auth; router checks admin."""
         return self.registration_repo.get_top_users_by_registrations(
             skip=skip, limit=limit, search=search
         )

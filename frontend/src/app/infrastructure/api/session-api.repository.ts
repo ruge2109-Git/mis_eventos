@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '@environments/environment';
+import { API_BASE_URL } from '@core/application/tokens/api-base-url.token';
 import { Session, CreateSessionDTO, UpdateSessionDTO } from '@core/domain/entities/session.entity';
 import { SessionRepository } from '@core/domain/ports/session.repository';
 import { dateToLocalISOString } from '@core/application/utils/date.util';
@@ -22,7 +22,8 @@ interface SessionResponse {
 })
 export class SessionApiRepository extends SessionRepository {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/sessions/`;
+  private baseUrl = inject(API_BASE_URL);
+  private apiUrl = `${this.baseUrl}/sessions/`;
 
   getByEventId(eventId: number): Observable<Session[]> {
     return this.http

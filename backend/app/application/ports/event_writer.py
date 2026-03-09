@@ -1,4 +1,3 @@
-"""ISP: write interface for event persistence."""
 from abc import ABC, abstractmethod
 
 from app.domain.entities.event import Event

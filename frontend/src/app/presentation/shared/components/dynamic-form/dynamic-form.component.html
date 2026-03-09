@@ -174,7 +174,10 @@
                   {{ file.name }} ({{ (file.size / 1024).toFixed(1) }} KB)
                 </p>
                 @if (getFilePreviewUrl(field); as previewUrl) {
-                  <img [src]="previewUrl" [alt]="file.name" class="mt-2 rounded-lg max-h-32 w-auto object-cover" />
+                  <picture class="block">
+                    <source [srcset]="previewUrl">
+                    <img [src]="previewUrl" [alt]="file.name" class="mt-2 rounded-lg max-h-32 w-auto object-cover" loading="lazy" />
+                  </picture>
                 }
               }
             </div>

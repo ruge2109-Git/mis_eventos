@@ -7,7 +7,6 @@
   (click)="navigateToEvent()"
   (keydown)="onCardKeydown($event)"
   *transloco="let t">
-  <!-- Featured Badge -->
   @if (isFeaturedLayout()) {
   <div class="absolute top-4 left-4 z-10">
     <span
@@ -17,14 +16,17 @@
   </div>
   }
 
-  <!-- Image -->
   <div class="relative overflow-hidden shrink-0 transition-transform duration-500 group-hover:scale-105 min-h-0"
     [class.lg:w-1/2]="isFeaturedLayout()"
     [class.h-full]="isFeaturedLayout()"
     [class.h-48]="!isFeaturedLayout() && !imageTakesHalf()"
     [ngClass]="{ 'flex-[0_0_50%]': imageTakesHalf() }">
     @if (event().imageUrl) {
-    <img [src]="event().imageUrl" [alt]="event().title" class="w-full h-full object-cover" />
+    <picture class="w-full h-full block">
+      <source media="(max-width: 768px)" [srcset]="event().imageUrl">
+      <source media="(min-width: 769px)" [srcset]="event().imageUrl">
+      <img [src]="event().imageUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
+    </picture>
     } @else {
     <div class="w-full h-full bg-slate-800 flex items-center justify-center">
       <span class="material-symbols-outlined text-4xl text-slate-700">image_not_supported</span>
@@ -33,7 +35,6 @@
     <div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent"></div>
   </div>
 
-  <!-- Content -->
   <div class="p-5 flex flex-col min-h-0 flex-1">
     <div class="flex justify-between items-start gap-2 mb-2">
       <h3 class="font-bold leading-tight line-clamp-2 min-w-0 flex-1" [class.text-3xl]="isFeaturedLayout()"

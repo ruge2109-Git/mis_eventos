@@ -3,7 +3,7 @@ import { DynamicFormComponent } from './dynamic-form.component';
 import { FieldConfig } from './field-config';
 import { By } from '@angular/platform-browser';
 import { Validators } from '@angular/forms';
-import { RouterTestingModule } from '@angular/router/testing';
+import { provideRouter } from '@angular/router';
 
 describe('DynamicFormComponent', () => {
   let component: DynamicFormComponent;
@@ -15,8 +15,10 @@ describe('DynamicFormComponent', () => {
   ];
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
-      imports: [DynamicFormComponent, RouterTestingModule]
+      imports: [DynamicFormComponent],
+      providers: [provideRouter([])]
     }).compileComponents();
 
     fixture = TestBed.createComponent(DynamicFormComponent);

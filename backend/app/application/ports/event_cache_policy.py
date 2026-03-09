@@ -1,7 +1,3 @@
-"""
-Policy for event cache keys and TTL (OCP).
-Use cases depend on this port; key/ttl strategy can change without modifying use cases.
-"""
 from abc import ABC, abstractmethod
 
 
@@ -31,5 +27,4 @@ class EventCachePolicy(ABC):
 
     @abstractmethod
     def list_invalidation_prefix(self) -> str:
-        """Prefix to pass to delete_by_prefix when invalidating list cache."""
         pass

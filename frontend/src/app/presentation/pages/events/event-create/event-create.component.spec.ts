@@ -618,6 +618,109 @@ describe('EventCreateComponent', () => {
     expect(component.isLoading).toBe(false);
   });
 
+  it('submit should parse array error details', () => {
+    mockCreate.mockReturnValue(throwError(() => ({ error: { detail: [{ msg: 'Title too short' }] } })));
+    setEventFormValues({ title: 'Event', capacity: 10 });
+    component.submit();
+    expect(component.globalError).toBe('Title too short');
+  });
+
+  describe('Attendees and Pagination', () => {
+    beforeEach(() => {
+      component.isEditMode = true;
+      component.eventId = 5;
+    });
+
+    it('loadAttendees on error should set total 0', () => {
+      vi.spyOn(mockRepository, 'getEventAttendees').mockReturnValue(throwError(() => new Error('Net err')));
+      component.loadAttendees();
+      expect(component.attendeesTotal).toBe(0);
+      expect(component.attendees.length).toBe(0);
+    });
+
+    it('attendeeGoToPage should limit boundaries and call loadAttendees', () => {
+      const spy = vi.spyOn(component, 'loadAttendees');
+      component.attendeesTotal = 20; // 4 pages
+      component.attendeeGoToPage(0); // < 1
+      expect(spy).not.toHaveBeenCalled();
+
+      component.attendeeGoToPage(5); // > 4
+      expect(spy).not.toHaveBeenCalled();
+
+      component.attendeeGoToPage(2);
+      expect(component.attendeesSkip).toBe(5); // (2-1) * 5
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('attendeePageNumbers should show ellipsis and numbers', () => {
+      component.attendeesTotal = 50; // 10 pages
+      component.attendeesSkip = 20; // page 5
+      expect(component.attendeesCurrentPage).toBe(5);
+      expect(component.attendeePageNumbers()).toEqual([1, -1, 4, 5, 6, -1, 10]);
+
+      component.attendeesSkip = 5; // page 2
+      expect(component.attendeePageNumbers()).toEqual([1, 2, 3, -1, 10]);
+
+      component.attendeesSkip = 40; // page 9
+      expect(component.attendeePageNumbers()).toEqual([1, -1, 8, 9, 10]);
+    });
+
+    it('attendeesCurrentPage should return 0 if total is 0', () => {
+      component.attendeesTotal = 0;
+      expect(component.attendeesCurrentPage).toBe(0);
+    });
+
+    it('onAttendeesSearchFromBar should trim query and reset skip', () => {
+      const spy = vi.spyOn(component, 'loadAttendees');
+      component.attendeesSkip = 10;
+      component.onAttendeesSearchFromBar(' jon ');
+      expect(component.attendeesSearch).toBe('jon');
+      expect(component.attendeesSkip).toBe(0);
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('formatAttendeeDate should format valid dates', () => {
+      expect(component.formatAttendeeDate('')).toBe('');
+      const dateStr = component.formatAttendeeDate('2026-03-08T10:00:00Z');
+      expect(dateStr).toContain('26');
+    });
+  });
+
+  describe('Delete Confirm Modal', () => {
+    beforeEach(() => {
+      component.isEditMode = true;
+      component.eventId = 5;
+    });
+
+    it('open / close delete confirm should toggle state', () => {
+      component.openDeleteConfirm();
+      expect(component.showDeleteConfirm).toBe(true);
+      component.closeDeleteConfirm();
+      expect(component.showDeleteConfirm).toBe(false);
+    });
+
+    it('confirmDelete should remove event and navigate', () => {
+      const navigateSpy = vi.spyOn(router, 'navigate');
+      const store = TestBed.inject(EventStore);
+      const removeSpy = vi.spyOn(store, 'removeEvent');
+      vi.spyOn(mockRepository, 'delete').mockReturnValue(of(undefined));
+      
+      component.showDeleteConfirm = true;
+      component.confirmDelete();
+      
+      expect(removeSpy).toHaveBeenCalledWith(5);
+      expect(navigateSpy).toHaveBeenCalledWith(['/dashboard/organizer']);
+      expect(component.showDeleteConfirm).toBe(false);
+    });
+
+    it('confirmDelete should handle errors', () => {
+      vi.spyOn(mockRepository, 'delete').mockReturnValue(throwError(() => ({ error: { detail: 'Delete failed' } })));
+      component.confirmDelete();
+      expect(component.globalError).toBe('Delete failed');
+      expect(component.isLoading).toBe(false);
+    });
+  });
+
   describe('edit mode load (line 73, toDatetimeLocal)', () => {
     const eventWithDates = {
       id: 5,

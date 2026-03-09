@@ -84,7 +84,6 @@ export class EventListComponent implements OnInit {
     this.loadPage(1);
   }
 
-  /** Números de página a mostrar (1, 2, 3, ..., última) */
   pageNumbers(): number[] {
     const total = this.totalPages();
     const current = this.currentPage();

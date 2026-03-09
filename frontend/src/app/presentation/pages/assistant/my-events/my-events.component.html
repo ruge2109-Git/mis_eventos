@@ -46,7 +46,10 @@
     <article class="rounded-2xl border border-white/10 bg-surface overflow-hidden flex flex-col">
       <div class="relative h-40 bg-slate-800 shrink-0">
         @if (event.imageUrl) {
-        <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" />
+        <picture class="w-full h-full block">
+          <source [srcset]="event.imageUrl">
+          <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" loading="lazy" />
+        </picture>
         } @else {
         <div class="w-full h-full flex items-center justify-center">
           <span class="material-symbols-outlined text-5xl text-slate-600">event</span>

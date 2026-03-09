@@ -1,5 +1,4 @@
 <div class="space-y-8" *transloco="let t">
-  <!-- Header -->
   <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
       <h1 class="text-2xl font-bold text-white tracking-tight">{{ t('dashboard.mainTitle') }}</h1>
@@ -31,7 +30,6 @@
 
   <!-- Buscador, filtros y lista: visibles siempre que no sea carga inicial sin datos ni error (así el buscador no se borra al buscar) -->
   @if (!eventsError() && (!eventsLoading() || store.events().length > 0)) {
-  <!-- Buscador -->
   <section class="w-full max-w-2xl">
     <app-search-bar
       [placeholder]="t('dashboard.searchPlaceholder')"
@@ -39,8 +37,7 @@
     </app-search-bar>
   </section>
 
-  <!-- Stats cards (click to filter) -->
-  <section class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
     <button type="button" (click)="setStatusFilter(null)"
       class="rounded-xl bg-surface border p-6 flex items-start gap-4 text-left transition-colors hover:border-accent-cyan/30"
       [class.border-accent-cyan/50]="statusFilter() === null"
@@ -91,7 +88,6 @@
     </button>
   </section>
 
-  <!-- Filtros y ordenamiento -->
   <section class="flex flex-wrap items-center gap-4">
     <span class="text-slate-400 text-sm">{{ t('dashboard.sortBy') }}</span>
     <div class="flex rounded-lg border border-white/10 overflow-hidden">
@@ -114,7 +110,6 @@
     </div>
   </section>
 
-  <!-- Mis Próximos Eventos -->
   <section class="space-y-4">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
       <h2 class="text-lg font-semibold text-white flex items-center gap-2">
@@ -139,7 +134,11 @@
           <div
             class="sm:w-56 lg:w-64 shrink-0 h-44 sm:h-auto bg-slate-800/80 flex items-center justify-center relative overflow-hidden">
             @if (event.imageUrl) {
-            <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" />
+            <picture class="w-full h-full block">
+              <source media="(max-width: 768px)" [srcset]="event.imageUrl">
+              <source media="(min-width: 769px)" [srcset]="event.imageUrl">
+              <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" loading="lazy" />
+            </picture>
             } @else {
             <div class="flex flex-col items-center justify-center gap-2 text-slate-500">
               <span class="material-symbols-outlined text-6xl">event</span>
@@ -238,7 +237,6 @@
     }
   </section>
 
-  <!-- Paginación -->
   @if (totalPages() > 1) {
   <nav class="w-full flex flex-wrap items-center justify-center gap-2 py-6" aria-label="Paginación de eventos">
     <button

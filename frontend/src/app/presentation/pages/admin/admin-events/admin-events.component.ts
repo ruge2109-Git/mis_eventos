@@ -41,7 +41,6 @@ export class AdminEventsComponent implements OnInit {
 
   currentPage = computed(() => Math.floor(this.skip() / LIMIT) + 1);
   totalPages = computed(() => Math.max(1, Math.ceil(this.total() / LIMIT)));
-  /** Page numbers to show (1, …, current-1, current, current+1, …, last); -1 = ellipsis */
   pageNumbers(): number[] {
     const total = this.totalPages();
     const current = this.currentPage();

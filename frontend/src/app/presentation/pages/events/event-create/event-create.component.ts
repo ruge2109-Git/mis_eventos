@@ -64,10 +64,8 @@ export class EventCreateComponent implements OnInit, OnDestroy {
   eventImagePreview: string | null = null;
   additionalImages: File[] = [];
   additionalImagePreviews: string[] = [];
-  /** URLs of additional images already saved on the server (from API when loading event). */
   savedAdditionalUrls: string[] = [];
   sessions: SessionFormItem[] = [];
-  /** Session ids when event was loaded (edit mode); used to compute which were removed. */
   initialSessionIds: number[] = [];
   isEditMode = false;
   eventId: number | null = null;
@@ -75,7 +73,6 @@ export class EventCreateComponent implements OnInit, OnDestroy {
   previewImageUrl: string | null = null;
   showDeleteConfirm = false;
 
-  /** Attendees (edit mode only): 5 per page, paginated and filterable */
   readonly attendeesPageSize = 5;
   attendees: EventAttendee[] = [];
   attendeesTotal = 0;
@@ -85,7 +82,6 @@ export class EventCreateComponent implements OnInit, OnDestroy {
 
   @ViewChild('formStart') formStartRef?: ElementRef<HTMLFormElement>;
 
-  /** Back link for header: admin list when editing from admin panel, else organizer dashboard. */
   get backLink(): string[] {
     return this.router.url.startsWith('/admin') ? ['/admin/eventos'] : ['/dashboard/organizer'];
   }
@@ -189,13 +185,11 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     this.sessions = this.sessions.filter((_, i) => i !== index);
   }
 
-  /** Returns overlap error message for session at index, or null. */
   getSessionOverlapError(index: number): string | null {
     const key = this.sessionValidation.getOverlapErrorKey(this.sessions, index);
     return key ? this.t(key) : null;
   }
 
-  /** Bound function for the sessions section component. */
   get sessionErrorFn(): (index: number) => string | null {
     return (i) => this.getSessionOverlapError(i);
   }
@@ -364,7 +358,6 @@ export class EventCreateComponent implements OnInit, OnDestroy {
     this.loadAttendees();
   }
 
-  /** Números de página a mostrar (1, 2, … última), -1 = ellipsis */
   attendeePageNumbers(): number[] {
     const total = this.attendeesTotalPages;
     const current = this.attendeesCurrentPage;

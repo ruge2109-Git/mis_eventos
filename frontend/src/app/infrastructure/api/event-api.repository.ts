@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '@environments/environment';
+import { API_BASE_URL } from '@core/application/tokens/api-base-url.token';
 import { Event, CreateEventDTO, UpdateEventDTO } from '@core/domain/entities/event.entity';
 import { EventRepository, type EventAttendee } from '@core/domain/ports/event.repository';
 import { dateToLocalISOString } from '@core/application/utils/date.util';
@@ -21,8 +21,9 @@ interface PaginatedResponse<T> {
 })
 export class EventApiRepository extends EventRepository {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/events/`;
-  private mapper = new EventApiMapper(environment.apiUrl);
+  private baseUrl = inject(API_BASE_URL);
+  private apiUrl = `${this.baseUrl}/events/`;
+  private mapper = new EventApiMapper(this.baseUrl);
 
   getAll(skip = 0, limit = 12, search?: string): Observable<{ items: Event[]; total: number }> {
     const params: Record<string, number | string> = { skip, limit };

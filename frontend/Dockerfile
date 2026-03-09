@@ -2,16 +2,15 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install angular cli globally
 RUN npm install -g @angular/cli@21
 
-# Since we don't have package.json yet, we just provide a basic structure
-# COPY package*.json ./
-# RUN npm install
-# COPY . .
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+RUN mkdir -p /app/reports && npm run test:coverage -- --coverage
 
 EXPOSE 4200
 
-# Start command
-# CMD ["ng", "serve", "--host", "0.0.0.0"]
-CMD ["sh", "-c", "echo 'Frontend container ready. Waiting for project initialization...' && tail -f /dev/null"]
+CMD ["ng", "serve", "--host", "0.0.0.0", "--configuration", "development"]

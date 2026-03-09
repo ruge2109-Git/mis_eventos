@@ -1,6 +1,6 @@
 """
 Maps Event domain entity to API response dict.
-Serialization is the responsibility of the adapter (SRP); controller returns domain objects.
+Serialization is the responsibility of the adapter; controller returns domain objects.
 """
 from app.domain.entities.event import Event
 
@@ -11,7 +11,6 @@ def event_to_response_dict(
     warning: str | None = None,
     registered_count: int | None = None,
 ) -> dict:
-    """Convert Event to a dict suitable for EventResponse API schema."""
     data = {
         "id": event.id,
         "title": event.title,

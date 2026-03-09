@@ -1,5 +1,4 @@
-# Event use cases (SRP: one responsibility per class).
-# EventUseCases in parent module acts as facade that delegates to these.
+# Event use cases.
 
 from app.application.use_cases.event.add_event_additional_image import (
     AddEventAdditionalImageUseCase,

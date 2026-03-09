@@ -34,7 +34,6 @@ class AdminController:
         return self.user_use_cases.get_user_by_id(user_id)
 
     def get_stats(self) -> dict:
-        """Return counts for admin dashboard: total users, total events, events by status."""
         _, total_users = self.user_use_cases.list_users(skip=0, limit=0)
         _, total_events = self.event_use_cases.list_events(
             skip=0, limit=0, search=None, status=None, organizer_id=None
@@ -64,7 +63,6 @@ class AdminController:
     def get_top_attendees(
         self, skip: int = 0, limit: int = 10, search: str | None = None
     ) -> tuple[list[tuple[int, str, str, int]], int]:
-        """(user_id, full_name, email, registration_count) for admin reports; (items, total)."""
         return self.registration_use_cases.get_top_attendees(
             skip=skip, limit=limit, search=search
         )
@@ -72,7 +70,6 @@ class AdminController:
     def get_upcoming_events(
         self, skip: int = 0, limit: int = 10, search: str | None = None
     ) -> tuple[list[Event], int]:
-        """Published events with start_date >= now for admin reports; (items, total)."""
         return self.event_use_cases.list_upcoming_events(
             skip=skip, limit=limit, search=search
         )

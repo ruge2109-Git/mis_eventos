@@ -1,4 +1,4 @@
-"""DTOs for auth API responses; controller returns these instead of raw dicts (SRP)."""
+"""DTOs for auth API responses."""
 from dataclasses import dataclass
 
 

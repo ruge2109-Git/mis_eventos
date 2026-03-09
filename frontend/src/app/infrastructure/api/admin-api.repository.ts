@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '@environments/environment';
+import { API_BASE_URL } from '@core/application/tokens/api-base-url.token';
 import { AdminRepository, PaginatedResponse, TopAttendee } from '@core/domain/ports/admin.repository';
 import { AdminStats } from '@core/domain/entities/admin-stats.entity';
 import { AdminUser } from '@core/domain/entities/admin-user.entity';
@@ -40,11 +40,12 @@ interface AdminEventResponse extends EventResponse {
 @Injectable({ providedIn: 'root' })
 export class AdminApiRepository extends AdminRepository {
   private http = inject(HttpClient);
-  private baseUrl = `${environment.apiUrl}/admin`;
-  private eventMapper = new EventApiMapper(environment.apiUrl);
+  private baseUrl = inject(API_BASE_URL);
+  private apiUrl = `${this.baseUrl}/admin`;
+  private eventMapper = new EventApiMapper(this.baseUrl);
 
   getStats(): Observable<AdminStats> {
-    return this.http.get<AdminStatsResponse>(`${this.baseUrl}/stats`).pipe(
+    return this.http.get<AdminStatsResponse>(`${this.apiUrl}/stats`).pipe(
       map(res => ({
         totalUsers: res.total_users,
         totalEvents: res.total_events,
@@ -66,7 +67,7 @@ export class AdminApiRepository extends AdminRepository {
         total: number;
         skip: number;
         limit: number;
-      }>(`${this.baseUrl}/reports/top-attendees`, { params })
+      }>(`${this.apiUrl}/reports/top-attendees`, { params })
       .pipe(
         map(res => ({
           items: res.items.map(i => ({
@@ -89,7 +90,7 @@ export class AdminApiRepository extends AdminRepository {
     if (search != null && search.trim() !== '') params['search'] = search.trim();
     return this.http
       .get<{ items: EventResponse[]; total: number; skip: number; limit: number }>(
-        `${this.baseUrl}/reports/upcoming-events`,
+        `${this.apiUrl}/reports/upcoming-events`,
         { params }
       )
       .pipe(
@@ -110,7 +111,7 @@ export class AdminApiRepository extends AdminRepository {
     if (search != null && search !== '') params['search'] = search;
     if (role != null && role !== '') params['role'] = role;
     return this.http
-      .get<PaginatedApiResponse<AdminUserResponse>>(`${this.baseUrl}/users`, { params })
+      .get<PaginatedApiResponse<AdminUserResponse>>(`${this.apiUrl}/users`, { params })
       .pipe(
         map(res => ({
           items: res.items.map(u => ({
@@ -126,7 +127,7 @@ export class AdminApiRepository extends AdminRepository {
   }
 
   getUserById(userId: number): Observable<AdminUser> {
-    return this.http.get<AdminUserResponse>(`${this.baseUrl}/users/${userId}`).pipe(
+    return this.http.get<AdminUserResponse>(`${this.apiUrl}/users/${userId}`).pipe(
       map(u => ({
         id: u.id,
         email: u.email,
@@ -149,7 +150,7 @@ export class AdminApiRepository extends AdminRepository {
     if (status != null && status !== '') params['status'] = status;
     if (organizerId != null) params['organizer_id'] = organizerId;
     return this.http
-      .get<PaginatedApiResponse<AdminEventResponse>>(`${this.baseUrl}/events`, { params })
+      .get<PaginatedApiResponse<AdminEventResponse>>(`${this.apiUrl}/events`, { params })
       .pipe(
         map(res => ({
           items: res.items.map(e => ({
@@ -172,7 +173,7 @@ export class AdminApiRepository extends AdminRepository {
     if (search != null && search.trim() !== '') params['search'] = search.trim();
     return this.http
       .get<{ items: EventResponse[]; total: number; skip: number; limit: number }>(
-        `${this.baseUrl}/users/${userId}/registered-events`,
+        `${this.apiUrl}/users/${userId}/registered-events`,
         { params }
       )
       .pipe(

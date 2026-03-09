@@ -17,16 +17,10 @@ class LocalStorageService(StorageService):
             os.makedirs(self.upload_dir)
 
     def save_image(self, image: ImageInput, folder: str) -> str:
-        """
-        Saves an image (from bytes), optimizes it (WebP), and generates a thumbnail.
-        Returns the main image relative URL.
-        """
-        # 1. Prepare directory
         target_dir = os.path.join(self.upload_dir, folder)
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
 
-        # 2. Generate unique filename
         base_name = str(uuid.uuid4())
         filename = f"{base_name}.webp"
         thumb_name = f"{base_name}_thumb.webp"
@@ -34,18 +28,15 @@ class LocalStorageService(StorageService):
         file_path = os.path.join(target_dir, filename)
         thumb_path = os.path.join(target_dir, thumb_name)
 
-        # 3. Process and Optimize Image with Pillow
         try:
             with Image.open(io.BytesIO(image.content)) as img:
                 if img.mode in ("RGBA", "P"):
                     img = img.convert("RGB")
 
-                # --- MAIN IMAGE (Responsive Desktop) ---
                 main_img = img.copy()
                 main_img.thumbnail((1200, 1200), Image.Resampling.LANCZOS)
                 main_img.save(file_path, "WEBP", quality=80, optimize=True)
 
-                # --- THUMBNAIL (Mobile/List view) ---
                 thumb_img = img.copy()
                 thumb_img.thumbnail((400, 400), Image.Resampling.LANCZOS)
                 thumb_img.save(thumb_path, "WEBP", quality=70, optimize=True)
@@ -53,7 +44,6 @@ class LocalStorageService(StorageService):
         except Exception as e:
             raise ImageProcessingError(f"Failed to process image: {str(e)}") from e
 
-        # 4. Return relative URL of the main image
         return f"{self.base_url}/{folder}/{filename}"
 
     def delete_image(self, path: str) -> None:
@@ -61,11 +51,9 @@ class LocalStorageService(StorageService):
             relative_path = path.replace(self.base_url, "").lstrip("/")
             local_path = os.path.join(self.upload_dir, relative_path)
 
-            # Delete main
             if os.path.exists(local_path):
                 os.remove(local_path)
 
-            # Delete thumb
             thumb_path = local_path.replace(".webp", "_thumb.webp")
             if os.path.exists(thumb_path):
                 os.remove(thumb_path)

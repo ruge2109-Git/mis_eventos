@@ -1,5 +1,4 @@
 <div class="w-full space-y-8" *transloco="let t">
-  <!-- Barra de búsqueda: siempre visible arriba -->
   <section class="w-full max-w-2xl mx-auto px-2">
     <app-search-bar
       [placeholder]="t('events.searchPlaceholder')"
@@ -23,7 +22,6 @@
   }
 
   @if (!eventsLoading() && !eventsError()) {
-  <!-- Layout: 1 destacado (izq) + 4 cards (derecha), con animaciones suaves -->
   <section class="w-full grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 animate-fade-slide-in">
     @if (featuredEvent(); as featured) {
     <div class="w-full min-w-0 lg:min-w-[340px] min-h-[420px] animate-fade-slide-in" style="animation-delay: 0ms">
@@ -46,7 +44,6 @@
     }
   </section>
 
-  <!-- Paginación: siempre visible cuando hay más de una página -->
   @if (totalPages() > 1) {
   <nav class="w-full flex flex-wrap items-center justify-center gap-2 py-8" aria-label="Paginación de eventos">
     <button

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '@environments/environment';
+import { API_BASE_URL } from '@core/application/tokens/api-base-url.token';
 import { SessionRegistration } from '@core/domain/entities/session-registration.entity';
 import { SessionRegistrationRepository } from '@core/domain/ports/session-registration.repository';
 
@@ -18,7 +18,8 @@ interface SessionRegistrationResponse {
 })
 export class SessionRegistrationApiRepository extends SessionRegistrationRepository {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/session-registrations/`;
+  private baseUrl = inject(API_BASE_URL);
+  private apiUrl = `${this.baseUrl}/session-registrations/`;
 
   registerToSession(sessionId: number): Observable<SessionRegistration> {
     return this.http

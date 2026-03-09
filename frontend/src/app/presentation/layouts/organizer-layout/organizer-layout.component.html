@@ -1,5 +1,4 @@
 <div class="flex min-h-screen bg-background-dark text-white" *transloco="let t">
-  <!-- Mobile header: only below lg -->
   <header
     class="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center gap-3 px-4 py-3 bg-surface border-b border-white/10">
     <button type="button" (click)="toggleSidebar()"
@@ -12,13 +11,11 @@
     </a>
   </header>
 
-  <!-- Overlay when sidebar open on mobile -->
   @if (sidebarOpen) {
   <div class="lg:hidden fixed inset-0 z-40 bg-black/60 transition-opacity" (click)="closeSidebar()" role="button"
     tabindex="-1" aria-label="Cerrar menú"></div>
   }
 
-  <!-- Sidebar: drawer on mobile, static on lg+ -->
   <aside
     class="organizer-sidebar fixed lg:relative inset-y-0 left-0 z-50 w-64 shrink-0 border-r border-white/10 bg-surface flex flex-col transition-transform duration-300 ease-out lg:translate-x-0 pt-14 lg:pt-0"
     [class.-translate-x-full]="!sidebarOpen" [class.translate-x-0]="sidebarOpen">

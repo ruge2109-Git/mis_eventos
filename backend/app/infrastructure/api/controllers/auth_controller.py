@@ -5,8 +5,6 @@ from app.infrastructure.api.security.jwt_handler import create_access_token
 
 
 class AuthController:
-    """Returns DTOs for auth operations; router/serialization layer converts to JSON (SRP)."""
-
     def __init__(self, user_use_cases: UserUseCases):
         self.user_use_cases = user_use_cases
 

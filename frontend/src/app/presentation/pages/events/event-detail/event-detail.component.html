@@ -18,10 +18,13 @@
 
   @if (event(); as ev) {
   <article>
-    <!-- Banner -->
     <div class="relative h-64 sm:h-80 lg:h-96 bg-slate-800 overflow-hidden">
       @if (ev.imageUrl) {
-      <img [src]="ev.imageUrl" [alt]="ev.title" class="w-full h-full object-cover" />
+      <picture class="w-full h-full block">
+        <source media="(max-width: 768px)" [srcset]="ev.imageUrl">
+        <source media="(min-width: 769px)" [srcset]="ev.imageUrl">
+        <img [src]="ev.imageUrl" [alt]="ev.title" class="w-full h-full object-cover" fetchpriority="high" />
+      </picture>
       } @else {
       <div class="w-full h-full flex items-center justify-center">
         <span class="material-symbols-outlined text-8xl text-slate-600">event</span>
@@ -51,7 +54,6 @@
       </div>
     </div>
 
-    <!-- Metrics (capacity / sessions) -->
     <div class="max-w-6xl mx-auto px-4 sm:px-6 -mt-8 relative z-10">
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div class="rounded-xl bg-surface border border-white/10 p-4 flex flex-col items-center text-center">
@@ -79,9 +81,7 @@
 
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Main content -->
         <div class="lg:col-span-2 space-y-10">
-          <!-- Sobre el Evento -->
           <section>
             <h2 class="text-lg font-bold text-white border-b-2 border-accent-cyan w-fit pb-1 mb-4">{{
               t('eventDetail.aboutEvent') }}</h2>
@@ -108,7 +108,6 @@
             }
           </section>
 
-          <!-- Galería de imágenes adicionales -->
           @if (ev.additionalImages && ev.additionalImages.length) {
           <section>
             <h2 class="text-lg font-bold text-white border-b-2 border-accent-cyan w-fit pb-1 mb-4">
@@ -121,14 +120,16 @@
               @for (img of ev.additionalImages; track img; let i = $index) {
               <button type="button" (click)="openLightbox(i)"
                 class="gallery-thumb aspect-[4/3] rounded-xl overflow-hidden border border-white/10 bg-slate-800 focus:outline-none focus:ring-2 focus:ring-accent-cyan/50 hover:border-accent-cyan/40 transition-all">
-                <img [src]="img" [alt]="ev.title + ' - ' + (i + 1)" class="w-full h-full object-cover" loading="lazy" />
+                <picture class="w-full h-full block">
+                  <source [srcset]="img">
+                  <img [src]="img" [alt]="ev.title + ' - ' + (i + 1)" class="w-full h-full object-cover" loading="lazy" />
+                </picture>
               </button>
               }
             </div>
           </section>
           }
 
-          <!-- Cronograma de Sesiones (línea de tiempo) -->
           <section>
             <h2 class="text-lg font-bold text-white border-b-2 border-accent-purple w-fit pb-1 mb-6">{{
               t('eventDetail.schedule') }}</h2>
@@ -197,9 +198,7 @@
           </section>
         </div>
 
-        <!-- Sidebar -->
         <div class="lg:col-span-1 space-y-6">
-          <!-- Registration card -->
           <div class="rounded-2xl bg-surface border border-white/10 p-6 sticky top-24">
             @if (ev.status === 'PUBLISHED') {
             <div class="flex items-center gap-2 text-green-400 text-sm font-medium mb-4">
@@ -261,7 +260,6 @@
       </div>
     </div>
 
-    <!-- Modal confirmación inscripción / cancelación -->
     @if (confirmModal() === 'register') {
     <div class="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/70" role="dialog" aria-labelledby="confirm-register-title" tabindex="0"
       (click)="closeConfirmModal()" (keydown.escape)="closeConfirmModal()" (keydown.enter)="closeConfirmModal()">
@@ -303,7 +301,6 @@
     </div>
     }
 
-    <!-- Lightbox -->
     @if (ev.additionalImages && ev.additionalImages.length && lightboxIndex() !== null) {
     <div class="lightbox-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
       (click)="closeLightbox()" (keydown.escape)="closeLightbox()" tabindex="0" role="dialog" aria-label="{{ t('eventDetail.gallery') }}">
@@ -328,8 +325,11 @@
         {{ lightboxIndex()! + 1 }} / {{ ev.additionalImages.length }}
       </p>
       <div class="flex items-center justify-center min-h-[50vh]" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" tabindex="0">
-        <img [src]="ev.additionalImages[lightboxIndex()!]" [alt]="ev.title"
-          class="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-lg shadow-2xl" />
+        <picture class="block max-w-full max-h-[85vh]">
+          <source [srcset]="ev.additionalImages[lightboxIndex()!]">
+          <img [src]="ev.additionalImages[lightboxIndex()!]" [alt]="ev.title"
+            class="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-lg shadow-2xl" loading="lazy" />
+        </picture>
       </div>
     </div>
     }

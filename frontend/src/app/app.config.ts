@@ -26,6 +26,7 @@ import { TranslocoHttpLoader } from './transloco-loader';
 import { authInterceptor } from './infrastructure/interceptors/auth.interceptor';
 import { loadingInterceptor } from './infrastructure/interceptors/loading.interceptor';
 import { errorInterceptor } from './infrastructure/interceptors/error.interceptor';
+import { cacheInterceptor } from './infrastructure/interceptors/cache.interceptor';
 
 
 export const appConfig: ApplicationConfig = {
@@ -35,7 +36,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withViewTransitions()),
     provideHttpClient(
       withFetch(),
-      withInterceptors([authInterceptor, loadingInterceptor, errorInterceptor])
+      withInterceptors([authInterceptor, cacheInterceptor, loadingInterceptor, errorInterceptor])
     ),
     { provide: EventReader, useClass: EventApiRepository },
     { provide: EventRepository, useClass: EventApiRepository },

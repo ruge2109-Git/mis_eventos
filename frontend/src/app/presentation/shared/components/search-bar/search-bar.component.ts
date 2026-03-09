@@ -12,7 +12,6 @@ import { debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
 })
 export class SearchBarComponent implements OnInit, OnDestroy {
   placeholder = input<string>('Buscar eventos...');
-  /** Optional: override input styles (e.g. smaller bar for side panels). */
   inputClass = input<string>('');
   searchChange = output<string>();
 

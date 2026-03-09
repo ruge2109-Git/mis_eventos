@@ -135,23 +135,49 @@ describe('OrganizerDashboardComponent', () => {
     expect(component.upcomingThisMonth()).toBe(1);
   });
 
-  it('should compute attendanceRate', () => {
-    store.setEvents([], 0);
-    expect(component.attendanceRate()).toBe(0);
-    store.setEvents([mockEvent], 1);
-    fixture.detectChanges();
-    expect(component.attendanceRate()).toBeGreaterThanOrEqual(70);
-  });
 
-  it('should compute upcomingEvents sorted by startDate limited to 6', () => {
-    const e1 = { ...mockEvent, id: 1, startDate: new Date(Date.now() + 86400000), endDate: new Date(Date.now() + 86400000 + 3600000) };
-    const e2 = { ...mockEvent, id: 2, startDate: new Date(Date.now() + 172800000), endDate: new Date(Date.now() + 172800000 + 3600000) };
+  it('should compute upcomingEvents sorted by startDate', () => {
+    const e1 = { ...mockEvent, id: 1, title: 'B', startDate: new Date(Date.now() + 86400000), endDate: new Date(Date.now() + 86400000 + 3600000) };
+    const e2 = { ...mockEvent, id: 2, title: 'A', startDate: new Date(Date.now() + 172800000), endDate: new Date(Date.now() + 172800000 + 3600000) };
     store.setEvents([e2, e1], 2);
     fixture.detectChanges();
-    const upcoming = component.upcomingEvents();
-    expect(upcoming.length).toBe(2);
+    component.setSortBy('date');
+    let upcoming = component.upcomingEvents();
     expect(upcoming[0].id).toBe(1);
     expect(upcoming[1].id).toBe(2);
+
+    component.setSortBy('title');
+    upcoming = component.upcomingEvents();
+    expect(upcoming[0].id).toBe(2); // 'A'
+    expect(upcoming[1].id).toBe(1); // 'B'
+  });
+
+  it('should filter events when setStatusFilter is called', () => {
+    const e1 = { ...mockEvent, id: 1, status: 'PUBLISHED' as const };
+    const e2 = { ...mockEvent, id: 2, status: 'DRAFT' as const };
+    const e3 = { ...mockEvent, id: 3, status: 'CANCELLED' as const };
+    store.setEvents([e1, e2, e3], 3);
+    
+    component.setStatusFilter('PUBLISHED');
+    expect(component.filteredEvents().length).toBe(1);
+    expect(component.filteredEvents()[0].id).toBe(1);
+
+    component.setStatusFilter('DRAFT');
+    expect(component.filteredEvents()[0].id).toBe(2);
+
+    component.setStatusFilter('CANCELLED');
+    expect(component.filteredEvents()[0].id).toBe(3);
+
+    component.setStatusFilter(null);
+    expect(component.filteredEvents().length).toBe(3);
+  });
+
+  it('should compute draftCount and cancelledCount', () => {
+    const e1 = { ...mockEvent, id: 1, status: 'DRAFT' as const };
+    const e2 = { ...mockEvent, id: 2, status: 'CANCELLED' as const };
+    store.setEvents([e1, e2], 2);
+    expect(component.draftCount()).toBe(1);
+    expect(component.cancelledCount()).toBe(1);
   });
 
   it('isActionLoading should return true when actionLoadingId matches', () => {
@@ -208,13 +234,22 @@ describe('OrganizerDashboardComponent', () => {
     expect(eventRepository.delete).not.toHaveBeenCalled();
   });
 
-  it('loadEvents with append should call use case and update store on success', () => {
+  it('confirmDelete should handle errors', () => {
+    const toast = TestBed.inject(ToastService);
+    const errorSpy = vi.spyOn(toast, 'error');
+    component.openDeleteConfirm(7);
+    vi.mocked(eventRepository.delete).mockReturnValue(throwError(() => ({ error: { detail: 'Delete failed' } })));
+    component.confirmDelete();
+    expect(errorSpy).toHaveBeenCalled();
+    expect(component.actionLoadingId()).toBeNull();
+  });
+
+  it('loadEvents should load the first page', () => {
     store.setPagination(10, 10);
     vi.mocked(getOrganizerEventsUseCase.execute).mockClear();
     vi.mocked(getOrganizerEventsUseCase.execute).mockReturnValue(of({ items: [mockEvent], total: 30 }));
-    component.loadEvents(true);
-    expect(getOrganizerEventsUseCase.execute).toHaveBeenCalledWith(20, 10);
-    expect(store.pagination().skip).toBe(20);
+    component.loadEvents();
+    expect(getOrganizerEventsUseCase.execute).toHaveBeenCalledWith(0, 12, undefined);
   });
 
   it('should show confirm modal when showDeleteConfirm is true', () => {
@@ -232,5 +267,111 @@ describe('OrganizerDashboardComponent', () => {
     component.cancelEvent(publishedEvent);
     expect(errorSpy).toHaveBeenCalled();
     expect(component.actionLoadingId()).toBeNull();
+  });
+
+  it('publishEvent should show toast and clear loading on error', () => {
+    const toast = TestBed.inject(ToastService);
+    const errorSpy = vi.spyOn(toast, 'error');
+    vi.mocked(eventRepository.publish).mockReturnValue(throwError(() => new Error('Net Error')));
+    component.publishEvent(mockEvent);
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it('revertEventToDraft should show toast and clear loading on error', () => {
+    const toast = TestBed.inject(ToastService);
+    const errorSpy = vi.spyOn(toast, 'error');
+    vi.mocked(eventRepository.revertToDraft).mockReturnValue(throwError(() => new Error('Net Error')));
+    component.revertEventToDraft(mockEvent);
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
+  describe('state change modals', () => {
+    it('should open and confirm publish', () => {
+      component.openPublishConfirm(mockEvent);
+      expect(component.stateChangeConfirm()?.type).toBe('publish');
+      expect(component.stateChangeModalTitle()).toBeTruthy();
+      expect(component.stateChangeModalMessage()).toBeTruthy();
+      
+      const spy = vi.spyOn(component, 'publishEvent');
+      component.confirmStateChange();
+      expect(spy).toHaveBeenCalledWith(mockEvent);
+    });
+
+    it('should open and confirm cancel', () => {
+      component.openCancelConfirm(mockEvent);
+      expect(component.stateChangeConfirm()?.type).toBe('cancel');
+      expect(component.stateChangeModalTitle()).toBeTruthy();
+      expect(component.stateChangeModalMessage()).toBeTruthy();
+      
+      const spy = vi.spyOn(component, 'cancelEvent');
+      component.confirmStateChange();
+      expect(spy).toHaveBeenCalledWith(mockEvent);
+    });
+
+    it('should open and confirm revert', () => {
+      component.openRevertConfirm(mockEvent);
+      expect(component.stateChangeConfirm()?.type).toBe('revert');
+      expect(component.stateChangeModalTitle()).toBeTruthy();
+      expect(component.stateChangeModalMessage()).toBeTruthy();
+      
+      const spy = vi.spyOn(component, 'revertEventToDraft');
+      component.confirmStateChange();
+      expect(spy).toHaveBeenCalledWith(mockEvent);
+    });
+
+    it('should fall back to empty string for title and message when payload is null', () => {
+      component.closeStateChangeConfirm();
+      expect(component.stateChangeModalTitle()).toBe('');
+      expect(component.stateChangeModalMessage()).toBe('');
+      component.confirmStateChange(); // does nothing
+    });
+  });
+
+  describe('pagination and search', () => {
+    it('should call loadPage(1) when onSearch is used', () => {
+      const spy = vi.spyOn(component, 'loadPage');
+      component.onSearch('hola');
+      expect(component.searchQuery()).toBe('hola');
+      expect(spy).toHaveBeenCalledWith(1);
+    });
+
+    it('should call loadPage when goToPage is used', () => {
+      const spy = vi.spyOn(component, 'loadPage');
+      component.goToPage(3);
+      expect(spy).toHaveBeenCalledWith(3);
+    });
+
+    it('limit loadPage calls out of bounds', () => {
+      const spy = vi.spyOn(getOrganizerEventsUseCase, 'execute');
+      spy.mockClear();
+      component.loadPage(-1);
+      expect(spy).not.toHaveBeenCalled();
+
+      store.setEvents([], 50); // total 50 -> pages ~ 5
+      component.loadPage(10);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should handle errors in loadPage without crashing', () => {
+      const loadingContext = TestBed.inject(LoadingContextService);
+      vi.mocked(getOrganizerEventsUseCase.execute).mockReturnValue(throwError(() => new Error('err')));
+      component.loadPage(1);
+      expect(loadingContext.loadingFor('events')()).toBe(false);
+    });
+
+    it('pageNumbers handles different states', () => {
+      store.setEvents([], 100); // 100 / 12 = 9 pages
+      component.currentPage.set(5);
+      expect(component.pageNumbers()).toEqual([1, -1, 4, 5, 6, -1, 9]);
+
+      component.currentPage.set(2);
+      expect(component.pageNumbers()).toEqual([1, 2, 3, -1, 9]);
+
+      component.currentPage.set(8);
+      expect(component.pageNumbers()).toEqual([1, -1, 7, 8, 9]);
+      
+      store.setEvents([], 50); // 50 / 12 = 5 pages
+      expect(component.pageNumbers()).toEqual([1, 2, 3, 4, 5]);
+    });
   });
 });

@@ -6,14 +6,18 @@ import { UpdateEventDTO } from '@core/domain/entities/event.entity';
 import { dateToLocalISOString } from '@core/application/utils/date.util';
 import { environment } from '@environments/environment';
 
+import { API_BASE_URL } from '@core/application/tokens/api-base-url.token';
+
 describe('EventApiRepository', () => {
   let repository: EventApiRepository;
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
         EventApiRepository,
+        { provide: API_BASE_URL, useValue: 'http://localhost:8000' },
         provideHttpClient(),
         provideHttpClientTesting()
       ]
@@ -24,7 +28,7 @@ describe('EventApiRepository', () => {
   });
 
   afterEach(() => {
-    httpMock.verify();
+    httpMock?.verify();
   });
 
   it('should fetch paginated events and map to entities', () => {

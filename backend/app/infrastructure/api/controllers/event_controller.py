@@ -1,6 +1,6 @@
 """
 Event controller returns domain objects (Event, CreateEventResult).
-Serialization to API shape is done in the router via EventMapper (SRP).
+Serialization to API shape is done in the router via EventMapper.
 """
 from datetime import datetime
 

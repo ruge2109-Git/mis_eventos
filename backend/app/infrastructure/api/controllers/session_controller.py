@@ -4,8 +4,6 @@ from app.application.use_cases.session_use_cases import SessionUseCases
 
 
 class SessionController:
-    """Orchestrates session operations; does not build domain entities (SRP)."""
-
     def __init__(self, session_use_cases: SessionUseCases):
         self.session_use_cases = session_use_cases
 

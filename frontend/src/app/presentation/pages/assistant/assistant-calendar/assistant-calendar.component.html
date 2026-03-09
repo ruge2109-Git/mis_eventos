@@ -33,7 +33,10 @@
           <article class="calendar-day-card flex flex-col rounded-2xl border border-white/10 bg-surface overflow-hidden flex-1 min-h-0">
             <div class="relative shrink-0 h-40 sm:h-48 bg-slate-800 overflow-hidden">
               @if (event.imageUrl) {
-              <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" />
+              <picture class="w-full h-full block">
+                <source [srcset]="event.imageUrl">
+                <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" loading="lazy" />
+              </picture>
               } @else {
               <div class="w-full h-full flex items-center justify-center">
                 <span class="material-symbols-outlined text-5xl text-slate-600">event</span>

@@ -222,7 +222,6 @@ def get_user_registered_events_admin(
     ),
     _: User = Depends(RequireAdmin),
 ):
-    """Admin-only: events the given user is registered to attend (paginated, search by title)."""
     events, total = registration_controller.get_user_registered_events_paginated(
         user_id, skip=skip, limit=limit, search=search
     )
@@ -254,7 +253,6 @@ def list_all_events(
     event_controller: EventController = Depends(get_event_controller),
     _: User = Depends(RequireAdmin),
 ):
-    """List all events with organizer email and full_name. Filter by organizer_id if given."""
     rows, total = event_controller.list_events_with_organizer(
         skip=skip,
         limit=limit,

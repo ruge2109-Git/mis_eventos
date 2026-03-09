@@ -41,7 +41,6 @@ export class AssistantDashboardComponent implements OnInit {
     return upcoming[0] ?? null;
   });
 
-  /** Próximos eventos (futuros, ordenados por fecha) para la lista de la derecha */
   upcomingList = computed(() => {
     const events = this.myEvents();
     const now = new Date();
@@ -56,7 +55,6 @@ export class AssistantDashboardComponent implements OnInit {
     this.loadMyEventsFirst();
   }
 
-  /** Solo una llamada inicial: eventos en los que estoy registrado. Luego recomendaciones. */
   private loadMyEventsFirst(): void {
     this.loading.set(true);
     this.getMyRegisteredEvents.execute().pipe(catchError(() => of([]))).subscribe(evs => {

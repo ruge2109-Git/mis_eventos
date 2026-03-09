@@ -62,4 +62,4 @@ app.include_router(session_registration_router := session_reg_router)
 
 @app.get("/")
 def read_root():
-    return {"message": f"Welcome to {settings.APP_NAME} (Hexagonal Architecture)"}
+    return {"message": f"Welcome to {settings.APP_NAME}"}

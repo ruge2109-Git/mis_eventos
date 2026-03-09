@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '@environments/environment';
+import { API_BASE_URL } from '@core/application/tokens/api-base-url.token';
 import { Event } from '@core/domain/entities/event.entity';
 import { Registration } from '@core/domain/entities/registration.entity';
 import { RegistrationRepository } from '@core/domain/ports/registration.repository';
@@ -20,8 +20,9 @@ interface RegistrationResponse {
 })
 export class RegistrationApiRepository extends RegistrationRepository {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/registrations/`;
-  private eventMapper = new EventApiMapper(environment.apiUrl);
+  private baseUrl = inject(API_BASE_URL);
+  private apiUrl = `${this.baseUrl}/registrations/`;
+  private eventMapper = new EventApiMapper(this.baseUrl);
 
   registerToEvent(eventId: number): Observable<Registration> {
     return this.http

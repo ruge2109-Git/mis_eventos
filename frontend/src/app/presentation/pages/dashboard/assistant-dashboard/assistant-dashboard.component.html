@@ -75,7 +75,11 @@
         <article class="rounded-2xl border border-white/10 bg-surface overflow-hidden flex flex-col sm:flex-row transition-colors duration-300 hover:border-white/20">
           @if (event.imageUrl) {
           <div class="sm:w-32 h-32 sm:h-auto shrink-0 bg-slate-800">
-            <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" />
+            <picture class="w-full h-full block">
+              <source media="(max-width: 768px)" [srcset]="event.imageUrl">
+              <source media="(min-width: 769px)" [srcset]="event.imageUrl">
+              <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" loading="lazy" />
+            </picture>
           </div>
           } @else {
           <div class="sm:w-32 h-24 shrink-0 bg-slate-800 flex items-center justify-center">

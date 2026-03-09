@@ -1,4 +1,3 @@
-"""ISP: read-only interface for event persistence."""
 from abc import ABC, abstractmethod
 from datetime import datetime
 

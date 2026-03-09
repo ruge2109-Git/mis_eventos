@@ -44,20 +44,15 @@ export class OrganizerDashboardComponent implements OnInit {
   actionLoadingId = signal<number | null>(null);
   eventIdToDelete = signal<number | null>(null);
   showDeleteConfirm = computed(() => this.eventIdToDelete() != null);
-  /** Confirmación para cambiar estado: publicar, cancelar, revertir a borrador */
   stateChangeConfirm = signal<{ type: 'publish' | 'cancel' | 'revert'; event: Event } | null>(null);
   showStateChangeConfirm = computed(() => this.stateChangeConfirm() != null);
   eventsLoading = computed(() => this.loadingContext.loadingFor(EVENTS_CONTEXT)());
   eventsError = computed(() => this.loadingContext.errorFor(EVENTS_CONTEXT)());
 
-  /** Búsqueda por texto */
   searchQuery = signal('');
-  /** Página actual (1-based) */
   currentPage = signal(1);
 
-  /** Filtro por estado: null = todos, 'PUBLISHED' | 'DRAFT' | 'CANCELLED' */
   statusFilter = signal<'PUBLISHED' | 'DRAFT' | 'CANCELLED' | null>(null);
-  /** Orden: 'date' | 'title' */
   sortBy = signal<'date' | 'title'>('date');
 
   private now = new Date();
@@ -82,7 +77,6 @@ export class OrganizerDashboardComponent implements OnInit {
     return list.filter(e => e.status === filter);
   });
 
-  /** Eventos de la página actual (filtrados por estado y ordenados) */
   upcomingEvents = computed(() => {
     const list = [...this.filteredEvents()];
     const by = this.sortBy();
@@ -101,7 +95,6 @@ export class OrganizerDashboardComponent implements OnInit {
     return Math.ceil(t / PAGE_SIZE);
   });
 
-  /** Números de página a mostrar (1, 2, … última) */
   pageNumbers(): number[] {
     const total = this.totalPages();
     const current = this.currentPage();

@@ -16,9 +16,7 @@ import { TruncatePipe } from '@shared/pipes/truncate.pipe';
 export class EventCardComponent {
   private router = inject(Router);
   event = input.required<Event>();
-  /** Cuando true, muestra la card en formato destacado (grande) aunque el evento no tenga isFeatured. */
   displayAsFeatured = input<boolean>(false);
-  /** Cuando true, la imagen ocupa el 50% de la altura de la card (card principal izquierda). */
   imageTakesHalf = input<boolean>(false);
 
   navigateToEvent(): void {

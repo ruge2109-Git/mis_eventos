@@ -47,7 +47,6 @@ export class AdminProfilesComponent implements OnInit {
     total: this.total()
   }));
 
-  /** Page numbers to show (1, …, current-1, current, current+1, …, last); -1 = ellipsis */
   pageNumbers(): number[] {
     const total = this.totalPages();
     const current = this.currentPage();
