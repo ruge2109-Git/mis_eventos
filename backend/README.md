@@ -1,278 +1,80 @@
 # Mis Eventos - Backend
 
-Sistema de gestión de eventos construido bajo Arquitectura Hexagonal (Puertos y Adaptadores) con principios SOLID.
+API RESTful de alto rendimiento para la gestión de eventos, desarrollada con **Python 3.12** y **FastAPI**. 
 
----
+## Arquitectura y Patrones
 
-## Tabla de Contenidos
+El backend implementa **Arquitectura Hexagonal (Puertos y Adaptadores)**, lo que permite un desacoplamiento total entre la lógica de negocio y las dependencias externas.
 
-- [Tecnologías](#tecnologías)
-- [Arquitectura](#arquitectura)
-- [API Endpoints](#api-endpoints)
-- [Reglas de Negocio](#reglas-de-negocio)
-- [Configuración](#configuración)
-- [Despliegue con Docker](#despliegue-con-docker)
-- [Desarrollo Local](#desarrollo-local)
-- [Testing](#testing)
-- [Linting](#linting)
+### Patrones Implementados:
+- **SOLID:** Aplicados en todas las capas para facilitar la extensión y el mantenimiento.
+- **Repository Pattern:** Abstracción del acceso a datos a través de puertos.
+- **Dependency Injection:** Gestión de dependencias nativa de FastAPI.
+- **DTOs & Mappers:** Uso de Pydantic y SQLModel para la validación y transformación de datos.
 
----
-
-## Tecnologías
-
-| Tecnología | Propósito |
-|------------|-----------|
-| **Python 3.12** | Lenguaje principal |
-| **FastAPI** | Framework web de alto rendimiento |
-| **SQLModel** | ORM basado en SQLAlchemy y Pydantic |
-| **PostgreSQL** | Base de datos relacional |
-| **Redis** | Caché de alto rendimiento |
-| **Pillow** | Procesamiento de imágenes |
-| **Alembic** | Migraciones de base de datos |
-| **Poetry** | Gestión de dependencias |
-| **JWT** | Autenticación |
-
----
-
-## Arquitectura
-
-El proyecto sigue el patrón de **Puertos y Adaptadores (Hexagonal)** para garantizar desacoplamiento entre lógica de negocio e infraestructura.
-
-```
+```plaintext
 backend/app/
-├── domain/                    # Entidades puras y reglas de negocio
-│   ├── entities/             # User, Event, Session, Registration
-│   └── exceptions/           # Excepciones de dominio
-├── application/              # Orquestación de casos de uso
-│   ├── use_cases/            # Lógica de negocio
-│   ├── ports/                # Interfaces/abstracciones
-│   ├── dto/                  # Objetos de transferencia
-│   └── serializers/         # Serialización de caché
-└── infrastructure/           # Adaptadores externos
-    ├── api/                  # FastAPI (routers, controllers, security)
-    ├── database/             # SQLModel (models, repositories)
-    ├── services/             # Storage, Cache, Hashing
-    └── config/               # Configuración
+├── domain/            # Entidades puras y excepciones de negocio
+├── application/       # Puertos (interfaces), DTOs y lógica de Casos de Uso
+└── infrastructure/    # Adaptadores (API, Repositorios SQL, Hashing, Auth)
 ```
 
----
+## Documentación de la API
 
-## API Endpoints
+El sistema utiliza **Swagger/OpenAPI** para documentar todos los endpoints de forma interactiva.
 
-### Autenticación (`/auth`)
+- **Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `POST` | `/auth/register` | Registro de usuarios (Asistente/Organizador) |
-| `POST` | `/auth/login` | Login, retorna token JWT |
+## Infraestructura Técnica
+- **Motor:** FastAPI + Python 3.12.
+- **Persistencia:** PostgreSQL con **SQLModel** (basado en SQLAlchemy).
+- **Caché:** Redis para optimización de consultas recurrentes.
+- **Migraciones:** Gestión de versiones de BD con **Alembic**.
 
-### Eventos (`/events`)
+## Scripts y Ejecución Local
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `GET` | `/events/` | Listar eventos (búsqueda, paginación) |
-| `POST` | `/events/` | Crear evento (Organizador/Admin) |
-| `GET` | `/events/{id}` | Detalle del evento |
-| `PUT` | `/events/{id}` | Actualizar evento |
-| `DELETE` | `/events/{id}` | Eliminar evento |
-| `POST` | `/events/{id}/image` | Subir imagen del evento |
+Para el desarrollo local se utiliza **Poetry** como gestor de dependencias.
 
-### Sesiones (`/sessions`)
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `GET` | `/sessions/event/{event_id}` | Sesiones de un evento |
-| `POST` | `/sessions/` | Crear sesión |
-| `PUT` | `/sessions/{id}` | Actualizar sesión |
-| `DELETE` | `/sessions/{id}` | Eliminar sesión |
-
-### Inscripciones (`/registrations`)
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `POST` | `/registrations/` | Inscribirse a evento |
-| `DELETE` | `/registrations/event/{id}` | Cancelar inscripción |
-| `GET` | `/registrations/user/{id}` | Inscripciones del usuario |
-
-### Inscripciones a Sesiones (`/session-registrations`)
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `POST` | `/session-registrations/` | Inscribirse a sesión |
-| `DELETE` | `/session-registrations/{id}` | Cancelar inscripción |
-
-### Usuarios (`/users`)
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `GET` | `/users/` | Listar usuarios (Admin) |
-| `GET` | `/users/{id}` | Obtener usuario |
-
-> **Documentación interactiva**: http://localhost:8000/docs
-
----
-
-## Reglas de Negocio
-
-1. **Restricción de Admin**: Los administradores no pueden inscribirse a eventos o sesiones
-2. **Control de Capacidad**: Validación de cupos disponibles en tiempo real
-3. **Estado del Evento**: Solo eventos en estado **Publicado** permiten inscripciones
-
----
-
-## Configuración
-
-### Variables de Entorno (.env)
-
-```env
-# App
-APP_NAME="Mis Eventos API"
-DEBUG=True
-
-# Database & Cache
-DATABASE_URL=postgresql://root:rootpassword@db:5432/mis_eventos
-REDIS_URL=redis://redis:6379/0
-
-# Security
-SECRET_KEY=tu_llave_secreta_jwt
-ACCESS_TOKEN_EXPIRE_MINUTES=60
-
-# CORS
-CORS_ORIGINS=http://localhost:4200
-
-# Admin (seed)
-DEFAULT_ADMIN_EMAIL=admin@gmail.com
-DEFAULT_ADMIN_PASSWORD=Password123!
-```
-
----
-
-## Despliegue con Docker
-
-### Inicio Rápido
-
-```bash
-# 1. Construir e iniciar servicios
-docker-compose up --build -d
-```
-
-> Las migraciones y el usuario admin se crean automáticamente.
-
-### Gestión de Migraciones
-
-```bash
-# Nueva migración
-docker compose exec backend alembic revision --autogenerate -m "descripcion"
-
-# Aplicar migraciones
-docker compose exec backend alembic upgrade head
-
-# Rollback
-docker compose exec backend alembic downgrade -1
-```
-
-### Comandos Útiles
-
-```bash
-# Ver logs
-docker-compose logs -f backend
-
-# Reiniciar servicio
-docker-compose restart backend
-
-# Acceder al contenedor
-docker-compose exec backend bash
-```
-
----
-
-## Desarrollo Local
-
-### Requisitos
-
+### Prerrequisitos
 - Python 3.12
-- PostgreSQL (puede usar el de Docker)
-- Redis
+- Instancias de PostgreSQL y Redis en ejecución (pueden ser las de Docker).
 
-### Instalación
+### Instalación y Ejecución
 
-```bash
-cd backend
-poetry install
+1. **Instalar dependencias:**
+   ```bash
+   cd backend
+   poetry install
+   ```
 
-# Copiar configuración
-cp .env.example .env
-```
+2. **Configurar el entorno:**
+   Copia las variables de entorno para desarrollo.
+   ```bash
+   cp .env.example .env
+   ```
 
-### Ejecución
+3. **Migraciones:**
+   ```bash
+   poetry run alembic upgrade head
+   ```
 
-```bash
-# Iniciar servidor
-poetry run uvicorn app.infrastructure.api.main:app --reload
+4. **Levantar el servidor:**
+   ```bash
+   poetry run uvicorn app.infrastructure.api.main:app --reload
+   ```
+   > La API estará expuesta y documentada en `http://localhost:8000/docs`
 
-# O directamente
-poetry run python -m uvicorn app.infrastructure.api.main:app --reload
-```
+### Testing y Calidad
 
-### Crear Admin
-
-```bash
-poetry run python -m app.scripts.seed_admin
-```
-
----
-
-## Testing
+El backend cuenta con una completa suite de pruebas automatizadas:
 
 ```bash
-# Todas las pruebas
-docker compose exec backend pytest
+# Ejecución local con Poetry
+poetry run pytest --cov=app
 
-# Con coverage
+# Ejecución de pruebas mediante Docker
 docker compose exec backend pytest --cov=app --cov-report=term-missing
-
-# Pruebas unitarias
-docker compose exec backend pytest tests/unit
-
-# Pruebas de integración
-docker compose exec backend pytest tests/integration
-
-# Archivo específico
-docker compose exec backend pytest tests/unit/test_event_service.py
 ```
 
-### Coverage
-
-El reporte de coverage se genera automáticamente durante el build de Docker:
-
-```bash
-# Construir contenedor
-docker-compose up --build
-
-# Ver reporte HTML
-# reports/coverage-backend/index.html
-```
-
----
-
-## Linting
-
-```bash
-# Verificar y corregir
-docker compose exec backend ruff check . --fix
-
-# Formatear código
-docker compose exec backend ruff format .
-```
-
----
-
-## Validación del Sistema
-
-1. Acceder a http://localhost:8000/docs
-2. Login con: `admin@gmail.com` / `Password123!`
-3. Autorizar con el token JWT
-4. Probar funcionalidades:
-   - Crear evento como Organizador
-   - Registrarse como Asistente
-   - Subir imagen y verificar versiones optimizadas
+> **Automatización:** Cada vez que el contenedor `backend` se inicia, ejecuta automáticamente las migraciones y genera el reporte de cobertura en `./reports/coverage-backend/`.

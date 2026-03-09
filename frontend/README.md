@@ -1,205 +1,61 @@
 # Mis Eventos - Frontend
 
-Cliente web de la plataforma Mis Eventos, construido con Angular y arquitetura limpia.
+Cliente web de la plataforma, construido como una Single Page Application (SPA) haciendo uso de las características más modernas de **Angular 21** junto a **Tailwind CSS**.
 
----
+## Arquitectura y Patrones
 
-## Tabla de Contenidos
+El frontend adopta **Clean Architecture**, aislando estrictamente la lógica de dominio de las implementaciones externas (UI y peticiones HTTP), lo cual facilita el testing y su escalabilidad.
 
-- [Tecnologías](#tecnologías)
-- [Arquitectura](#arquitectura)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Componentes Compartidos](#componentes-compartidos)
-- [Configuración](#configuración)
-- [Desarrollo](#desarrollo)
-- [Internacionalización](#internacionalización)
-- [Testing](#testing)
+### Patrones y Estrategias:
+- **Signals-Based State:** Uso de Angular Signals para una detección de cambios granular, eficiente y reactiva.
+- **Container / Presentational Components:** Separación de componentes inteligentes (lógica) y componentes tontos (UI pura).
+- **Strategy Pattern:** Implementación de interfaces para servicios y repositorios de datos.
+- **Standalone Components:** Arquitectura modular sin NgModules para reducir el boilerplate y mejorar el lazy loading.
 
----
-
-## Tecnologías
-
-| Tecnología | Propósito |
-|------------|-----------|
-| **Angular 21** | Framework con Standalone Components |
-| **Angular Signals** | Estado reactivo |
-| **Tailwind CSS 4** | Estilos responsivos |
-| **Transloco** | Internacionalización |
-| **TypeScript** | Tipado estricto |
-| **RxJS** | Programación reactiva |
-| **Vitest** | Testing |
-
----
-
-## Arquitectura
-
-El proyecto sigue **Clean Architecture** con separación clara de responsabilidades:
-
-```
+```plaintext
 frontend/src/app/
-├── core/                      # Núcleo de la aplicación
-│   ├── domain/               # Entidades y constantes
-│   │   ├── entities/        # Tipos (Event, User, Registration)
-│   │   └── constants/       # Roles de usuario
-│   ├── application/         # Lógica de negocio
-│   │   ├── usecases/       # Casos de uso
-│   │   ├── services/       # Servicios (Toast, Validation)
-│   │   ├── guards/         # Protectores de rutas
-│   │   └── store/          # Estado global
-│   └── utils/              # Utilidades
-├── infrastructure/          # Integraciones externas
-│   ├── api/                # Repositorios HTTP
-│   ├── interceptors/       # HTTP interceptors
-│   └── storage/            # Local storage
-└── presentation/            # Capa de presentación
-    ├── layouts/            # Layouts (Main, Admin, Organizer)
-    └── pages/              # Páginas de características
+├── core/               # Lógica de dominio, Casos de Uso y gestión de Estado (Signals)
+├── infrastructure/     # Adaptadores de datos (HTTP Repositories, Storage, Interceptors)
+└── presentation/       # Componentes de UI, Layouts, Visuales y Páginas
 ```
 
----
+## Stack Técnico e Infraestructura
+- **Angular 21 + TypeScript:** Programación estructurada y tipado fuerte.
+- **Tailwind CSS v4:** Framework de estilos utility-first con soporte nativo para Glassmorphism.
+- **Transloco:** Sistema de internacionalización (i18n) para soporte multi-idioma (ES/EN).
+- **Vitest:** Test runner moderno de alta velocidad con soporte nativo para coverage.
 
-## Estructura de Componentes
+## Ejecución Local
 
-Cada componente sigue el patrón de 4 archivos:
+Para correr el proyecto fuera de los contenedores para fines de desarrollo, utiliza NPM.
 
-| Archivo | Propósito |
-|---------|-----------|
-| `*.component.ts` | Lógica y estado |
-| `*.component.html` | Template |
-| `*.component.scss` | Estilos encapsulados |
-| `*.component.spec.ts` | Pruebas unitarias |
+### Prerrequisitos
+- Node.js (versión LTS).
 
----
+### Instalación y Ejecución
 
-## Componentes Compartidos
+1. **Instalar dependencias:**
+   ```bash
+   cd frontend
+   npm install
+   ```
 
-Biblioteca de componentes internos en `src/app/presentation/shared/components/`:
+2. **Levantar servidor de desarrollo:**
+   ```bash
+   npm start
+   ```
+   > La aplicación estará disponible en `http://localhost:4200` y recargará automáticamente ante cualquier cambio.
 
-| Componente | Descripción |
-|------------|-------------|
-| **ButtonComponent** | Botones con variantes (primary, outline, ghost), tamaños y estados |
-| **InputComponent** | Campos con iconos, etiquetas y validación |
-| **NavbarComponent** | Navegación con glassmorphism y diseño responsivo |
-| **FooterComponent** | Pie de página con selector de idioma |
-| **AvatarComponent** | Representación de usuarios |
-| **SearchBarComponent** | Búsqueda con debounce |
-| **EventCardComponent** | Tarjetas de eventos con estado y capacidad |
-| **ModalComponent** | Ventanas modales reutilizables |
-| **ToastComponent** | Notificaciones temporales |
+### Testing y Calidad
 
----
-
-## Configuración
-
-### Variables de Entorno
-
-Crea `src/environments/environment.ts`:
-
-```typescript
-export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:8000/api'
-};
-```
-
-### Dependencias
+El proyecto usa `Vitest` como test runner con cobertura de código.
 
 ```bash
-npm install
-```
-
----
-
-## Desarrollo
-
-### Servidor de Desarrollo
-
-```bash
-npm start
-# Disponible en http://localhost:4200
-```
-
-### Build de Producción
-
-```bash
-npm run build
-# Los archivos se generan en dist/
-```
-
-### Linting
-
-```bash
-npm run lint
-```
-
----
-
-## Internacionalización
-
-El sistema usa **Transloco** para multi-idioma.
-
-### Archivos de Traducción
-
-| Idioma | Archivo |
-|--------|---------|
-| Español | `public/assets/i18n/es.json` |
-| Inglés | `public/assets/i18n/en.json` |
-
-### Uso en Componentes
-
-```typescript
-import { TranslocoService } from '@ngneat/transloco';
-
-constructor(private transloco: TranslocoService) {}
-
-changeLanguage(lang: string) {
-  this.transloco.setActiveLang(lang);
-}
-
-// En template
-{{ 'key.translation' | transloco }}
-```
-
----
-
-## Testing
-
-```bash
-# Todas las pruebas
+# Ejecutar suite de pruebas localmente
 npm test
 
-# Modo watch
-npm test -- --watch
-
-# Coverage
-npm test -- --coverage
+# Correr pruebas localmente y generar reporte de coverage
+npm run test:coverage
 ```
 
-### Coverage
-
-El reporte de coverage se genera automáticamente durante el build de Docker:
-
-```bash
-# Construir contenedor
-docker-compose up --build
-
-# Ver reporte
-# reports/coverage/
-```
-
----
-
-## Roles y Permisos
-
-| Rol | Descripción |
-|-----|-------------|
-| **Admin** | Panel de administración, gestión completa |
-| **Organizador** | Dashboard de organizador, crear/gestionar eventos |
-| **Asistente** | Explorar eventos, inscribirse, ver calendario personal |
-
-### Rutas Protegidas
-
-- `/admin/*` - Solo Admin
-- `/organizer/*` - Admin y Organizador
-- `/events/*` - Todos los roles autenticados
-- `/auth/*` - Público
+> **Automatización:** Cada vez que el contenedor `frontend` se inicia, ejecuta automáticamente las pruebas de cobertura y el reporte se guarda en `./reports/coverage-frontend/`.

@@ -11,6 +11,23 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d mis_eventos"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mis_eventos_redis
+    ports:
+      - "6379:6379"
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   backend:
     build:
@@ -27,16 +44,11 @@ services:
       - DATABASE_URL=postgresql://root:rootpassword@db:5432/mis_eventos
       - REDIS_URL=redis://redis:6379/0
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    container_name: mis_eventos_redis
-    ports:
-      - "6379:6379"
-    restart: always
 
   frontend:
     build:
@@ -52,10 +64,10 @@ services:
     environment:
       - API_URL=http://localhost:8000/api
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     restart: unless-stopped
 
 volumes:
   postgres_data:
   uploads_data:
-  reports:
